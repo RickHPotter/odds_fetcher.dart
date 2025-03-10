@@ -1,20 +1,30 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show debugPrint;
 import "package:http/http.dart" as http;
+import 'package:odds_fetcher/models/league.dart' show League;
 import 'package:odds_fetcher/models/record.dart';
+import 'package:odds_fetcher/models/team.dart' show Team;
+import 'package:odds_fetcher/services/database_service.dart'
+    show DatabaseService;
 import 'package:odds_fetcher/utils/parse_utils.dart';
 
 class ApiService {
   static const String baseUrl = 'https://px-1x2.7mdt.com/data/history/en/';
 
   Future<List<Record>> fetchData(String date) async {
-    const bettingHouse = 17;
+    const bettingHouseId = 17;
     final resultMessage = "$date == ";
 
-    final url = Uri.parse('$baseUrl$date/$bettingHouse.js?nocache=${DateTime.now().millisecondsSinceEpoch}');
+    final url = Uri.parse(
+      '$baseUrl$date/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}',
+    );
     final response = await http.get(url);
 
     if (response.statusCode != 200) {
-      return Future.error('$resultMessage Failed to fetch data. Status: ${response.statusCode}');
+      return Future.error(
+        '$resultMessage Failed to fetch data. Status: ${response.statusCode}',
+      );
     }
 
     String bodyStr = await _sanitizeData(response.body);
@@ -29,13 +39,14 @@ class ApiService {
       try {
         recordsArray = json.decode(bodyStr);
       } catch (e) {
-        return Future.error('$resultMessage Failed to parse sanitized data. Error: $e');
+        return Future.error(
+          '$resultMessage Failed to parse sanitized data. Error: $e',
+        );
       }
     }
 
     final List<Record> records = [];
     for (var recordData in recordsArray) {
-
       final fields = recordData.split("|");
       if (fields.length < 17) {
         return Future.error('$resultMessage Invalid data structure');
@@ -60,30 +71,38 @@ class ApiService {
             awayFirstHalfScore = int.tryParse(scores[1]);
           }
         }
+        final leagueCode = fields[3].split(",")[0];
+        final leagueName = fields[3].split(",")[1];
+
+        final leagueId = await DatabaseService.getOrCreateLeague(
+          leagueCode,
+          leagueName,
+        );
+        final homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
+        final awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
 
         final record = Record(
-            bettingHouse: bettingHouse,
-            matchDate: matchDate.toString().substring(0, 10),
-            league: fields[3].split(",")[0],
-            leagueName: fields[3].split(",")[1],
-            homeTeam: fields[6],
-            awayTeam: fields[7],
-            earlyOdds1: parseDouble(fields[11]),
-            earlyOddsX: parseDouble(fields[12]),
-            earlyOdds2: parseDouble(fields[13]),
-            finalOdds1: double.tryParse(fields[14]),
-            finalOddsX: double.tryParse(fields[15]),
-            finalOdds2: double.tryParse(fields[16]),
-            homeFirstHalfScore: homeFirstHalfScore,
-            awayFirstHalfScore: awayFirstHalfScore,
-            homeSecondHalfScore: parseInteger(fields[8]),
-            awaySecondHalfScore: parseInteger(fields[9]),
-            );
+          bettingHouseId: bettingHouseId,
+          matchDate: matchDate,
+          league: League(id: leagueId, code: leagueCode, name: leagueName),
+          homeTeam: Team(id: homeTeamId, name: fields[6]),
+          awayTeam: Team(id: awayTeamId, name: fields[7]),
+          earlyOdds1: parseDouble(fields[11]),
+          earlyOddsX: parseDouble(fields[12]),
+          earlyOdds2: parseDouble(fields[13]),
+          finalOdds1: double.tryParse(fields[14]),
+          finalOddsX: double.tryParse(fields[15]),
+          finalOdds2: double.tryParse(fields[16]),
+          homeFirstHalfScore: homeFirstHalfScore,
+          awayFirstHalfScore: awayFirstHalfScore,
+          homeSecondHalfScore: parseInteger(fields[8]),
+          awaySecondHalfScore: parseInteger(fields[9]),
+        );
 
         records.add(record);
       } catch (e) {
-        print("Error parsing record: $e");
-        print("Problematic fields: $fields");
+        debugPrint("Error parsing record: $e");
+        debugPrint("Problematic fields: $fields");
       }
     }
 
@@ -93,7 +112,10 @@ class ApiService {
   Future<String> _sanitizeData(String rawData) async {
     // Remove UTF-8 BOM and sanitize data as needed
     rawData = rawData.replaceFirst("\xef\xbb\xbf", ""); // Remove BOM
-    rawData = rawData.replaceFirst("var dt = ", ""); // Remove JavaScript variable assignment
+    rawData = rawData.replaceFirst(
+      "var dt = ",
+      "",
+    ); // Remove JavaScript variable assignment
     rawData = rawData.replaceAll("\\'", "'"); // Fix escaped single quotes
     rawData = rawData.replaceAll("\t", " "); // Replace tabs with spaces
     rawData = rawData.replaceAll(";", " "); // Replace end semicolon with space

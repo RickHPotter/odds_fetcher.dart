@@ -1,63 +1,77 @@
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' show join;
 import 'package:odds_fetcher/models/record.dart';
 
 class DatabaseService {
   static Database? _db;
   static const String dbName = "odds_fetcher.db";
 
-  // Singleton pattern to make sure only one database instance exists
   static Future<Database> get database async {
     if (_db != null) return _db!;
 
-    // Initialize the database if it hasn't been initialized
     _db = await _initDb();
+    _db?.execute("PRAGMA foreign_keys = ON;");
+
     return _db!;
   }
 
+  static Future<void> deleteDatabaseFile() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, "odds_fetcher.db");
+    await databaseFactory.deleteDatabase(path);
+  }
+
+  static Future<void> executeSchema(Database db, String version) async {
+    final script = await rootBundle.loadString(
+      "assets/migrations/$version.sql",
+    );
+    final statements = script.split(";");
+    for (final statement in statements) {
+      if (statement.trim().isNotEmpty) {
+        await db.execute(statement);
+      }
+    }
+  }
+
   static Future<Database> _initDb() async {
-    // Get the path to the database in the device's file system
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, dbName);
 
-    // Open or create the database
     return await openDatabase(
       path,
-      version: 1, // Adjust version if necessary
+      version: 1,
       onCreate: (db, version) async {
-        return db.execute(
-          """CREATE TABLE records(
-               id INTEGER PRIMARY KEY,
-               bettingHouse INTEGER,
-               matchDate TEXT,
-               league TEXT,
-               leagueName TEXT,
-               homeTeam TEXT,
-               awayTeam TEXT,
-               earlyOdds1 TEXT,
-               earlyOddsX TEXT,
-               earlyOdds2 TEXT,
-               finalOdds1 TEXT,
-               finalOddsX TEXT,
-               finalOdds2 TEXT,
-               homeFirstHalfScore INTEGER,
-               homeSecondHalfScore INTEGER,
-               awayFirstHalfScore INTEGER,
-               awaySecondHalfScore INTEGER
-             )""",
-        );
+        await executeSchema(db, version.toString().padLeft(4, "0"));
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        for (var v = oldVersion + 1; v <= newVersion; v++) {
+          await executeSchema(db, v.toString().padLeft(4, "0"));
+        }
       },
     );
   }
 
-  // Fetch records from the DB
   static Future<List<Record>> fetchRecords() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('records');
 
-    return List.generate(maps.length, (i) {
-      return Record.fromJson(maps[i]);
-    });
+    final List<Map<String, dynamic>> result = await db.rawQuery("""
+    SELECT
+      r.*,
+      l.id AS leagueId,
+      l.leagueCode,
+      l.leagueName,
+      ht.id AS homeTeamId,
+      ht.teamName AS homeTeamName,
+      at.id AS awayTeamId,
+      at.teamName AS awayTeamName
+    FROM Records r
+    JOIN Leagues l ON r.leagueId = l.id
+    JOIN Teams ht ON r.homeTeamId = ht.id
+    JOIN Teams at ON r.awayTeamId = at.id
+    """);
+
+    return result.map((row) => Record.fromMap(row)).toList();
   }
 
   static Future<void> insertRecord(Record record) async {
@@ -66,5 +80,42 @@ class DatabaseService {
       record.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  static Future<int> getOrCreateLeague(
+    String leagueCode,
+    String leagueName,
+  ) async {
+    final db = await database;
+
+    final result = await db.query(
+      "Leagues",
+      where: "leagueCode = ? AND leagueName = ?",
+      whereArgs: [leagueCode, leagueName],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first["id"] as int;
+    }
+
+    return await db.insert("Leagues", {
+      "leagueCode": leagueCode,
+      "leagueName": leagueName,
+    });
+  }
+
+  static Future<int> getOrCreateTeam(String teamName) async {
+    final db = await database;
+    final result = await db.query(
+      "Teams",
+      where: "teamName = ?",
+      whereArgs: [teamName],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first["id"] as int;
+    }
+
+    return await db.insert("Teams", {"teamName": teamName});
   }
 }

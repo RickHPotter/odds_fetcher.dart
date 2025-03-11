@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:odds_fetcher/screens/records_list_screen.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import "package:flutter/material.dart";
+import "package:odds_fetcher/screens/records_list_screen.dart";
+import "package:sqflite_common_ffi/sqflite_ffi.dart";
 
 void main() async {
   sqfliteFfiInit();
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Record List',
+      title: "Odds Fetcher",
       theme: ThemeData(
         primarySwatch: Colors.orange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -64,10 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Expanded(
             child: IndexedStack(
               index: selectedIndex,
-              children: const [
-                RecordListScreen(title: "Listagem de Registros"),
-                Text("Hello"),
-              ],
+              children: const [RecordListScreen(), Text("Hello")],
             ),
           ),
         ],

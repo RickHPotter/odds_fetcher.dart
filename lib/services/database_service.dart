@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:odds_fetcher/models/filter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' show join;
 import 'package:odds_fetcher/models/record.dart';
@@ -52,7 +53,7 @@ class DatabaseService {
     );
   }
 
-  static Future<List<Record>> fetchRecords() async {
+  static Future<List<Record>> fetchRecords({Filter? filter}) async {
     final db = await database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""

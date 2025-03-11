@@ -12,13 +12,11 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  fluent_ui: ^4.11.2
   sqflite_common_ffi: ^2.3.1
   sqflite: ^2.3.3+1
   intl: ^0.19.0
   path: ^1.8.3
   http: ^1.1.0
-  data_table_2: ^2.5.18
   pluto_grid: ^8.0.0
 
 dev_dependencies:

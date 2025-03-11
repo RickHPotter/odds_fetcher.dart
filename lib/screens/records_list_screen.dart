@@ -26,6 +26,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   String currentDate = DateTime.now().toString();
   int progress = 0;
   bool isFetching = false;
+  bool isCancelled = false;
 
   late PlutoGridStateManager stateManager;
 
@@ -33,6 +34,14 @@ class _RecordListScreenState extends State<RecordListScreen> {
     final fetchedRecords = await DatabaseService.fetchRecords(filter: filter);
 
     setState(() => records = fetchedRecords);
+  }
+
+  Future<void> loadMaxMatchDate() async {
+    final startDateToFetch = await DatabaseService.loadMaxMatchDate();
+
+    if (startDateToFetch != DateTime.now()) {
+      startFetching(startDate: startDateToFetch);
+    }
   }
 
   @override
@@ -44,21 +53,15 @@ class _RecordListScreenState extends State<RecordListScreen> {
     _loadRecords();
 
     fetcher = RecordFetcher();
-    //fetcher.progressStream.listen((progressValue) {
-    //  setState(() {
-    //    progress = progressValue;
-    //  });
-    //});
-
-    // Listen to progress updates
     fetcher.progressStream.listen((value) {
       setState(() => progress = value);
     });
 
-    // Listen to current date updates
     fetcher.currentDateStream.listen((value) {
       setState(() => currentDate = value);
     });
+
+    loadMaxMatchDate();
 
     super.initState();
   }
@@ -81,22 +84,29 @@ class _RecordListScreenState extends State<RecordListScreen> {
   //  stateManager.setFilter(null);
   //}
 
-  void startFetching() async {
-    print(DateTime.now().toString());
+  void startFetching({DateTime? startDate, DateTime? endDate}) async {
+    debugPrint(DateTime.now().toString());
 
-    setState(() => isFetching = true);
+    startDate ??= DateTime.parse("2008-01-01");
+    endDate ??= DateTime.now().subtract(Duration(days: 1));
+
+    setState(() {
+      isFetching = true;
+      isCancelled = false;
+    });
 
     await fetcher.fetchAndInsertRecords(
-      startDate: DateTime.parse("2008-01-01"),
-      endDate: DateTime.now(),
+      startDate: startDate,
+      endDate: endDate,
+      isCancelledCallback: () => isCancelled,
     );
 
-    showSuccessDialog();
+    if (!isCancelled) showSuccessDialog();
     setState(() => isFetching = false);
   }
 
   void showSuccessDialog() {
-    print(DateTime.now().toString());
+    debugPrint(DateTime.now().toString());
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -136,6 +146,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
     return Scaffold(
       key: _scaffoldMessengerKey,
       appBar: AppBar(
+        toolbarHeight: 130,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -172,6 +183,25 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       LinearProgressIndicator(value: progress / 100),
                       SizedBox(height: 5),
                       Text("$progress%"),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            isCancelled = true;
+                            isFetching = false;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                        child: Text(
+                          "Abort",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
                     ],
                   ),
                 ),

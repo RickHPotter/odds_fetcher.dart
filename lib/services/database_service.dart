@@ -1,4 +1,7 @@
-import 'package:flutter/services.dart' show rootBundle;
+import 'dart:io';
+
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:odds_fetcher/models/filter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' show join;
@@ -7,6 +10,7 @@ import 'package:odds_fetcher/models/record.dart';
 class DatabaseService {
   static Database? _db;
   static const String dbName = "odds_fetcher.db";
+  static const String assetDbPath = "assets/odds_fetcher_template.db";
 
   static Future<Database> get database async {
     if (_db != null) return _db!;
@@ -17,10 +21,34 @@ class DatabaseService {
     return _db!;
   }
 
-  static Future<void> deleteDatabaseFile() async {
+  static Future<Database> _initDb() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, "odds_fetcher.db");
-    await databaseFactory.deleteDatabase(path);
+    final path = join(dbPath, dbName);
+
+    final dbDir = Directory(dbPath);
+    if (!dbDir.existsSync()) {
+      debugPrint("Creating database directory: $dbPath");
+      await dbDir.create(recursive: true);
+    }
+
+    final dbExists = await databaseExists(path);
+
+    if (!dbExists) {
+      debugPrint("Database does not exist, copying from assets...");
+      try {
+        ByteData data = await rootBundle.load(assetDbPath);
+        List<int> bytes = data.buffer.asUint8List();
+
+        await File(path).writeAsBytes(bytes, flush: true);
+        debugPrint("Database copied successfully.");
+      } catch (e) {
+        debugPrint("Error copying database: $e");
+      }
+    } else {
+      debugPrint("Database already exists.");
+    }
+
+    return await openDatabase(path, version: 1);
   }
 
   static Future<void> executeSchema(Database db, String version) async {
@@ -35,26 +63,15 @@ class DatabaseService {
     }
   }
 
-  static Future<Database> _initDb() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, dbName);
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await executeSchema(db, version.toString().padLeft(4, "0"));
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        for (var v = oldVersion + 1; v <= newVersion; v++) {
-          await executeSchema(db, v.toString().padLeft(4, "0"));
-        }
-      },
-    );
-  }
-
   static Future<List<Record>> fetchRecords({Filter? filter}) async {
     final db = await database;
+    late String whereClause;
+
+    if (filter == null) {
+      whereClause = "WHERE 1 = 1";
+    } else {
+      whereClause = filter.whereClause();
+    }
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
     SELECT
@@ -70,10 +87,35 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    LIMIT 1000
+    $whereClause
+    ;
     """);
 
     return result.map((row) => Record.fromMap(row)).toList();
+  }
+
+  static Future<DateTime> loadMaxMatchDate() async {
+    final db = await database;
+
+    final List<Map<String, dynamic>> result = await db.rawQuery("""
+    SELECT
+      MAX(
+        MatchDateYear ||
+        printf('%02d', MatchDateMonth) ||
+        printf('%02d', MatchDateDay)
+      ) AS MatchDate,
+      MatchDateYear || '-' ||
+      printf('%02d', MatchDateMonth) || '-' ||
+      printf('%02d', MatchDateDay) As MatchDateStr
+    FROM Records
+    LIMIT 1;
+    """);
+
+    if (result.isEmpty || result.first["MatchDateStr"] == null) {
+      return DateTime.parse("2008-01-01");
+    }
+
+    return DateTime.parse(result.first["MatchDateStr"]);
   }
 
   static Future<void> insertRecord(Record record) async {

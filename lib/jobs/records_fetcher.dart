@@ -38,6 +38,7 @@ class RecordFetcher {
   Future<void> fetchAndInsertRecords({
     required DateTime startDate,
     required DateTime endDate,
+    required bool Function() isCancelledCallback,
   }) async {
     List<Future<List<Record>>> fetchTasks = [];
     List<Record> recordBuffer = [];
@@ -74,6 +75,15 @@ class RecordFetcher {
       _progressController.add(
         ((completedSteps / totalFetchTasks) * 100).toInt(),
       );
+
+      if (isCancelledCallback()) {
+        debugPrint("Fetching aborted by user.");
+        break;
+      }
+    }
+
+    if (isCancelledCallback()) {
+      return;
     }
 
     if (fetchTasks.isNotEmpty) {

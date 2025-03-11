@@ -144,4 +144,14 @@ class Filter {
     endDate = DateTime.now();
     this.futureNextMinutes = futureNextMinutes;
   }
+
+  String whereClause() {
+    late String whereClause = "WHERE 1 = 1";
+    whereClause +=
+        " AND MatchDateYear > ${startDate.year} OR (MatchDateYear >= ${startDate.year} AND MatchDateMonth >= ${startDate.month} AND MatchDateDay >= ${startDate.day})";
+    whereClause +=
+        " AND MatchDateYear <= ${endDate.year} AND MatchDateMonth <= ${endDate.month} AND MatchDateDay <= ${endDate.day}";
+
+    return whereClause;
+  }
 }

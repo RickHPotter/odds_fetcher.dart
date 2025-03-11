@@ -70,6 +70,7 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
+    LIMIT 1000
     """);
 
     return result.map((row) => Record.fromMap(row)).toList();
@@ -79,8 +80,28 @@ class DatabaseService {
     await _db?.insert(
       "records",
       record.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
     );
+  }
+
+  static Future<void> insertRecordsBatch(List<Record> records) async {
+    if (_db == null || records.isEmpty) return;
+
+    Batch batch = _db!.batch();
+
+    for (Record record in records) {
+      batch.insert(
+        "records",
+        record.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+
+    try {
+      await batch.commit(noResult: true);
+    } catch (e) {
+      // ignore
+    }
   }
 
   static Future<int> getOrCreateLeague(
@@ -102,7 +123,7 @@ class DatabaseService {
     return await db.insert("Leagues", {
       "leagueCode": leagueCode,
       "leagueName": leagueName,
-    });
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   static Future<int> getOrCreateTeam(String teamName) async {
@@ -117,6 +138,8 @@ class DatabaseService {
       return result.first["id"] as int;
     }
 
-    return await db.insert("Teams", {"teamName": teamName});
+    return await db.insert("Teams", {
+      "teamName": teamName,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

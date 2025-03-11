@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
@@ -12,47 +13,107 @@ class RecordListScreen extends StatefulWidget {
 }
 
 class _RecordListScreenState extends State<RecordListScreen> {
-  final viewKey = GlobalKey();
-
-  List<Record> records = [];
+  late List<Record> records = [];
   late int filterPastYears = 1;
-  late Duration filterFutureNext = Duration(hours: 1);
-  Filter filter = Filter();
+  late int filterFutureNextMinutes = 60;
+  late Filter filter = Filter(
+    filterName: "Filtro Padrão",
+    startDate: DateTime.now(),
+    endDate: DateTime.now(),
+  );
+
+  late RecordFetcher fetcher;
+  String currentDate = DateTime.now().toString();
+  int progress = 0;
+  bool isFetching = false;
 
   late PlutoGridStateManager stateManager;
 
   void _loadRecords() async {
     final fetchedRecords = await DatabaseService.fetchRecords(filter: filter);
 
-    setState(() {
-      records = fetchedRecords;
-    });
+    setState(() => records = fetchedRecords);
   }
 
   @override
   void initState() {
     filter.updateFilter(
-      futureNext: filterFutureNext,
+      futureNextMinutes: filterFutureNextMinutes,
       pastYears: filterPastYears,
     );
     _loadRecords();
+
+    fetcher = RecordFetcher();
+    //fetcher.progressStream.listen((progressValue) {
+    //  setState(() {
+    //    progress = progressValue;
+    //  });
+    //});
+
+    // Listen to progress updates
+    fetcher.progressStream.listen((value) {
+      setState(() => progress = value);
+    });
+
+    // Listen to current date updates
+    fetcher.currentDateStream.listen((value) {
+      setState(() => currentDate = value);
+    });
+
     super.initState();
   }
 
-  void filterWithPlutoGrid(String column, String keyword) {
-    stateManager.setFilter(
-      (element) =>
-          element.cells[column]?.value.toString().contains(keyword) ?? false,
+  @override
+  void dispose() {
+    fetcher.dispose();
+    super.dispose();
+  }
+
+  //void filterWithPlutoGrid(String column, String keyword) {
+  //  stateManager.setFilter(
+  //    (element) =>
+  //        element.cells[column]?.value.toString().contains(keyword) ?? false,
+  //  );
+  //}
+
+  //void resetFilters() {
+  //  filter = Filter();
+  //  stateManager.setFilter(null);
+  //}
+
+  void startFetching() async {
+    print(DateTime.now().toString());
+
+    setState(() => isFetching = true);
+
+    await fetcher.fetchAndInsertRecords(
+      startDate: DateTime.parse("2008-01-01"),
+      endDate: DateTime.now(),
     );
+
+    showSuccessDialog();
+    setState(() => isFetching = false);
   }
 
-  void applyDbFilter() {
-    _loadRecords();
-  }
-
-  void resetFilters() {
-    filter = Filter();
-    stateManager.setFilter(null);
+  void showSuccessDialog() {
+    print(DateTime.now().toString());
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Sucesso!"),
+          content: Text("Jogos buscados com sucesso!"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void filterHistoryMatches(int time) {
@@ -61,24 +122,84 @@ class _RecordListScreenState extends State<RecordListScreen> {
     _loadRecords();
   }
 
-  void filterUpcomingMatches(Duration duration) {
-    filterFutureNext = duration;
-    filter.futureNext = duration;
+  void filterUpcomingMatches(int duration) {
+    filterFutureNextMinutes = duration;
+    filter.futureNextMinutes = duration;
     _loadRecords();
   }
+
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Listagem de Jogos")),
+      key: _scaffoldMessengerKey,
+      appBar: AppBar(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(child: const Text("Listagem de Jogos")),
+            if (!isFetching)
+              Padding(
+                padding: EdgeInsetsDirectional.all(10),
+                child: ElevatedButton(
+                  onPressed: startFetching,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0),
+                    ),
+                  ),
+                  child: Text("Buscar Jogos"),
+                ),
+              ),
+            if (isFetching)
+              Padding(
+                padding: EdgeInsetsDirectional.all(12),
+                child: SizedBox(
+                  width: 300,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        currentDate.split(" ")[0],
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      LinearProgressIndicator(value: progress / 100),
+                      SizedBox(height: 5),
+                      Text("$progress%"),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            Text(
+              filter.filterName,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              records.length.toString(),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Text("Últimos:", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  "Jogos Passados:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 for (var time in [1, 2, 3, 5, 8, 10, 15, 20])
                   Container(
                     padding: const EdgeInsets.all(5),
@@ -101,32 +222,29 @@ class _RecordListScreenState extends State<RecordListScreen> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  "Próximos:",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  "Jogos Futuros:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                for (var duration in [
-                  Duration(minutes: 10),
-                  Duration(minutes: 30),
-                  Duration(hours: 1),
-                  Duration(hours: 3),
-                  Duration(hours: 6),
-                  Duration(hours: 12),
-                ])
+                for (var minutes in [10, 30, 60, 60 * 3, 60 * 6, 60 * 12])
                   Container(
                     padding: const EdgeInsets.all(5),
                     child: ElevatedButton(
-                      onPressed: () => filterUpcomingMatches(duration),
+                      onPressed: () => filterUpcomingMatches(minutes),
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         backgroundColor:
-                            duration == filterFutureNext ? Colors.blue : null,
+                            minutes == filterFutureNextMinutes
+                                ? Colors.blue
+                                : null,
                       ),
                       child: Text(
-                        duration.inMinutes < 60
-                            ? '${duration.inMinutes} min'
-                            : '${duration.inHours} h',
+                        minutes < 60
+                            ? '$minutes minutos'
+                            : minutes == 60
+                            ? '${minutes ~/ 60} hora'
+                            : '${minutes ~/ 60} horas',
                       ),
                     ),
                   ),

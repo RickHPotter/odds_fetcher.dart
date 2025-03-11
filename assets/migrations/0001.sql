@@ -91,7 +91,6 @@ CREATE TABLE Filters (
   minGoalsFullTime           INTEGER,
   maxGoalsFullTime           INTEGER,
   futureNextMinutes          INTEGER,
-  futureNextHours            INTEGER,
   futureDismissNoEarlyOdds   INTEGER,
   futureDismissNoFinalOdds   INTEGER,
   futureDismissNoHistory     INTEGER,

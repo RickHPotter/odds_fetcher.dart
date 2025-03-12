@@ -118,6 +118,7 @@ class RecordFetcher {
       return;
     }
 
+    await DatabaseService.deleteOldFutureRecords();
     await DatabaseService.insertRecordsBatch(records);
 
     _progressController.add(50);

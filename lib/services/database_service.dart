@@ -151,7 +151,7 @@ class DatabaseService {
 
   static Future<void> insertRecord(Record record) async {
     await _db?.insert(
-      "records",
+      "Records",
       record.toMap(),
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
@@ -164,7 +164,7 @@ class DatabaseService {
 
     for (Record record in records) {
       batch.insert(
-        "records",
+        "Records",
         record.toMap(),
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
@@ -224,5 +224,9 @@ class DatabaseService {
     return await db.insert("Teams", {
       "teamName": teamName,
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  static Future<int>? deleteOldFutureRecords() {
+    return _db?.delete("Records", where: "finished = ?", whereArgs: [0]);
   }
 }

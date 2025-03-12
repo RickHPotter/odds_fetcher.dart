@@ -147,9 +147,11 @@ class ApiService {
       }
 
       DateTime matchDate;
+      List<String> timeFraments = fields[1].split(",");
+
       try {
         matchDate = DateTime.parse(
-          fields[1].replaceAll(",", "-"),
+          "${timeFraments[0]}-${timeFraments[1]}-${timeFraments[2]} ${timeFraments[3]}:${timeFraments[4]}:${timeFraments[5]}",
         ).subtract(const Duration(hours: 11));
       } catch (e) {
         matchDate = DateTime.now();

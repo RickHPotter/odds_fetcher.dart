@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:odds_fetcher/models/folder.dart';
 import 'package:odds_fetcher/models/league.dart';
 import 'package:odds_fetcher/models/team.dart';
@@ -166,7 +167,8 @@ class Filter {
       Duration(minutes: futureNextMinutes as int),
     );
 
-    final dateInt =
+    final minDate = DateFormat("yyyyMMddHm").format(DateTime.now());
+    final maxDate =
         "${date.year.toString().padLeft(4, '0')}"
         "${date.month.toString().padLeft(2, '0')}"
         "${date.day.toString().padLeft(2, '0')}"
@@ -174,7 +176,9 @@ class Filter {
         "${date.minute.toString().padLeft(2, '0')}";
 
     whereClause +=
-        " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$dateInt'";
+        " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) >= '$minDate'";
+    whereClause +=
+        " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$maxDate'";
 
     return whereClause;
   }

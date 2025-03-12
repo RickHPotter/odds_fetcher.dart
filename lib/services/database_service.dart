@@ -63,7 +63,38 @@ class DatabaseService {
     }
   }
 
-  static Future<List<Record>> fetchRecords({Filter? filter}) async {
+  static Future<List<Record>> fetchFutureRecords({Filter? filter}) async {
+    final db = await database;
+    late String whereClause;
+
+    if (filter == null) {
+      whereClause = "WHERE 1 = 1";
+    } else {
+      whereClause = filter.whereClauseFuture();
+    }
+
+    final List<Map<String, dynamic>> result = await db.rawQuery("""
+    SELECT
+      r.*,
+      l.id AS leagueId,
+      l.leagueCode,
+      l.leagueName,
+      ht.id AS homeTeamId,
+      ht.teamName AS homeTeamName,
+      at.id AS awayTeamId,
+      at.teamName AS awayTeamName
+    FROM Records r
+    JOIN Leagues l ON r.leagueId = l.id
+    JOIN Teams ht ON r.homeTeamId = ht.id
+    JOIN Teams at ON r.awayTeamId = at.id
+    $whereClause
+    ;
+    """);
+
+    return result.map((row) => Record.fromMap(row)).toList();
+  }
+
+  static Future<List<Record>> fetchRecords({Filter? filter, int? id}) async {
     final db = await database;
     late String whereClause;
 
@@ -148,19 +179,29 @@ class DatabaseService {
 
   static Future<int> getOrCreateLeague(
     String leagueCode,
-    String leagueName,
+    String? leagueName,
   ) async {
     final db = await database;
 
+    String whereClause = "leagueCode = ?";
+    List<String> whereArgs = [leagueCode];
+
+    if (leagueName != null) {
+      whereClause += " AND leagueName = ?";
+      whereArgs.add(leagueName);
+    }
+
     final result = await db.query(
       "Leagues",
-      where: "leagueCode = ? AND leagueName = ?",
-      whereArgs: [leagueCode, leagueName],
+      where: whereClause,
+      whereArgs: whereArgs,
     );
 
     if (result.isNotEmpty) {
       return result.first["id"] as int;
     }
+
+    leagueName ??= leagueCode;
 
     return await db.insert("Leagues", {
       "leagueCode": leagueCode,

@@ -13,6 +13,7 @@ class RecordListScreen extends StatefulWidget {
 }
 
 class _RecordListScreenState extends State<RecordListScreen> {
+  late List<Record> pivotRecords = [];
   late List<Record> records = [];
   late int filterPastYears = 1;
   late int filterFutureNextMinutes = 60;
@@ -31,8 +32,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
   late PlutoGridStateManager stateManager;
 
   void _loadRecords() async {
-    final fetchedRecords = await DatabaseService.fetchRecords(filter: filter);
+    final fetchedRecords = await DatabaseService.fetchFutureRecords(
+      filter: filter,
+    );
 
+    setState(() => pivotRecords = fetchedRecords);
     setState(() => records = fetchedRecords);
   }
 
@@ -42,6 +46,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
     if (startDateToFetch != DateTime.now()) {
       startFetching(startDate: startDateToFetch);
     }
+
+    startFetchingFuture();
   }
 
   @override
@@ -105,6 +111,22 @@ class _RecordListScreenState extends State<RecordListScreen> {
     setState(() => isFetching = false);
   }
 
+  void startFetchingFuture() async {
+    debugPrint(DateTime.now().toString());
+
+    setState(() {
+      isFetching = true;
+      isCancelled = false;
+    });
+
+    await fetcher.fetchAndInsertFutureRecords(
+      isCancelledCallback: () => isCancelled,
+    );
+
+    if (!isCancelled) showSuccessDialog();
+    setState(() => isFetching = false);
+  }
+
   void showSuccessDialog() {
     debugPrint(DateTime.now().toString());
     showDialog(
@@ -146,83 +168,118 @@ class _RecordListScreenState extends State<RecordListScreen> {
     return Scaffold(
       key: _scaffoldMessengerKey,
       appBar: AppBar(
-        toolbarHeight: 130,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Expanded(child: const Text("Listagem de Jogos")),
-            if (!isFetching)
-              Padding(
-                padding: EdgeInsetsDirectional.all(10),
-                child: ElevatedButton(
-                  onPressed: startFetching,
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(0),
-                    ),
-                  ),
-                  child: Text("Buscar Jogos"),
-                ),
-              ),
-            if (isFetching)
-              Padding(
-                padding: EdgeInsetsDirectional.all(12),
-                child: SizedBox(
-                  width: 300,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        currentDate.split(" ")[0],
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      LinearProgressIndicator(value: progress / 100),
-                      SizedBox(height: 5),
-                      Text("$progress%"),
-                      SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            isCancelled = true;
-                            isFetching = false;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                        ),
-                        child: Text(
-                          "Abort",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
+        title: const Text("Listagem de Jogos", style: TextStyle(fontSize: 32)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Text(
-              filter.filterName,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      filter.filterName.toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    ),
+                    Text(
+                      "${records.length} jogos encontrados.",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 400,
+                      height: 150,
+                      child:
+                          isFetching
+                              ? Padding(
+                                padding: EdgeInsetsDirectional.all(12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      currentDate.split(" ")[0],
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 5),
+                                    LinearProgressIndicator(
+                                      value: progress / 100,
+                                    ),
+                                    SizedBox(height: 5),
+                                    Text("$progress%"),
+                                    SizedBox(height: 10),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          isCancelled = true;
+                                          isFetching = false;
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "Abort",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : Row(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.all(10),
+                                    child: ElevatedButton(
+                                      onPressed: startFetching,
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            0,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text("Buscar Jogos"),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.all(10),
+                                    child: ElevatedButton(
+                                      onPressed: startFetchingFuture,
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            0,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text("Buscar Jogos Futuros"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              records.length.toString(),
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-            ),
-            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [

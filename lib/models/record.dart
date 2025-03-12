@@ -2,6 +2,7 @@ import "package:odds_fetcher/models/league.dart" show League;
 import "package:odds_fetcher/models/team.dart" show Team;
 
 class Record {
+  final int? id;
   final int bettingHouseId;
   final DateTime matchDate;
   final League league;
@@ -17,8 +18,10 @@ class Record {
   final int? awayFirstHalfScore;
   final int? homeSecondHalfScore;
   final int? awaySecondHalfScore;
+  final bool? finished;
 
   Record({
+    this.id,
     required this.bettingHouseId,
     required this.matchDate,
     required this.league,
@@ -34,6 +37,7 @@ class Record {
     this.awayFirstHalfScore,
     this.homeSecondHalfScore,
     this.awaySecondHalfScore,
+    this.finished = true,
   });
 
   String get firstHalfScore {
@@ -46,6 +50,7 @@ class Record {
 
   factory Record.fromMap(Map<String, dynamic> map) {
     return Record(
+      id: map["id"],
       bettingHouseId: map["bettingHouseId"] ?? 17, // Default to 17
       matchDate: DateTime(
         map["matchDateYear"],
@@ -73,6 +78,7 @@ class Record {
       awayFirstHalfScore: map["awayFirstHalfScore"],
       homeSecondHalfScore: map["homeSecondHalfScore"],
       awaySecondHalfScore: map["awaySecondHalfScore"],
+      finished: map["finished"].toString() == "1",
     );
   }
 
@@ -97,11 +103,7 @@ class Record {
       "finalOdds1": finalOdds1,
       "finalOddsX": finalOddsX,
       "finalOdds2": finalOdds2,
-      "finished":
-          matchDate.isBefore(DateTime.now()) &&
-                  (homeSecondHalfScore != null || awaySecondHalfScore != null)
-              ? 1
-              : 0,
+      "finished": finished == true ? 1 : 0,
     };
   }
 }

@@ -1,29 +1,30 @@
-import 'dart:convert';
+import "dart:convert";
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import "package:flutter/foundation.dart" show debugPrint;
 import "package:http/http.dart" as http;
-import 'package:odds_fetcher/models/league.dart' show League;
-import 'package:odds_fetcher/models/record.dart';
-import 'package:odds_fetcher/models/team.dart' show Team;
-import 'package:odds_fetcher/services/database_service.dart'
+import "package:odds_fetcher/models/league.dart" show League;
+import "package:odds_fetcher/models/record.dart";
+import "package:odds_fetcher/models/team.dart" show Team;
+import "package:odds_fetcher/services/database_service.dart"
     show DatabaseService;
-import 'package:odds_fetcher/utils/parse_utils.dart';
+import "package:odds_fetcher/utils/parse_utils.dart";
 
 class ApiService {
-  static const String baseUrl = 'https://px-1x2.7mdt.com/data/history/en/';
+  static const String baseUrl = "https://px-1x2.7mdt.com/data/history/en/";
+  static const String futureUrl = "https://px-1x2.7mdt.com/data/company/en/";
 
   Future<List<Record>> fetchData(String date) async {
     const bettingHouseId = 17;
     final resultMessage = "$date == ";
 
     final url = Uri.parse(
-      '$baseUrl$date/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}',
+      "$baseUrl$date/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}",
     );
     final response = await http.get(url);
 
     if (response.statusCode != 200) {
       return Future.error(
-        '$resultMessage Failed to fetch data. Status: ${response.statusCode}',
+        "$resultMessage Failed to fetch data. Status: ${response.statusCode}",
       );
     }
 
@@ -40,7 +41,7 @@ class ApiService {
         recordsArray = json.decode(bodyStr);
       } catch (e) {
         return Future.error(
-          '$resultMessage Failed to parse sanitized data. Error: $e',
+          "$resultMessage Failed to parse sanitized data. Error: $e",
         );
       }
     }
@@ -49,7 +50,7 @@ class ApiService {
     for (var recordData in recordsArray) {
       final fields = recordData.split("|");
       if (fields.length < 17) {
-        return Future.error('$resultMessage Invalid data structure');
+        return Future.error("$resultMessage Invalid data structure");
       }
 
       DateTime matchDate;
@@ -109,20 +110,99 @@ class ApiService {
     return records;
   }
 
+  Future<List<Record>> fetchFutureData() async {
+    const bettingHouseId = 17;
+
+    final url = Uri.parse(
+      "${ApiService.futureUrl}/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}",
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode != 200) {
+      return Future.error(
+        "Failed to fetch future data. Status: ${response.statusCode}",
+      );
+    }
+
+    String bodyStr = await _sanitizeData(response.body);
+
+    List<dynamic> recordsArray;
+    try {
+      recordsArray = json.decode(bodyStr);
+    } catch (e) {
+      bodyStr = _sanitizeUffef(bodyStr);
+      try {
+        recordsArray = json.decode(bodyStr);
+      } catch (e) {
+        return Future.error("Failed to parse sanitized future data. Error: $e");
+      }
+    }
+
+    final List<Record> records = [];
+    for (var recordData in recordsArray) {
+      final fields = recordData.split("|");
+      if (fields.length < 16) {
+        return Future.error("Invalid future data structure");
+      }
+
+      DateTime matchDate;
+      try {
+        matchDate = DateTime.parse(
+          fields[1].replaceAll(",", "-"),
+        ).subtract(const Duration(hours: 11));
+      } catch (e) {
+        matchDate = DateTime.now();
+      }
+
+      try {
+        final leagueCode = fields[3];
+        final leagueId = await DatabaseService.getOrCreateLeague(
+          leagueCode,
+          null,
+        );
+        final homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
+        final awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
+
+        final record = Record(
+          bettingHouseId: bettingHouseId,
+          matchDate: matchDate,
+          league: League(id: leagueId, code: leagueCode, name: leagueCode),
+          homeTeam: Team(id: homeTeamId, name: fields[6]),
+          awayTeam: Team(id: awayTeamId, name: fields[7]),
+          earlyOdds1: parseDouble(fields[8]),
+          earlyOddsX: parseDouble(fields[9]),
+          earlyOdds2: parseDouble(fields[10]),
+          finalOdds1: double.tryParse(fields[11]),
+          finalOddsX: double.tryParse(fields[12]),
+          finalOdds2: double.tryParse(fields[13]),
+          homeFirstHalfScore: null,
+          awayFirstHalfScore: null,
+          homeSecondHalfScore: null,
+          awaySecondHalfScore: null,
+          finished: false,
+        );
+
+        records.add(record);
+      } catch (e) {
+        debugPrint("Error parsing record: $e");
+        debugPrint("Problematic fields: $fields");
+      }
+    }
+
+    return records;
+  }
+
   Future<String> _sanitizeData(String rawData) async {
-    // Remove UTF-8 BOM and sanitize data as needed
-    rawData = rawData.replaceFirst("\xef\xbb\xbf", ""); // Remove BOM
-    rawData = rawData.replaceFirst(
-      "var dt = ",
-      "",
-    ); // Remove JavaScript variable assignment
-    rawData = rawData.replaceAll("\\'", "'"); // Fix escaped single quotes
-    rawData = rawData.replaceAll("\t", " "); // Replace tabs with spaces
-    rawData = rawData.replaceAll(";", " "); // Replace end semicolon with space
+    rawData = rawData.replaceFirst("\xef\xbb\xbf", "");
+    rawData = rawData.replaceFirst("var dt = ", "");
+    rawData = rawData.replaceAll("\\'", "'");
+    rawData = rawData.replaceAll("\t", " ");
+    rawData = rawData.replaceAll(";", " ");
     return rawData;
   }
 
   String _sanitizeUffef(String rawData) {
-    return rawData.replaceFirst("\ufeff", ""); // Remove BOM (UFFEF)
+    return rawData.replaceFirst("\ufeff", "");
   }
 }

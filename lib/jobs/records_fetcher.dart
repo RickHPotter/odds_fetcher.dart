@@ -105,6 +105,24 @@ class RecordFetcher {
     }
   }
 
+  Future<void> fetchAndInsertFutureRecords({
+    required bool Function() isCancelledCallback,
+  }) async {
+    List<Record> records = [];
+
+    records = await ApiService().fetchFutureData();
+    _currentDateController.add("Data Futura");
+    _progressController.add(50);
+
+    if (isCancelledCallback()) {
+      return;
+    }
+
+    await DatabaseService.insertRecordsBatch(records);
+
+    _progressController.add(50);
+  }
+
   void dispose() {
     _progressController.close();
     _currentDateController.close();

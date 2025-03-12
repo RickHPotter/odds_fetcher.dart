@@ -136,7 +136,7 @@ class Filter {
     );
   }
 
-  void updateFilter({int? pastYears, int? futureNextMinutes}) {
+  void update({int? pastYears, int? futureNextMinutes}) {
     if (pastYears != null) {
       startDate = DateTime.now().subtract(Duration(days: pastYears * 365));
     }
@@ -146,11 +146,35 @@ class Filter {
   }
 
   String whereClause() {
-    late String whereClause = "WHERE 1 = 1";
+    late String whereClause = "WHERE finished = 1";
     whereClause +=
         " AND MatchDateYear > ${startDate.year} OR (MatchDateYear >= ${startDate.year} AND MatchDateMonth >= ${startDate.month} AND MatchDateDay >= ${startDate.day})";
     whereClause +=
         " AND MatchDateYear <= ${endDate.year} AND MatchDateMonth <= ${endDate.month} AND MatchDateDay <= ${endDate.day}";
+
+    return whereClause;
+  }
+
+  String whereClauseFuture() {
+    late String whereClause = "WHERE finished = 0";
+
+    if (futureNextMinutes == null) {
+      return whereClause;
+    }
+
+    final date = DateTime.now().add(
+      Duration(minutes: futureNextMinutes as int),
+    );
+
+    final dateInt =
+        "${date.year.toString().padLeft(4, '0')}"
+        "${date.month.toString().padLeft(2, '0')}"
+        "${date.day.toString().padLeft(2, '0')}"
+        "${date.hour.toString().padLeft(2, '0')}"
+        "${date.minute.toString().padLeft(2, '0')}";
+
+    whereClause +=
+        " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$dateInt'";
 
     return whereClause;
   }

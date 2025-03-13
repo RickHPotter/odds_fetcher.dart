@@ -160,27 +160,27 @@ class Filter {
     whereClause +=
         " AND MatchDateYear <= ${endDate.year} AND MatchDateMonth <= ${endDate.month} AND MatchDateDay <= ${endDate.day}";
 
-    if (early1 != null) {
+    if (futureSameEarlyHome == 1 && early1 != null) {
       whereClause += " AND earlyOdds1 = $early1";
     }
 
-    if (earlyX != null) {
+    if (futureSameEarlyDraw == 1 && earlyX != null) {
       whereClause += " AND earlyOddsX = $earlyX";
     }
 
-    if (early2 != null) {
+    if (futureSameEarlyAway == 1 && early2 != null) {
       whereClause += " AND earlyOdds2 = $early2";
     }
 
-    if (final1 != null) {
+    if (futureSameFinalHome == 1 && final1 != null) {
       whereClause += " AND finalOdds1 = $final1";
     }
 
-    if (finalX != null) {
+    if (futureSameFinalDraw == 1 && finalX != null) {
       whereClause += " AND finalOddsX = $finalX";
     }
 
-    if (final2 != null) {
+    if (futureSameFinalAway == 1 && final2 != null) {
       whereClause += " AND finalOdds2 = $final2";
     }
 

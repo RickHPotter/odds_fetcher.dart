@@ -119,8 +119,6 @@ class DatabaseService {
       );
     }
 
-    debugPrint(whereClause);
-
     final List<Map<String, dynamic>> result = await db.rawQuery("""
     SELECT
       r.*,

@@ -42,6 +42,20 @@ class _RecordListScreenState extends State<RecordListScreen> {
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
+  void updateFilter() {
+    filter.update(
+      pastYears: filterPastYears,
+      futureNextMinutes: filterFutureNextMinutes,
+    );
+
+    filter.futureSameEarlyHome = isEarly ? 1 : 0;
+    filter.futureSameEarlyDraw = isEarly ? 1 : 0;
+    filter.futureSameEarlyAway = isEarly ? 1 : 0;
+    filter.futureSameFinalHome = isFinal ? 1 : 0;
+    filter.futureSameFinalDraw = isFinal ? 1 : 0;
+    filter.futureSameFinalAway = isFinal ? 1 : 0;
+  }
+
   Future<void> loadMaxMatchDate() async {
     final startDateToFetch = await DatabaseService.loadMaxMatchDate();
 
@@ -60,7 +74,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
     setState(() => pivotRecords = fetchedRecords);
   }
 
-  void loadPastMatches(int id, int index) async {
+  void loadPastMatches(int? id, int? index) async {
+    if (id == null || index == null) {
+      return;
+    }
+
     final futurePivotRecord = pivotRecords[index];
     final fetchedRecords = DatabaseService.fetchRecords(
       filter: filter,
@@ -82,10 +100,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
   @override
   void initState() {
     initializeDateFormatting("pt-BR");
-    filter.update(
-      futureNextMinutes: filterFutureNextMinutes,
-      pastYears: filterPastYears,
-    );
+
+    updateFilter();
 
     fetcher = RecordFetcher();
     fetcher.progressStream.listen((value) {
@@ -175,8 +191,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void filterMatchesBySimiliarity(String option) {
-    debugPrint(option);
-
     if (option == "early") {
       isEarly = !isEarly;
       int sqliteBool = isEarly ? 1 : 0;
@@ -202,6 +216,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
       isFinal = isFinal;
       filter = filter;
     });
+
+    loadPastMatches(selectedMatchId, pivotRecordIndex);
   }
 
   @override
@@ -602,6 +618,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     const DataColumn(label: Text("Early 1")),
                     const DataColumn(label: Text("Early X")),
                     const DataColumn(label: Text("Early 2")),
+                    const DataColumn(label: Text("Final 1")),
+                    const DataColumn(label: Text("Final X")),
+                    const DataColumn(label: Text("Final 2")),
                   ],
                   rows: [
                     DataRow(
@@ -655,6 +674,36 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           Text(
                             pivotRecords[pivotRecordIndex as int].earlyOdds2
                                 .toString(),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].finalOdds1 ==
+                                    null
+                                ? ""
+                                : pivotRecords[pivotRecordIndex as int]
+                                    .finalOdds1
+                                    .toString(),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].finalOddsX ==
+                                    null
+                                ? ""
+                                : pivotRecords[pivotRecordIndex as int]
+                                    .finalOddsX
+                                    .toString(),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].finalOdds2 ==
+                                    null
+                                ? ""
+                                : pivotRecords[pivotRecordIndex as int]
+                                    .finalOdds2
+                                    .toString(),
                           ),
                         ),
                       ],

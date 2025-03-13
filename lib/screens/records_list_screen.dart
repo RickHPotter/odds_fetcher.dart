@@ -6,8 +6,9 @@ import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/widgets/match_card.dart";
+import "package:odds_fetcher/widgets/past_matches_datatable.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humanisedTime;
-import "package:pluto_grid/pluto_grid.dart";
+import "package:odds_fetcher/widgets/success_dialog.dart" show showSuccessDialog;
 
 class RecordListScreen extends StatefulWidget {
   const RecordListScreen({super.key});
@@ -35,19 +36,25 @@ class _RecordListScreenState extends State<RecordListScreen> {
   int? selectedMatchId;
   int? pivotRecordIndex;
 
-  late PlutoGridStateManager stateManager;
+  final futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2];
+  final pastYearsList = [1, 2, 3, 5, 8, 10, 15, 20];
+
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   void updateFilter() {
     filter.update(pastYears: filterPastYears, futureNextMinutes: filterFutureNextMinutes);
 
-    filter.futureSameEarlyHome = isEarly ? 1 : 0;
-    filter.futureSameEarlyDraw = isEarly ? 1 : 0;
-    filter.futureSameEarlyAway = isEarly ? 1 : 0;
-    filter.futureSameFinalHome = isFinal ? 1 : 0;
-    filter.futureSameFinalDraw = isFinal ? 1 : 0;
-    filter.futureSameFinalAway = isFinal ? 1 : 0;
+    int isEarlyBoolInt = isEarly ? 1 : 0;
+    int isFinalBoolInt = isFinal ? 1 : 0;
+
+    filter
+      ..futureSameEarlyHome = isEarlyBoolInt
+      ..futureSameEarlyDraw = isEarlyBoolInt
+      ..futureSameEarlyAway = isEarlyBoolInt
+      ..futureSameFinalHome = isFinalBoolInt
+      ..futureSameFinalDraw = isFinalBoolInt
+      ..futureSameFinalAway = isFinalBoolInt;
   }
 
   Future<void> loadMaxMatchDate() async {
@@ -63,7 +70,21 @@ class _RecordListScreenState extends State<RecordListScreen> {
   void loadFutureMatches() async {
     final fetchedRecords = await DatabaseService.fetchFutureRecords(filter: filter);
 
-    setState(() => pivotRecords = fetchedRecords);
+    if (pivotRecords.isNotEmpty && pivotRecordIndex != null) {
+      Record pivotRecord = pivotRecords[pivotRecordIndex as int];
+      pivotRecordIndex = fetchedRecords.indexWhere((record) => record.id == pivotRecord.id);
+
+      if (pivotRecordIndex == -1) {
+        pivotRecordIndex = null;
+      }
+    } else {
+      pivotRecordIndex = 0;
+    }
+
+    setState(() {
+      pivotRecords = fetchedRecords;
+      pivotRecordIndex = pivotRecordIndex;
+    });
   }
 
   void loadPastMatches(int? id, int? index) async {
@@ -103,7 +124,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       setState(() => currentDate = value);
     });
 
-    //loadMaxMatchDate();
+    loadMaxMatchDate();
     startFetchingFuture();
     loadFutureMatches();
 
@@ -127,7 +148,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     await fetcher.fetchAndInsertRecords(startDate: startDate, endDate: endDate, isCancelledCallback: () => isCancelled);
 
-    if (!isCancelled) showSuccessDialog("Jogos passados buscados com sucesso!");
+    if (mounted && !isCancelled) showSuccessDialog(context, "Jogos passados buscados com sucesso!");
+
     setState(() => isFetching = false);
   }
 
@@ -139,77 +161,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     await fetcher.fetchAndInsertFutureRecords(isCancelledCallback: () => isCancelled);
 
-    if (!isCancelled) showSuccessDialog("Jogos futuros buscados com sucesso!");
+    if (mounted && !isCancelled) showSuccessDialog(context, "Jogos futuros buscados com sucesso!");
+
     setState(() => isFetching = false);
   }
-
-  void showSuccessDialog(String content) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Sucesso!"),
-          content: Text(content),
-          actions: <Widget>[
-            TextButton(
-              child: Text("OK"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // FILTERS
-  void filterHistoryMatches(int time) {
-    filterPastYears = time;
-    filter.startDate = DateTime.now().subtract(Duration(days: time * 365));
-
-    loadPastMatches(selectedMatchId, pivotRecordIndex);
-  }
-
-  void filterUpcomingMatches(int duration) {
-    filterFutureNextMinutes = duration;
-    filter.futureNextMinutes = duration;
-
-    loadFutureMatches();
-  }
-
-  void filterMatchesBySimiliarity(String option) {
-    if (option == "early") {
-      isEarly = !isEarly;
-      int sqliteBool = isEarly ? 1 : 0;
-
-      filter
-        ..futureSameEarlyHome = sqliteBool
-        ..futureSameEarlyDraw = sqliteBool
-        ..futureSameEarlyAway = sqliteBool;
-    }
-
-    if (option == "final") {
-      isFinal = !isFinal;
-      int sqliteBool = isFinal ? 1 : 0;
-
-      filter
-        ..futureSameFinalHome = sqliteBool
-        ..futureSameFinalDraw = sqliteBool
-        ..futureSameFinalAway = sqliteBool;
-    }
-
-    setState(() {
-      isEarly = isEarly;
-      isFinal = isFinal;
-      filter = filter;
-    });
-
-    loadPastMatches(selectedMatchId, pivotRecordIndex);
-  }
-
-  final futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2];
-  final pastYearsList = [1, 2, 3, 5, 8, 10, 15, 20];
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +182,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
         ),
       ],
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Column(
           children: [
             // Header and Controls
@@ -281,7 +236,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   child:
                       isFetching
                           ? Padding(
-                            padding: const EdgeInsetsDirectional.all(12),
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -313,7 +268,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           : Row(
                             children: [
                               Padding(
-                                padding: const EdgeInsetsDirectional.all(10),
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: ElevatedButton(
                                   onPressed: startFetching,
                                   style: ElevatedButton.styleFrom(
@@ -323,7 +278,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsetsDirectional.all(10),
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: ElevatedButton(
                                   onPressed: startFetchingFuture,
                                   style: ElevatedButton.styleFrom(
@@ -337,7 +292,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             // Past Matches Filter
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -451,7 +406,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   itemBuilder: (context, index) {
                     final match = pivotRecords[index];
                     return Padding(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: ElevatedButton(
                         onPressed: () => loadPastMatches(match.id as int, index),
                         style: OutlinedButton.styleFrom(
@@ -508,179 +463,55 @@ class _RecordListScreenState extends State<RecordListScreen> {
               ),
             // Past Matches DataTable
             if (selectedMatchId != null) const SizedBox(height: 15),
-            Expanded(
-              child: FutureBuilder<List<Record>>(
-                future: records,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Error: ${snapshot.error}"));
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No past matches found."));
-                  }
-
-                  final records = snapshot.data!;
-                  return PlutoGrid(
-                    columns: getColumns(),
-                    rows: getRows(records),
-                    rowColorCallback: (PlutoRowColorContext context) {
-                      final record = records[context.rowIdx];
-                      final int home = record.homeSecondHalfScore ?? 0;
-                      final int away = record.awaySecondHalfScore ?? 0;
-
-                      if (home == away) {
-                        return Colors.grey.shade200;
-                      } else if (home > away) {
-                        return Colors.green.shade100;
-                      } else {
-                        return Colors.red.shade100;
-                      }
-                    },
-                    onLoaded: (event) {
-                      stateManager = event.stateManager;
-                      stateManager.setShowColumnFilter(true);
-                    },
-                    configuration: PlutoGridConfiguration(
-                      scrollbar: const PlutoGridScrollbarConfig(isAlwaysShown: true, draggableScrollbar: true),
-                      style: PlutoGridStyleConfig(gridBorderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-                },
-              ),
-            ),
+            PastMachDataTable(records: records, screenWidth: MediaQuery.of(context).size.width),
           ],
         ),
       ),
     );
   }
 
-  List<PlutoColumn> getColumns() {
-    final screenWidth = MediaQuery.of(context).size.width;
+  // FILTERS
+  void filterHistoryMatches(int time) {
+    filterPastYears = time;
+    filter.startDate = DateTime.now().subtract(Duration(days: time * 365));
 
-    final baseWidth = screenWidth * 0.06;
-    final largerWidth = screenWidth * 0.12;
-
-    return [
-      PlutoColumn(
-        title: "DIA",
-        field: "dia",
-        type: PlutoColumnType.date(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "LIGA",
-        field: "liga",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: largerWidth,
-      ),
-      PlutoColumn(
-        title: "HOME",
-        field: "home",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: largerWidth,
-      ),
-      PlutoColumn(
-        title: "AWAY",
-        field: "away",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: largerWidth,
-      ),
-      PlutoColumn(
-        title: "INTERVALO",
-        field: "intervalo",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "PLACAR FINAL",
-        field: "placar",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "EARLY 1",
-        field: "early_home",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "EARLY X",
-        field: "early_draw",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "EARLY 2",
-        field: "early_away",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "FINAL 1",
-        field: "final_home",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "FINAL X",
-        field: "final_draw",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-      PlutoColumn(
-        title: "FINAL 2",
-        field: "final_away",
-        type: PlutoColumnType.text(),
-        titleTextAlign: PlutoColumnTextAlign.center,
-        textAlign: PlutoColumnTextAlign.center,
-        width: baseWidth,
-      ),
-    ];
+    loadPastMatches(selectedMatchId, pivotRecordIndex);
   }
 
-  List<PlutoRow> getRows(List<Record> records) {
-    return records.map((record) {
-      return PlutoRow(
-        cells: {
-          "dia": PlutoCell(value: record.matchDate.toString()),
-          "liga": PlutoCell(value: record.league.code),
-          "home": PlutoCell(value: record.homeTeam.name),
-          "away": PlutoCell(value: record.awayTeam.name),
-          "intervalo": PlutoCell(value: record.firstHalfScore),
-          "placar": PlutoCell(value: record.secondHalfScore),
-          "early_home": PlutoCell(value: record.earlyOdds1?.toString() ?? ""),
-          "early_draw": PlutoCell(value: record.earlyOddsX?.toString() ?? ""),
-          "early_away": PlutoCell(value: record.earlyOdds2?.toString() ?? ""),
-          "final_home": PlutoCell(value: record.finalOdds1?.toString() ?? ""),
-          "final_draw": PlutoCell(value: record.finalOddsX?.toString() ?? ""),
-          "final_away": PlutoCell(value: record.finalOdds2?.toString() ?? ""),
-        },
-      );
-    }).toList();
+  void filterUpcomingMatches(int duration) {
+    filterFutureNextMinutes = duration;
+    filter.futureNextMinutes = duration;
+
+    loadFutureMatches();
+  }
+
+  void filterMatchesBySimiliarity(String option) {
+    if (option == "early") {
+      isEarly = !isEarly;
+      int sqliteBool = isEarly ? 1 : 0;
+
+      filter
+        ..futureSameEarlyHome = sqliteBool
+        ..futureSameEarlyDraw = sqliteBool
+        ..futureSameEarlyAway = sqliteBool;
+    }
+
+    if (option == "final") {
+      isFinal = !isFinal;
+      int sqliteBool = isFinal ? 1 : 0;
+
+      filter
+        ..futureSameFinalHome = sqliteBool
+        ..futureSameFinalDraw = sqliteBool
+        ..futureSameFinalAway = sqliteBool;
+    }
+
+    setState(() {
+      isEarly = isEarly;
+      isFinal = isFinal;
+      filter = filter;
+    });
+
+    loadPastMatches(selectedMatchId, pivotRecordIndex);
   }
 }

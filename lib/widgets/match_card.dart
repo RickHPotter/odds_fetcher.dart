@@ -240,9 +240,9 @@ class MatchCard extends StatelessWidget {
           DataCell(Center(child: Text(pivotRecord.earlyOdds1.toString()))),
           DataCell(Center(child: Text(pivotRecord.earlyOddsX.toString()))),
           DataCell(Center(child: Text(pivotRecord.earlyOdds2.toString()))),
-          DataCell(pivotRecord.finalOdds1 == null ? notFound : Center(child: Text(pivotRecord.finalOdds1.toString()))),
-          DataCell(pivotRecord.finalOddsX == null ? notFound : Center(child: Text(pivotRecord.finalOddsX.toString()))),
-          DataCell(pivotRecord.finalOdds2 == null ? notFound : Center(child: Text(pivotRecord.finalOdds2.toString()))),
+          DataCell(Center(child: pivotRecord.finalOdds1 == null ? notFound : Text(pivotRecord.finalOdds1.toString()))),
+          DataCell(Center(child: pivotRecord.finalOddsX == null ? notFound : Text(pivotRecord.finalOddsX.toString()))),
+          DataCell(Center(child: pivotRecord.finalOdds2 == null ? notFound : Text(pivotRecord.finalOdds2.toString()))),
         ],
       ),
     ];

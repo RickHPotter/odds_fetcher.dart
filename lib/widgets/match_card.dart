@@ -7,7 +7,7 @@ class MatchCard extends StatelessWidget {
   final Record pivotRecord;
   final double screenWidth;
 
-  final percentagesContainerWidthFactor = 0.10;
+  final percentagesContainerWidthFactor = 0.15;
 
   const MatchCard({super.key, required this.records, required this.pivotRecord, required this.screenWidth});
 
@@ -210,8 +210,8 @@ class MatchCard extends StatelessWidget {
   }
 
   List<DataColumn> getColumns() {
-    final baseWidth = FixedColumnWidth(screenWidth * 0.06);
-    final largerWidth = FixedColumnWidth(screenWidth * 0.10);
+    final baseWidth = FixedColumnWidth(screenWidth * 0.05);
+    final largerWidth = FixedColumnWidth(screenWidth * 0.08);
 
     return [
       DataColumn(label: Text("Dia"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),

@@ -1,7 +1,7 @@
 import "package:flutter/material.dart" show AlertDialog, FutureBuilder, Navigator, Text, TextButton, showDialog;
 
 void showSuccessDialog(context, String content) {
-  Duration dismissDuration = const Duration(seconds: 2);
+  Duration dismissDuration = const Duration(seconds: 1);
 
   showDialog(
     context: context,

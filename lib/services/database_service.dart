@@ -3,6 +3,8 @@ import "dart:io";
 import "package:flutter/foundation.dart" show debugPrint;
 import "package:flutter/services.dart" show ByteData, rootBundle;
 import "package:odds_fetcher/models/filter.dart";
+import "package:odds_fetcher/models/folder.dart";
+import "package:odds_fetcher/models/league.dart";
 import "package:sqflite/sqflite.dart";
 import "package:path/path.dart" show join;
 import "package:odds_fetcher/models/record.dart";
@@ -218,5 +220,24 @@ class DatabaseService {
 
   static Future<int>? deleteOldFutureRecords() {
     return _db?.delete("Records", where: "finished = ?", whereArgs: [0]);
+  }
+
+  static Future<List<League>> fetchLeagues() async {
+    final db = await database;
+
+    final result = await db.query("Leagues", orderBy: "leagueName");
+
+    return result.map((row) => League.fromMap(row)).toList();
+  }
+
+  static Future<List<Folder>> fetchFolders() async {
+    final db = await database;
+
+    //final result = await db.query("Folders", orderBy: "folderName");
+    final List<Map<String, dynamic>> result = [
+      {"id": 1, "folderName": "Test"},
+    ];
+
+    return result.map((row) => Folder.fromMap(row)).toList();
   }
 }

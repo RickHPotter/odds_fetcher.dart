@@ -4,8 +4,11 @@ import "package:intl/date_symbol_data_local.dart";
 import "package:intl/intl.dart";
 import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/models/filter.dart";
+import "package:odds_fetcher/models/folder.dart";
+import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
+import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeagueFolderFilterButton;
 import "package:odds_fetcher/widgets/match_card.dart";
 import "package:odds_fetcher/widgets/past_matches_datatable.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humanisedTime;
@@ -21,6 +24,8 @@ class RecordListScreen extends StatefulWidget {
 class _RecordListScreenState extends State<RecordListScreen> {
   Future<List<Record>>? records;
   late List<Record> pivotRecords = [];
+  late List<League> leagues = [];
+  late List<Folder> folders = [];
 
   late int filterPastYears = 1;
   late int filterFutureNextMinutes = 60;
@@ -33,6 +38,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   bool isCancelled = false;
   bool isEarly = true;
   bool isFinal = false;
+  bool isSameLeague = false;
 
   int? selectedMatchId;
   int? pivotRecordIndex;
@@ -111,6 +117,16 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
   }
 
+  void loadLeaguesAndFolders() async {
+    final fetchedLeagues = await DatabaseService.fetchLeagues();
+    final fetchedFolders = await DatabaseService.fetchFolders();
+
+    setState(() {
+      leagues = fetchedLeagues;
+      folders = fetchedFolders;
+    });
+  }
+
   @override
   void initState() {
     initializeDateFormatting("pt-BR");
@@ -126,8 +142,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
 
     fetchFromMaxMatchDate();
-    startFetchingFuture();
     loadFutureMatches();
+    loadLeaguesAndFolders();
 
     super.initState();
   }
@@ -149,7 +165,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     await fetcher.fetchAndInsertRecords(startDate: startDate, endDate: endDate, isCancelledCallback: () => isCancelled);
 
-    if (mounted && !isCancelled) showSuccessDialog(context, "Jogos passados buscados com sucesso!");
+    //if (mounted && !isCancelled) showSuccessDialog(context, "Jogos passados buscados com sucesso!");
 
     setState(() => isFetching = false);
   }
@@ -162,7 +178,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     await fetcher.fetchAndInsertFutureRecords(isCancelledCallback: () => isCancelled);
 
-    if (mounted && !isCancelled) showSuccessDialog(context, "Jogos futuros buscados com sucesso!");
+    //if (mounted && !isCancelled) showSuccessDialog(context, "Jogos futuros buscados com sucesso!");
 
     setState(() => isFetching = false);
   }
@@ -391,6 +407,38 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                 ),
+                SizedBox(
+                  width: 180,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () => filterMatchesBySameLeague(),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shadowColor: Colors.purple,
+                        backgroundColor: isSameLeague ? Colors.blueAccent : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
+                          Text("Mesma Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: LeagueFolderFilterButton(
+                      folders: folders,
+                      leagues: leagues,
+                      screenWidth: MediaQuery.of(context).size.width,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 15),
@@ -517,6 +565,19 @@ class _RecordListScreenState extends State<RecordListScreen> {
     setState(() {
       isEarly = isEarly;
       isFinal = isFinal;
+      filter = filter;
+    });
+
+    loadPastMatches(selectedMatchId, pivotRecordIndex);
+  }
+
+  void filterMatchesBySameLeague() {
+    isSameLeague = !isSameLeague;
+
+    filter.futureOnlySameLeague = isSameLeague ? 1 : 0;
+
+    setState(() {
+      isSameLeague = isSameLeague;
       filter = filter;
     });
 

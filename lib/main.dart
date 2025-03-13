@@ -19,10 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "Odds Fetcher",
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
       home: MyHomePage(),
     );
   }
@@ -49,22 +46,11 @@ class _MyHomePageState extends State<MyHomePage> {
               setState(() => selectedIndex = index);
             },
             destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.home),
-                label: Text("Listagem de Registros"),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.portrait),
-                label: Text("About"),
-              ),
+              NavigationRailDestination(icon: Icon(Icons.home), label: Text("Listagem de Registros")),
+              NavigationRailDestination(icon: Icon(Icons.portrait), label: Text("About")),
             ],
           ),
-          Expanded(
-            child: IndexedStack(
-              index: selectedIndex,
-              children: const [RecordListScreen(), Text("Hello")],
-            ),
-          ),
+          Expanded(child: IndexedStack(index: selectedIndex, children: const [RecordListScreen(), Text("Hello")])),
         ],
       ),
     );

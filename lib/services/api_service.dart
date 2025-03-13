@@ -114,7 +114,7 @@ class ApiService {
     const bettingHouseId = 17;
 
     final url = Uri.parse(
-      "${ApiService.futureUrl}/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}",
+      "${ApiService.futureUrl}$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}",
     );
 
     final response = await http.get(url);

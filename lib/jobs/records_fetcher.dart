@@ -6,8 +6,7 @@ import "package:odds_fetcher/models/record.dart";
 
 class RecordFetcher {
   final StreamController<int> _progressController = StreamController<int>();
-  final StreamController<String> _currentDateController =
-      StreamController<String>();
+  final StreamController<String> _currentDateController = StreamController<String>();
 
   Stream<int> get progressStream => _progressController.stream;
   Stream<String> get currentDateStream => _currentDateController.stream;
@@ -26,9 +25,7 @@ class RecordFetcher {
         debugPrint("Retrying $dateStr - Attempt ${attempt + 1}");
         return fetchWithRetry(dateStr, attempt + 1);
       } else {
-        debugPrint(
-          "Failed to fetch $dateStr after $maxRetryAttempts attempts.",
-        );
+        debugPrint("Failed to fetch $dateStr after $maxRetryAttempts attempts.");
         failedFetches.add(DateTime.parse(dateStr));
         return [];
       }
@@ -72,9 +69,7 @@ class RecordFetcher {
       }
 
       completedSteps++;
-      _progressController.add(
-        ((completedSteps / totalFetchTasks) * 100).toInt(),
-      );
+      _progressController.add(((completedSteps / totalFetchTasks) * 100).toInt());
 
       if (isCancelledCallback()) {
         debugPrint("Fetching aborted by user.");
@@ -105,9 +100,7 @@ class RecordFetcher {
     }
   }
 
-  Future<void> fetchAndInsertFutureRecords({
-    required bool Function() isCancelledCallback,
-  }) async {
+  Future<void> fetchAndInsertFutureRecords({required bool Function() isCancelledCallback}) async {
     List<Record> records = [];
 
     records = await ApiService().fetchFutureData();

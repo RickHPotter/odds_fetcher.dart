@@ -5,6 +5,6 @@ class Team {
   Team({required this.id, required this.name});
 
   factory Team.fromMap(Map<String, dynamic> map) {
-    return Team(id: map['id'], name: map['teamName']);
+    return Team(id: map["id"], name: map["teamName"]);
   }
 }

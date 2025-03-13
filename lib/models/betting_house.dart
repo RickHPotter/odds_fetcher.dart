@@ -5,9 +5,6 @@ class BettingHouse {
   BettingHouse({required this.id, required this.name});
 
   factory BettingHouse.fromMap(Map<String, dynamic> map) {
-    return BettingHouse(
-      id: map['id'],
-      name: map['bettingHouseName'],
-    );
+    return BettingHouse(id: map["id"], name: map["bettingHouseName"]);
   }
 }

@@ -1,7 +1,7 @@
-import 'package:intl/intl.dart';
-import 'package:odds_fetcher/models/folder.dart';
-import 'package:odds_fetcher/models/league.dart';
-import 'package:odds_fetcher/models/team.dart';
+import "package:intl/intl.dart";
+import "package:odds_fetcher/models/folder.dart";
+import "package:odds_fetcher/models/league.dart";
+import "package:odds_fetcher/models/team.dart";
 
 class Filter {
   int? id;
@@ -146,14 +146,7 @@ class Filter {
     this.futureNextMinutes = futureNextMinutes;
   }
 
-  String whereClause({
-    double? early1,
-    double? earlyX,
-    double? early2,
-    double? final1,
-    double? finalX,
-    double? final2,
-  }) {
+  String whereClause({double? early1, double? earlyX, double? early2, double? final1, double? finalX, double? final2}) {
     late String whereClause = "WHERE finished = 1";
     whereClause +=
         " AND (MatchDateYear > ${startDate.year} OR (MatchDateYear >= ${startDate.year} AND MatchDateMonth >= ${startDate.month} AND MatchDateDay >= ${startDate.day}))";
@@ -194,11 +187,9 @@ class Filter {
       return whereClause;
     }
 
-    final date = DateTime.now().add(
-      Duration(minutes: futureNextMinutes as int),
-    );
+    final date = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
 
-    final minDate = DateFormat("yyyyMMddHm").format(DateTime.now());
+    final minDate = DateFormat("yyyyMMddHHm").format(DateTime.now());
     final maxDate =
         "${date.year.toString().padLeft(4, '0')}"
         "${date.month.toString().padLeft(2, '0')}"

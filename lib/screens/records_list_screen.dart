@@ -5,6 +5,7 @@ import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
+import "package:odds_fetcher/utils/parse_utils.dart" show humanisedTime;
 import "package:pluto_grid/pluto_grid.dart";
 
 class RecordListScreen extends StatefulWidget {
@@ -20,11 +21,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   late int filterPastYears = 1;
   late int filterFutureNextMinutes = 60;
-  late Filter filter = Filter(
-    filterName: "Filtro Padrão",
-    startDate: DateTime.now(),
-    endDate: DateTime.now(),
-  );
+  late Filter filter = Filter(filterName: "Filtro Padrão", startDate: DateTime.now(), endDate: DateTime.now());
 
   late RecordFetcher fetcher;
   String currentDate = DateTime.now().toString();
@@ -39,14 +36,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   late PlutoGridStateManager stateManager;
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   void updateFilter() {
-    filter.update(
-      pastYears: filterPastYears,
-      futureNextMinutes: filterFutureNextMinutes,
-    );
+    filter.update(pastYears: filterPastYears, futureNextMinutes: filterFutureNextMinutes);
 
     filter.futureSameEarlyHome = isEarly ? 1 : 0;
     filter.futureSameEarlyDraw = isEarly ? 1 : 0;
@@ -67,9 +60,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void loadFutureMatches() async {
-    final fetchedRecords = await DatabaseService.fetchFutureRecords(
-      filter: filter,
-    );
+    final fetchedRecords = await DatabaseService.fetchFutureRecords(filter: filter);
 
     setState(() => pivotRecords = fetchedRecords);
   }
@@ -133,11 +124,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       isCancelled = false;
     });
 
-    await fetcher.fetchAndInsertRecords(
-      startDate: startDate,
-      endDate: endDate,
-      isCancelledCallback: () => isCancelled,
-    );
+    await fetcher.fetchAndInsertRecords(startDate: startDate, endDate: endDate, isCancelledCallback: () => isCancelled);
 
     if (!isCancelled) showSuccessDialog("Jogos passados buscados com sucesso!");
     setState(() => isFetching = false);
@@ -149,9 +136,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       isCancelled = false;
     });
 
-    await fetcher.fetchAndInsertFutureRecords(
-      isCancelledCallback: () => isCancelled,
-    );
+    await fetcher.fetchAndInsertFutureRecords(isCancelledCallback: () => isCancelled);
 
     if (!isCancelled) showSuccessDialog("Jogos futuros buscados com sucesso!");
     setState(() => isFetching = false);
@@ -181,12 +166,14 @@ class _RecordListScreenState extends State<RecordListScreen> {
   void filterHistoryMatches(int time) {
     filterPastYears = time;
     filter.startDate = DateTime.now().subtract(Duration(days: time * 365));
-    loadFutureMatches();
+
+    loadPastMatches(selectedMatchId, pivotRecordIndex);
   }
 
   void filterUpcomingMatches(int duration) {
     filterFutureNextMinutes = duration;
     filter.futureNextMinutes = duration;
+
     loadFutureMatches();
   }
 
@@ -220,6 +207,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
     loadPastMatches(selectedMatchId, pivotRecordIndex);
   }
 
+  final futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2];
+  final pastYearsList = [1, 2, 3, 5, 8, 10, 15, 20];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,10 +220,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
           children: [
             Text(
               "Filtro: ${filter.filterName}",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
             ),
           ],
         ),
@@ -251,55 +238,36 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   children: [
                     Text(
                       filter.filterName.toUpperCase(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                     ),
                     Text(
                       "${pivotRecords.length} jogos futuros encontrados.",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                     ),
                     FutureBuilder<List<Record>>(
                       future: records,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Text(
                             "Carregando jogos passados...",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                           );
                         }
                         if (snapshot.hasError) {
                           return const Text(
                             "Erro ao carregar jogos passados.",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
                           );
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Text(
                             "0 jogos passados encontrados.",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                           );
                         }
                         return Text(
                           "${snapshot.data!.length} jogos passados encontrados.",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                         );
                       },
                     ),
@@ -318,10 +286,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               children: [
                                 Text(
                                   currentDate.split(" ")[0],
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 5),
                                 LinearProgressIndicator(value: progress / 100),
@@ -337,14 +302,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                                   ),
-                                  child: const Text(
-                                    "Abort",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
+                                  child: const Text("Abort", style: TextStyle(color: Colors.white)),
                                 ),
                               ],
                             ),
@@ -356,9 +316,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                 child: ElevatedButton(
                                   onPressed: startFetching,
                                   style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(0),
-                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
                                   ),
                                   child: const Text("Buscar Jogos"),
                                 ),
@@ -368,9 +326,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                 child: ElevatedButton(
                                   onPressed: startFetchingFuture,
                                   style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(0),
-                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
                                   ),
                                   child: const Text("Buscar Jogos Futuros"),
                                 ),
@@ -387,12 +343,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
               children: [
                 SizedBox(
                   width: 180,
-                  child: const Text(
-                    "Jogos Passados:",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  child: const Text("Jogos Passados:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
-                for (var time in [1, 2, 3, 5, 8, 10, 15, 20])
+                for (var time in pastYearsList)
                   SizedBox(
                     width: 180,
                     child: Padding(
@@ -400,21 +353,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       child: ElevatedButton(
                         onPressed: () => filterHistoryMatches(time),
                         style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           shadowColor: Colors.purple,
-                          backgroundColor:
-                              time == filterPastYears
-                                  ? Colors.blueAccent
-                                  : null,
+                          backgroundColor: time == filterPastYears ? Colors.blueAccent : null,
                         ),
                         child: Text(
                           time <= 1 ? "$time ano" : "$time anos",
-                          style: TextStyle(
-                            color:
-                                time == filterPastYears ? Colors.white : null,
-                          ),
+                          style: TextStyle(color: time == filterPastYears ? Colors.white : null),
                         ),
                       ),
                     ),
@@ -428,12 +373,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
               children: [
                 SizedBox(
                   width: 180,
-                  child: const Text(
-                    "Jogos Futuros:",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  child: const Text("Jogos Futuros:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
-                for (var minutes in [10, 30, 60, 60 * 3, 60 * 6, 60 * 12])
+                for (var minutes in futureMatchesMinutesList)
                   SizedBox(
                     width: 180,
                     child: Padding(
@@ -441,27 +383,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       child: ElevatedButton(
                         onPressed: () => filterUpcomingMatches(minutes),
                         style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           shadowColor: Colors.purple,
-                          backgroundColor:
-                              minutes == filterFutureNextMinutes
-                                  ? Colors.blueAccent
-                                  : null,
+                          backgroundColor: minutes == filterFutureNextMinutes ? Colors.blueAccent : null,
                         ),
                         child: Text(
-                          minutes < 60
-                              ? "$minutes minutos"
-                              : minutes == 60
-                              ? "${minutes ~/ 60} hora"
-                              : "${minutes ~/ 60} horas",
-                          style: TextStyle(
-                            color:
-                                minutes == filterFutureNextMinutes
-                                    ? Colors.white
-                                    : null,
-                          ),
+                          humanisedTime(minutes),
+                          style: TextStyle(color: minutes == filterFutureNextMinutes ? Colors.white : null),
                         ),
                       ),
                     ),
@@ -474,10 +402,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               children: [
                 SizedBox(
                   width: 180,
-                  child: const Text(
-                    "Similaridade:",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  child: const Text("Similaridade:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 SizedBox(
                   width: 180,
@@ -486,16 +411,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     child: ElevatedButton(
                       onPressed: () => filterMatchesBySimiliarity("early"),
                       style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         shadowColor: Colors.purple,
                         backgroundColor: isEarly ? Colors.blueAccent : null,
                       ),
-                      child: Text(
-                        "Early",
-                        style: TextStyle(color: isEarly ? Colors.white : null),
-                      ),
+                      child: Text("Early", style: TextStyle(color: isEarly ? Colors.white : null)),
                     ),
                   ),
                 ),
@@ -506,16 +426,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     child: ElevatedButton(
                       onPressed: () => filterMatchesBySimiliarity("final"),
                       style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         shadowColor: Colors.purple,
                         backgroundColor: isFinal ? Colors.blueAccent : null,
                       ),
-                      child: Text(
-                        "Final",
-                        style: TextStyle(color: isFinal ? Colors.white : null),
-                      ),
+                      child: Text("Final", style: TextStyle(color: isFinal ? Colors.white : null)),
                     ),
                   ),
                 ),
@@ -537,13 +452,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     return Padding(
                       padding: const EdgeInsets.all(4),
                       child: ElevatedButton(
-                        onPressed:
-                            () => loadPastMatches(match.id as int, index),
+                        onPressed: () => loadPastMatches(match.id as int, index),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor:
-                              selectedMatchId == match.id
-                                  ? Colors.grey[400]
-                                  : Colors.grey[100],
+                          backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(3),
                             side: const BorderSide(color: Colors.black),
@@ -558,13 +469,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               style: TextStyle(color: Colors.black),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const Text(
-                              "x",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                             Text(
                               match.awayTeam.name,
                               style: TextStyle(color: Colors.black),
@@ -575,23 +480,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 Text(
-                                  DateFormat.MMMMd(
-                                    "pt-BR",
-                                  ).format(match.matchDate),
-                                  style: TextStyle(
-                                    color: Colors.blueGrey,
-                                    fontSize: 12,
-                                  ),
+                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
                                 ),
                                 SizedBox(width: 10),
                                 Text(
-                                  DateFormat.Hm(
-                                    "pt-BR",
-                                  ).format(match.matchDate),
-                                  style: TextStyle(
-                                    color: Colors.blueGrey,
-                                    fontSize: 12,
-                                  ),
+                                  DateFormat.Hm("pt-BR").format(match.matchDate),
+                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
                                 ),
                               ],
                             ),
@@ -618,9 +513,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {}
 
                       final records = snapshot.data!;
-                      final percentages = Record.calculateMatchPercentages(
-                        records,
-                      );
+                      final percentages = Record.calculateMatchPercentages(records);
 
                       return Card(
                         child: Padding(
@@ -631,9 +524,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                 children: [
                                   Text(
                                     "HOME ${percentages['homeWins']}%",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -641,9 +532,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                 children: [
                                   Text(
                                     "DRAW ${percentages['draws']}%",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -651,9 +540,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                 children: [
                                   Text(
                                     "AWAY ${percentages['awayWins']}%",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -683,98 +570,34 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         rows: [
                           DataRow(
                             cells: [
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].matchDate.toString())),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].league.name)),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].homeTeam.name)),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].awayTeam.name)),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].firstHalfScore)),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].secondHalfScore)),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].earlyOdds1.toString())),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].earlyOddsX.toString())),
+                              DataCell(Text(pivotRecords[pivotRecordIndex as int].earlyOdds2.toString())),
                               DataCell(
                                 Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .matchDate
-                                      .toString(),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .league
-                                      .name,
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .homeTeam
-                                      .name,
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .awayTeam
-                                      .name,
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .firstHalfScore,
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .secondHalfScore,
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .earlyOdds1
-                                      .toString(),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .earlyOddsX
-                                      .toString(),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                      .earlyOdds2
-                                      .toString(),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                              .finalOdds1 ==
-                                          null
+                                  pivotRecords[pivotRecordIndex as int].finalOdds1 == null
                                       ? ""
-                                      : pivotRecords[pivotRecordIndex as int]
-                                          .finalOdds1
-                                          .toString(),
+                                      : pivotRecords[pivotRecordIndex as int].finalOdds1.toString(),
                                 ),
                               ),
                               DataCell(
                                 Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                              .finalOddsX ==
-                                          null
+                                  pivotRecords[pivotRecordIndex as int].finalOddsX == null
                                       ? ""
-                                      : pivotRecords[pivotRecordIndex as int]
-                                          .finalOddsX
-                                          .toString(),
+                                      : pivotRecords[pivotRecordIndex as int].finalOddsX.toString(),
                                 ),
                               ),
                               DataCell(
                                 Text(
-                                  pivotRecords[pivotRecordIndex as int]
-                                              .finalOdds2 ==
-                                          null
+                                  pivotRecords[pivotRecordIndex as int].finalOdds2 == null
                                       ? ""
-                                      : pivotRecords[pivotRecordIndex as int]
-                                          .finalOdds2
-                                          .toString(),
+                                      : pivotRecords[pivotRecordIndex as int].finalOdds2.toString(),
                                 ),
                               ),
                             ],
@@ -823,13 +646,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       stateManager.setShowColumnFilter(true);
                     },
                     configuration: PlutoGridConfiguration(
-                      scrollbar: const PlutoGridScrollbarConfig(
-                        isAlwaysShown: true,
-                        draggableScrollbar: true,
-                      ),
-                      style: PlutoGridStyleConfig(
-                        gridBorderRadius: BorderRadius.circular(8),
-                      ),
+                      scrollbar: const PlutoGridScrollbarConfig(isAlwaysShown: true, draggableScrollbar: true),
+                      style: PlutoGridStyleConfig(gridBorderRadius: BorderRadius.circular(8)),
                     ),
                   );
                 },

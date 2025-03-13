@@ -13,3 +13,21 @@ int parseInteger(String value) {
   }
   return 0;
 }
+
+String humanisedTime(int minutes) {
+  const int hour = 60;
+  const int day = hour * 24;
+
+  switch (minutes) {
+    case < hour:
+      return "$minutes minutos";
+    case hour:
+      return "1 hora";
+    case < day:
+      return "${minutes ~/ 60} horas";
+    case day:
+      return "1 dia";
+    default:
+      return "${minutes ~/ (60 * 24)} dias";
+  }
+}

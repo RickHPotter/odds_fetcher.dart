@@ -1,11 +1,11 @@
-import 'dart:io';
+import "dart:io";
 
-import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:flutter/services.dart' show ByteData, rootBundle;
-import 'package:odds_fetcher/models/filter.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' show join;
-import 'package:odds_fetcher/models/record.dart';
+import "package:flutter/foundation.dart" show debugPrint;
+import "package:flutter/services.dart" show ByteData, rootBundle;
+import "package:odds_fetcher/models/filter.dart";
+import "package:sqflite/sqflite.dart";
+import "package:path/path.dart" show join;
+import "package:odds_fetcher/models/record.dart";
 
 class DatabaseService {
   static Database? _db;
@@ -52,9 +52,7 @@ class DatabaseService {
   }
 
   static Future<void> executeSchema(Database db, String version) async {
-    final script = await rootBundle.loadString(
-      "assets/migrations/$version.sql",
-    );
+    final script = await rootBundle.loadString("assets/migrations/$version.sql");
     final statements = script.split(";");
     for (final statement in statements) {
       if (statement.trim().isNotEmpty) {
@@ -68,7 +66,7 @@ class DatabaseService {
     late String whereClause;
 
     if (filter == null) {
-      whereClause = "WHERE 1 = 1";
+      whereClause = "WHERE finished = 0";
     } else {
       whereClause = filter.whereClauseFuture();
     }
@@ -165,11 +163,7 @@ class DatabaseService {
   }
 
   static Future<void> insertRecord(Record record) async {
-    await _db?.insert(
-      "Records",
-      record.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await _db?.insert("Records", record.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   static Future<void> insertRecordsBatch(List<Record> records) async {
@@ -178,11 +172,7 @@ class DatabaseService {
     Batch batch = _db!.batch();
 
     for (Record record in records) {
-      batch.insert(
-        "Records",
-        record.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
+      batch.insert("Records", record.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
     }
 
     try {
@@ -192,10 +182,7 @@ class DatabaseService {
     }
   }
 
-  static Future<int> getOrCreateLeague(
-    String leagueCode,
-    String? leagueName,
-  ) async {
+  static Future<int> getOrCreateLeague(String leagueCode, String? leagueName) async {
     final db = await database;
 
     String whereClause = "leagueCode = ?";
@@ -206,11 +193,7 @@ class DatabaseService {
       whereArgs.add(leagueName);
     }
 
-    final result = await db.query(
-      "Leagues",
-      where: whereClause,
-      whereArgs: whereArgs,
-    );
+    final result = await db.query("Leagues", where: whereClause, whereArgs: whereArgs);
 
     if (result.isNotEmpty) {
       return result.first["id"] as int;
@@ -226,19 +209,13 @@ class DatabaseService {
 
   static Future<int> getOrCreateTeam(String teamName) async {
     final db = await database;
-    final result = await db.query(
-      "Teams",
-      where: "teamName = ?",
-      whereArgs: [teamName],
-    );
+    final result = await db.query("Teams", where: "teamName = ?", whereArgs: [teamName]);
 
     if (result.isNotEmpty) {
       return result.first["id"] as int;
     }
 
-    return await db.insert("Teams", {
-      "teamName": teamName,
-    }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    return await db.insert("Teams", {"teamName": teamName}, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   static Future<int>? deleteOldFutureRecords() {

@@ -70,18 +70,12 @@ class Record {
       league: League.fromMap(map),
       homeTeam: Team(id: map["homeTeamId"], name: map["homeTeamName"]),
       awayTeam: Team(id: map["awayTeamId"], name: map["awayTeamName"]),
-      earlyOdds1:
-          map["earlyOdds1"] != null ? double.tryParse(map["earlyOdds1"]) : null,
-      earlyOddsX:
-          map["earlyOddsX"] != null ? double.tryParse(map["earlyOddsX"]) : null,
-      earlyOdds2:
-          map["earlyOdds2"] != null ? double.tryParse(map["earlyOdds2"]) : null,
-      finalOdds1:
-          map["finalOdds1"] != null ? double.tryParse(map["finalOdds1"]) : null,
-      finalOddsX:
-          map["finalOddsX"] != null ? double.tryParse(map["finalOddsX"]) : null,
-      finalOdds2:
-          map["finalOdds2"] != null ? double.tryParse(map["finalOdds2"]) : null,
+      earlyOdds1: map["earlyOdds1"] != null ? double.tryParse(map["earlyOdds1"]) : null,
+      earlyOddsX: map["earlyOddsX"] != null ? double.tryParse(map["earlyOddsX"]) : null,
+      earlyOdds2: map["earlyOdds2"] != null ? double.tryParse(map["earlyOdds2"]) : null,
+      finalOdds1: map["finalOdds1"] != null ? double.tryParse(map["finalOdds1"]) : null,
+      finalOddsX: map["finalOddsX"] != null ? double.tryParse(map["finalOddsX"]) : null,
+      finalOdds2: map["finalOdds2"] != null ? double.tryParse(map["finalOdds2"]) : null,
       homeFirstHalfScore: map["homeFirstHalfScore"],
       awayFirstHalfScore: map["awayFirstHalfScore"],
       homeSecondHalfScore: map["homeSecondHalfScore"],

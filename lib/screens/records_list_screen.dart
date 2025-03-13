@@ -5,6 +5,7 @@ import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
+import "package:odds_fetcher/widgets/match_card.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humanisedTime;
 import "package:pluto_grid/pluto_grid.dart";
 
@@ -499,114 +500,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
               ),
             ),
             const SizedBox(height: 15),
-            // Match Details
             if (selectedMatchId != null)
-              Row(
-                children: [
-                  FutureBuilder<List<Record>>(
-                    future: records,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {}
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {}
-
-                      final records = snapshot.data!;
-                      final percentages = Record.calculateMatchPercentages(records);
-
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "HOME ${percentages['homeWins']}%",
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    "DRAW ${percentages['draws']}%",
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    "AWAY ${percentages['awayWins']}%",
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  Expanded(
-                    child: Card(
-                      child: DataTable(
-                        columns: [
-                          const DataColumn(label: Text("Dia")),
-                          const DataColumn(label: Text("Liga")),
-                          const DataColumn(label: Text("Home")),
-                          const DataColumn(label: Text("Away")),
-                          const DataColumn(label: Text("Intervalo")),
-                          const DataColumn(label: Text("Placar Final")),
-                          const DataColumn(label: Text("Early 1")),
-                          const DataColumn(label: Text("Early X")),
-                          const DataColumn(label: Text("Early 2")),
-                          const DataColumn(label: Text("Final 1")),
-                          const DataColumn(label: Text("Final X")),
-                          const DataColumn(label: Text("Final 2")),
-                        ],
-                        rows: [
-                          DataRow(
-                            cells: [
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].matchDate.toString())),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].league.name)),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].homeTeam.name)),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].awayTeam.name)),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].firstHalfScore)),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].secondHalfScore)),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].earlyOdds1.toString())),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].earlyOddsX.toString())),
-                              DataCell(Text(pivotRecords[pivotRecordIndex as int].earlyOdds2.toString())),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int].finalOdds1 == null
-                                      ? ""
-                                      : pivotRecords[pivotRecordIndex as int].finalOdds1.toString(),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int].finalOddsX == null
-                                      ? ""
-                                      : pivotRecords[pivotRecordIndex as int].finalOddsX.toString(),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  pivotRecords[pivotRecordIndex as int].finalOdds2 == null
-                                      ? ""
-                                      : pivotRecords[pivotRecordIndex as int].finalOdds2.toString(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              MatchCard(
+                records: records,
+                pivotRecord: pivotRecords[pivotRecordIndex as int],
+                screenWidth: MediaQuery.of(context).size.width,
               ),
             // Past Matches DataTable
             if (selectedMatchId != null) const SizedBox(height: 15),

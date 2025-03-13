@@ -109,9 +109,10 @@ class Record {
     };
   }
 
-  static Map<String, double> calculateMatchPercentages(List<Record> records) {
+  static Map<String, double> calculateScoreMatchPercentages(List<Record> records) {
     if (records.isEmpty) return {"homeWins": 0, "draws": 0, "awayWins": 0};
 
+    int totalMatches = records.length;
     int homeWins = 0;
     int draws = 0;
     int awayWins = 0;
@@ -129,11 +130,44 @@ class Record {
       }
     }
 
-    int totalMatches = records.length;
     return {
       "homeWins": ((homeWins / totalMatches) * 100).roundToDouble(),
       "draws": ((draws / totalMatches) * 100).roundToDouble(),
       "awayWins": ((awayWins / totalMatches) * 100).roundToDouble(),
+    };
+  }
+
+  static Map<String, double> calculateGoalsMatchPercentages(List<Record> records) {
+    if (records.isEmpty) return {"homeWins": 0, "draws": 0, "awayWins": 0};
+
+    int totalMatches = records.length;
+    int underHalf = 0;
+    int overHalf = 0;
+    int underFull = 0;
+    int overFull = 0;
+
+    for (var record in records) {
+      int half = (record.homeFirstHalfScore ?? 0) + (record.awayFirstHalfScore ?? 0);
+      int full = (record.homeSecondHalfScore ?? 0) + (record.awaySecondHalfScore ?? 0);
+
+      if (half < 1) {
+        underHalf++;
+      } else {
+        overHalf++;
+      }
+
+      if (full < 2) {
+        underFull++;
+      } else {
+        overFull++;
+      }
+    }
+
+    return {
+      "underHalf": ((underHalf / totalMatches) * 100).roundToDouble(),
+      "overHalf": ((overHalf / totalMatches) * 100).roundToDouble(),
+      "underFull": ((underFull / totalMatches) * 100).roundToDouble(),
+      "overFull": ((overFull / totalMatches) * 100).roundToDouble(),
     };
   }
 }

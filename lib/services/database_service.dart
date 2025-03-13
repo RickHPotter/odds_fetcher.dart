@@ -44,8 +44,6 @@ class DatabaseService {
       } catch (e) {
         debugPrint("Error copying database: $e");
       }
-    } else {
-      debugPrint("Database already exists.");
     }
 
     return await openDatabase(path, version: 1);
@@ -138,7 +136,7 @@ class DatabaseService {
     return result.map((row) => Record.fromMap(row)).toList();
   }
 
-  static Future<DateTime> loadMaxMatchDate() async {
+  static Future<DateTime> fetchFromMaxMatchDate() async {
     final db = await database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""

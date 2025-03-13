@@ -1,3 +1,4 @@
+import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
 import "package:intl/date_symbol_data_local.dart";
 import "package:intl/intl.dart";
@@ -57,8 +58,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
       ..futureSameFinalAway = isFinalBoolInt;
   }
 
-  Future<void> loadMaxMatchDate() async {
-    final startDateToFetch = await DatabaseService.loadMaxMatchDate();
+  Future<void> fetchFromMaxMatchDate() async {
+    final startDateToFetch = await DatabaseService.fetchFromMaxMatchDate();
 
     if (startDateToFetch != DateTime.now()) {
       startFetching(startDate: startDateToFetch);
@@ -124,7 +125,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       setState(() => currentDate = value);
     });
 
-    loadMaxMatchDate();
+    fetchFromMaxMatchDate();
     startFetchingFuture();
     loadFutureMatches();
 
@@ -396,61 +397,68 @@ class _RecordListScreenState extends State<RecordListScreen> {
             // Future Matches Carrousel
             SizedBox(
               height: 100,
-              child: Scrollbar(
-                thumbVisibility: true,
-                controller: _scrollController,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
+              child: Listener(
+                onPointerSignal: (event) {
+                  if (event is PointerScrollEvent) {
+                    _scrollController.jumpTo(_scrollController.offset + event.scrollDelta.dy);
+                  }
+                },
+                child: Scrollbar(
+                  thumbVisibility: true,
                   controller: _scrollController,
-                  itemCount: pivotRecords.length,
-                  itemBuilder: (context, index) {
-                    final match = pivotRecords[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () => loadPastMatches(match.id as int, index),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(3),
-                            side: const BorderSide(color: Colors.black),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    controller: _scrollController,
+                    itemCount: pivotRecords.length,
+                    itemBuilder: (context, index) {
+                      final match = pivotRecords[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: ElevatedButton(
+                          onPressed: () => loadPastMatches(match.id as int, index),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(3),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 5),
+                              Text(
+                                match.homeTeam.name,
+                                style: TextStyle(color: Colors.black),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                              Text(
+                                match.awayTeam.name,
+                                style: TextStyle(color: Colors.black),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  Text(
+                                    DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                    style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    DateFormat.Hm("pt-BR").format(match.matchDate),
+                                    style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 5),
-                            Text(
-                              match.homeTeam.name,
-                              style: TextStyle(color: Colors.black),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                            Text(
-                              match.awayTeam.name,
-                              style: TextStyle(color: Colors.black),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
-                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  DateFormat.Hm("pt-BR").format(match.matchDate),
-                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

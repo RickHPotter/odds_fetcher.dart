@@ -606,110 +606,184 @@ class _RecordListScreenState extends State<RecordListScreen> {
             const SizedBox(height: 15),
             // Match Details
             if (selectedMatchId != null)
-              Card(
-                child: DataTable(
-                  columns: [
-                    const DataColumn(label: Text("Dia")),
-                    const DataColumn(label: Text("Liga")),
-                    const DataColumn(label: Text("Home")),
-                    const DataColumn(label: Text("Away")),
-                    const DataColumn(label: Text("Intervalo")),
-                    const DataColumn(label: Text("Placar Final")),
-                    const DataColumn(label: Text("Early 1")),
-                    const DataColumn(label: Text("Early X")),
-                    const DataColumn(label: Text("Early 2")),
-                    const DataColumn(label: Text("Final 1")),
-                    const DataColumn(label: Text("Final X")),
-                    const DataColumn(label: Text("Final 2")),
-                  ],
-                  rows: [
-                    DataRow(
-                      cells: [
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].matchDate
-                                .toString(),
+              Row(
+                children: [
+                  FutureBuilder<List<Record>>(
+                    future: records,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {}
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {}
+
+                      final records = snapshot.data!;
+                      final percentages = Record.calculateMatchPercentages(
+                        records,
+                      );
+
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    "HOME ${percentages['homeWins']}%",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    "DRAW ${percentages['draws']}%",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    "AWAY ${percentages['awayWins']}%",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].league.name,
+                      );
+                    },
+                  ),
+                  Expanded(
+                    child: Card(
+                      child: DataTable(
+                        columns: [
+                          const DataColumn(label: Text("Dia")),
+                          const DataColumn(label: Text("Liga")),
+                          const DataColumn(label: Text("Home")),
+                          const DataColumn(label: Text("Away")),
+                          const DataColumn(label: Text("Intervalo")),
+                          const DataColumn(label: Text("Placar Final")),
+                          const DataColumn(label: Text("Early 1")),
+                          const DataColumn(label: Text("Early X")),
+                          const DataColumn(label: Text("Early 2")),
+                          const DataColumn(label: Text("Final 1")),
+                          const DataColumn(label: Text("Final X")),
+                          const DataColumn(label: Text("Final 2")),
+                        ],
+                        rows: [
+                          DataRow(
+                            cells: [
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .matchDate
+                                      .toString(),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .league
+                                      .name,
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .homeTeam
+                                      .name,
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .awayTeam
+                                      .name,
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .firstHalfScore,
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .secondHalfScore,
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .earlyOdds1
+                                      .toString(),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .earlyOddsX
+                                      .toString(),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                      .earlyOdds2
+                                      .toString(),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                              .finalOdds1 ==
+                                          null
+                                      ? ""
+                                      : pivotRecords[pivotRecordIndex as int]
+                                          .finalOdds1
+                                          .toString(),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                              .finalOddsX ==
+                                          null
+                                      ? ""
+                                      : pivotRecords[pivotRecordIndex as int]
+                                          .finalOddsX
+                                          .toString(),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  pivotRecords[pivotRecordIndex as int]
+                                              .finalOdds2 ==
+                                          null
+                                      ? ""
+                                      : pivotRecords[pivotRecordIndex as int]
+                                          .finalOdds2
+                                          .toString(),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].homeTeam.name,
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].awayTeam.name,
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int]
-                                .firstHalfScore,
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int]
-                                .secondHalfScore,
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].earlyOdds1
-                                .toString(),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].earlyOddsX
-                                .toString(),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].earlyOdds2
-                                .toString(),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].finalOdds1 ==
-                                    null
-                                ? ""
-                                : pivotRecords[pivotRecordIndex as int]
-                                    .finalOdds1
-                                    .toString(),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].finalOddsX ==
-                                    null
-                                ? ""
-                                : pivotRecords[pivotRecordIndex as int]
-                                    .finalOddsX
-                                    .toString(),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            pivotRecords[pivotRecordIndex as int].finalOdds2 ==
-                                    null
-                                ? ""
-                                : pivotRecords[pivotRecordIndex as int]
-                                    .finalOdds2
-                                    .toString(),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             // Past Matches DataTable
             if (selectedMatchId != null) const SizedBox(height: 15),
@@ -731,6 +805,19 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   return PlutoGrid(
                     columns: getColumns(),
                     rows: getRows(records),
+                    rowColorCallback: (PlutoRowColorContext context) {
+                      final record = records[context.rowIdx];
+                      final int home = record.homeSecondHalfScore ?? 0;
+                      final int away = record.awaySecondHalfScore ?? 0;
+
+                      if (home == away) {
+                        return Colors.grey.shade200;
+                      } else if (home > away) {
+                        return Colors.green.shade100;
+                      } else {
+                        return Colors.red.shade100;
+                      }
+                    },
                     onLoaded: (event) {
                       stateManager = event.stateManager;
                       stateManager.setShowColumnFilter(true);

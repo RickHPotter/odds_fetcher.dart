@@ -114,4 +114,32 @@ class Record {
       "finished": finished == true ? 1 : 0,
     };
   }
+
+  static Map<String, double> calculateMatchPercentages(List<Record> records) {
+    if (records.isEmpty) return {"homeWins": 0, "draws": 0, "awayWins": 0};
+
+    int homeWins = 0;
+    int draws = 0;
+    int awayWins = 0;
+
+    for (var record in records) {
+      int home = record.homeSecondHalfScore ?? 0;
+      int away = record.awaySecondHalfScore ?? 0;
+
+      if (home == away) {
+        homeWins++;
+      } else if (home > away) {
+        draws++;
+      } else {
+        awayWins++;
+      }
+    }
+
+    int totalMatches = records.length;
+    return {
+      "homeWins": ((homeWins / totalMatches) * 100).roundToDouble(),
+      "draws": ((draws / totalMatches) * 100).roundToDouble(),
+      "awayWins": ((awayWins / totalMatches) * 100).roundToDouble(),
+    };
+  }
 }

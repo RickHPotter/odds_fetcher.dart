@@ -41,10 +41,18 @@ class Record {
   });
 
   String get firstHalfScore {
+    if (homeFirstHalfScore == null || awayFirstHalfScore == null) {
+      return "";
+    }
+
     return "$homeFirstHalfScore - $awayFirstHalfScore";
   }
 
   String get secondHalfScore {
+    if (homeSecondHalfScore == null || awaySecondHalfScore == null) {
+      return "";
+    }
+
     return "$homeSecondHalfScore - $awaySecondHalfScore";
   }
 

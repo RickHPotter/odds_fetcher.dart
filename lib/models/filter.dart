@@ -146,12 +146,43 @@ class Filter {
     this.futureNextMinutes = futureNextMinutes;
   }
 
-  String whereClause() {
+  String whereClause({
+    double? early1,
+    double? earlyX,
+    double? early2,
+    double? final1,
+    double? finalX,
+    double? final2,
+  }) {
     late String whereClause = "WHERE finished = 1";
     whereClause +=
-        " AND MatchDateYear > ${startDate.year} OR (MatchDateYear >= ${startDate.year} AND MatchDateMonth >= ${startDate.month} AND MatchDateDay >= ${startDate.day})";
+        " AND (MatchDateYear > ${startDate.year} OR (MatchDateYear >= ${startDate.year} AND MatchDateMonth >= ${startDate.month} AND MatchDateDay >= ${startDate.day}))";
     whereClause +=
         " AND MatchDateYear <= ${endDate.year} AND MatchDateMonth <= ${endDate.month} AND MatchDateDay <= ${endDate.day}";
+
+    if (early1 != null) {
+      whereClause += " AND earlyOdds1 = $early1";
+    }
+
+    if (earlyX != null) {
+      whereClause += " AND earlyOddsX = $earlyX";
+    }
+
+    if (early2 != null) {
+      whereClause += " AND earlyOdds2 = $early2";
+    }
+
+    if (final1 != null) {
+      whereClause += " AND finalOdds1 = $final1";
+    }
+
+    if (finalX != null) {
+      whereClause += " AND finalOddsX = $finalX";
+    }
+
+    if (final2 != null) {
+      whereClause += " AND finalOdds2 = $final2";
+    }
 
     return whereClause;
   }

@@ -94,15 +94,32 @@ class DatabaseService {
     return result.map((row) => Record.fromMap(row)).toList();
   }
 
-  static Future<List<Record>> fetchRecords({Filter? filter, int? id}) async {
+  static Future<List<Record>> fetchRecords({
+    Filter? filter,
+    double? early1,
+    double? earlyX,
+    double? early2,
+    double? final1,
+    double? finalX,
+    double? final2,
+  }) async {
     final db = await database;
     late String whereClause;
 
     if (filter == null) {
       whereClause = "WHERE 1 = 1";
     } else {
-      whereClause = filter.whereClause();
+      whereClause = filter.whereClause(
+        early1: early1,
+        earlyX: earlyX,
+        early2: early2,
+        final1: final1,
+        finalX: finalX,
+        final2: final2,
+      );
     }
+
+    debugPrint(whereClause);
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
     SELECT

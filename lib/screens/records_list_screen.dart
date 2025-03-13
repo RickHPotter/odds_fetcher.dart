@@ -31,8 +31,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
   int progress = 0;
   bool isFetching = false;
   bool isCancelled = false;
+  bool isEarly = true;
+  bool isFinal = false;
 
   int? selectedMatchId;
+  int? pivotRecordIndex;
 
   late PlutoGridStateManager stateManager;
   final ScrollController _scrollController = ScrollController();
@@ -54,17 +57,25 @@ class _RecordListScreenState extends State<RecordListScreen> {
       filter: filter,
     );
 
-    debugPrint(fetchedRecords.length.toString());
-
     setState(() => pivotRecords = fetchedRecords);
   }
 
-  void loadPastMatches(int id) async {
-    final fetchedRecords = DatabaseService.fetchRecords(id: id, filter: filter);
+  void loadPastMatches(int id, int index) async {
+    final futurePivotRecord = pivotRecords[index];
+    final fetchedRecords = DatabaseService.fetchRecords(
+      filter: filter,
+      early1: futurePivotRecord.earlyOdds1,
+      earlyX: futurePivotRecord.earlyOddsX,
+      early2: futurePivotRecord.earlyOdds2,
+      final1: futurePivotRecord.finalOdds1,
+      finalX: futurePivotRecord.finalOddsX,
+      final2: futurePivotRecord.finalOdds2,
+    );
 
     setState(() {
       selectedMatchId = id;
       records = fetchedRecords;
+      pivotRecordIndex = index;
     });
   }
 
@@ -161,6 +172,36 @@ class _RecordListScreenState extends State<RecordListScreen> {
     filterFutureNextMinutes = duration;
     filter.futureNextMinutes = duration;
     loadFutureMatches();
+  }
+
+  void filterMatchesBySimiliarity(String option) {
+    debugPrint(option);
+
+    if (option == "early") {
+      isEarly = !isEarly;
+      int sqliteBool = isEarly ? 1 : 0;
+
+      filter
+        ..futureSameEarlyHome = sqliteBool
+        ..futureSameEarlyDraw = sqliteBool
+        ..futureSameEarlyAway = sqliteBool;
+    }
+
+    if (option == "final") {
+      isFinal = !isFinal;
+      int sqliteBool = isFinal ? 1 : 0;
+
+      filter
+        ..futureSameFinalHome = sqliteBool
+        ..futureSameFinalDraw = sqliteBool
+        ..futureSameFinalAway = sqliteBool;
+    }
+
+    setState(() {
+      isEarly = isEarly;
+      isFinal = isFinal;
+      filter = filter;
+    });
   }
 
   @override
@@ -323,8 +364,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 15),
             // Past Matches Filter
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -365,8 +405,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 10),
-
+            const SizedBox(height: 15),
             // Future Matches Filter
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -413,7 +452,61 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 180,
+                  child: const Text(
+                    "Similaridade:",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () => filterMatchesBySimiliarity("early"),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        shadowColor: Colors.purple,
+                        backgroundColor: isEarly ? Colors.blueAccent : null,
+                      ),
+                      child: Text(
+                        "Early",
+                        style: TextStyle(color: isEarly ? Colors.white : null),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () => filterMatchesBySimiliarity("final"),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        shadowColor: Colors.purple,
+                        backgroundColor: isFinal ? Colors.blueAccent : null,
+                      ),
+                      child: Text(
+                        "Final",
+                        style: TextStyle(color: isFinal ? Colors.white : null),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            // Future Matches Carrousel
             SizedBox(
               height: 100,
               child: Scrollbar(
@@ -428,7 +521,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     return Padding(
                       padding: const EdgeInsets.all(4),
                       child: ElevatedButton(
-                        onPressed: () => loadPastMatches(match.id as int),
+                        onPressed:
+                            () => loadPastMatches(match.id as int, index),
                         style: OutlinedButton.styleFrom(
                           backgroundColor:
                               selectedMatchId == match.id
@@ -473,6 +567,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                     fontSize: 12,
                                   ),
                                 ),
+                                SizedBox(width: 10),
                                 Text(
                                   DateFormat.Hm(
                                     "pt-BR",
@@ -492,19 +587,83 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 15),
             // Match Details
             if (selectedMatchId != null)
-              Text(
-                "Details for Match ID: $selectedMatchId",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Card(
+                child: DataTable(
+                  columns: [
+                    const DataColumn(label: Text("Dia")),
+                    const DataColumn(label: Text("Liga")),
+                    const DataColumn(label: Text("Home")),
+                    const DataColumn(label: Text("Away")),
+                    const DataColumn(label: Text("Intervalo")),
+                    const DataColumn(label: Text("Placar Final")),
+                    const DataColumn(label: Text("Early 1")),
+                    const DataColumn(label: Text("Early X")),
+                    const DataColumn(label: Text("Early 2")),
+                  ],
+                  rows: [
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].matchDate
+                                .toString(),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].league.name,
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].homeTeam.name,
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].awayTeam.name,
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int]
+                                .firstHalfScore,
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int]
+                                .secondHalfScore,
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].earlyOdds1
+                                .toString(),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].earlyOddsX
+                                .toString(),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            pivotRecords[pivotRecordIndex as int].earlyOdds2
+                                .toString(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-
             // Past Matches DataTable
+            if (selectedMatchId != null) const SizedBox(height: 15),
             Expanded(
               child: FutureBuilder<List<Record>>(
                 future: records,
@@ -546,56 +705,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
     );
   }
 
-  //List<PlutoColumnGroup> getFirstRow() {
-  //  if (records.isEmpty) {
-  //    return [];
-  //  }
-  //
-  //  final Record record = records.first;
-  //
-  //  return [
-  //    PlutoColumnGroup(
-  //      title: record.matchDate.toString().split(".")[0],
-  //      fields: ["dia"],
-  //    ),
-  //    PlutoColumnGroup(title: record.league.code, fields: ["liga"]),
-  //    PlutoColumnGroup(title: record.homeTeam.name, fields: ["home"]),
-  //    PlutoColumnGroup(title: record.awayTeam.name, fields: ["away"]),
-  //    PlutoColumnGroup(title: record.firstHalfScore, fields: ["intervalo"]),
-  //    PlutoColumnGroup(title: record.secondHalfScore, fields: ["placar"]),
-  //    PlutoColumnGroup(
-  //      title: record.earlyOdds1 == null ? "" : record.earlyOdds1.toString(),
-  //      fields: ["early_home"],
-  //    ),
-  //    PlutoColumnGroup(
-  //      title: record.earlyOddsX == null ? "" : record.earlyOddsX.toString(),
-  //      fields: ["early_draw"],
-  //    ),
-  //    PlutoColumnGroup(
-  //      title: record.earlyOdds2 == null ? "" : record.earlyOdds2.toString(),
-  //      fields: ["early_away"],
-  //    ),
-  //    PlutoColumnGroup(
-  //      title: record.finalOdds1 == null ? "" : record.finalOdds1.toString(),
-  //      fields: ["final_home"],
-  //    ),
-  //    PlutoColumnGroup(
-  //      title: record.finalOddsX == null ? "" : record.finalOddsX.toString(),
-  //      fields: ["final_draw"],
-  //    ),
-  //    PlutoColumnGroup(
-  //      title: record.finalOdds2 == null ? "" : record.finalOdds2.toString(),
-  //      fields: ["final_away"],
-  //    ),
-  //  ];
-  //}
-
   List<PlutoColumn> getColumns() {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Calculate dynamic width based on screen size
-    final baseWidth = screenWidth * 0.06; // 5% of screen width
-    final largerWidth = screenWidth * 0.12; // 10% for more important columns
+    final baseWidth = screenWidth * 0.06;
+    final largerWidth = screenWidth * 0.12;
 
     return [
       PlutoColumn(
@@ -639,7 +753,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
         width: baseWidth,
       ),
       PlutoColumn(
-        title: "FIM DE JOGO",
+        title: "PLACAR FINAL",
         field: "placar",
         type: PlutoColumnType.text(),
         titleTextAlign: PlutoColumnTextAlign.center,

@@ -1,5 +1,7 @@
+import "dart:math";
+
 import "package:flutter/material.dart";
-import "package:intl/intl.dart";
+import "package:intl/intl.dart" show DateFormat;
 import "package:odds_fetcher/models/record.dart";
 
 class MatchCard extends StatelessWidget {
@@ -9,127 +11,150 @@ class MatchCard extends StatelessWidget {
 
   const MatchCard({super.key, required this.records, required this.pivotRecord});
 
+  Widget matchOdds(Record match) {
+    double earlyHome = match.earlyOdds1 ?? 0.0;
+    double earlyDraw = match.earlyOddsX ?? 0.0;
+    double earlyAway = match.earlyOdds2 ?? 0.0;
+    double finalHome = match.finalOdds1 ?? 0.0;
+    double finalDraw = match.finalOddsX ?? 0.0;
+    double finalAway = match.finalOdds2 ?? 0.0;
+
+    Widget oddsChip(double value, Color color) {
+      return Chip(
+        backgroundColor: color,
+        label: Text(value.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold)),
+      );
+    }
+
+    Widget oddsRow(double homeOdds, double drawOdds, double awayOdds) {
+      double lowestOdds = [homeOdds, drawOdds, awayOdds].reduce(min);
+      double highestOdds = [homeOdds, drawOdds, awayOdds].reduce(max);
+
+      Color color(double odds) => switch (odds) {
+        _ when homeOdds == drawOdds && homeOdds == awayOdds => Colors.yellow.shade300,
+        _ when odds == lowestOdds => Colors.green.shade300,
+        _ when odds == highestOdds => Colors.red.shade300,
+        _ => Colors.grey.shade200,
+      };
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          oddsChip(homeOdds, color(homeOdds)),
+          oddsChip(drawOdds, color(drawOdds)),
+          oddsChip(awayOdds, color(awayOdds)),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        oddsRow(earlyHome, earlyDraw, earlyAway),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Center(child: Icon(Icons.home, size: 16)),
+              Center(child: Icon(Icons.close, size: 16)),
+              Center(child: Icon(Icons.public, size: 16)),
+              //Text("x", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+
+        oddsRow(finalHome, finalDraw, finalAway),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FutureBuilder<List<Record>>(
-            future: records,
-            builder: (context, snapshot) {
-              Widget scorePercentageChild;
-              Widget goalsPercentageChild;
+      child: FutureBuilder<List<Record>>(
+        future: records,
+        builder: (context, snapshot) {
+          Widget scorePercentageChild;
+          Widget goalsPercentageChild;
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                scorePercentageChild = const Center(child: CircularProgressIndicator());
-                goalsPercentageChild = const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                scorePercentageChild = Text("Erro ao carregar os dados: ${snapshot.error}");
-                goalsPercentageChild = Text("Erro ao carregar os dados: ${snapshot.error}");
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                scorePercentageChild = const Center(child: Text("Nenhum dado disponível"));
-                goalsPercentageChild = const Center(child: Text("Nenhum dado disponível"));
-              } else {
-                final records = snapshot.data!;
-                final scorePercentages = Record.calculateScoreMatchPercentages(records);
-                final goalsPercentages = Record.calculateGoalsMatchPercentages(records);
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            scorePercentageChild = const Center(child: CircularProgressIndicator());
+            goalsPercentageChild = const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            scorePercentageChild = Text("Erro ao carregar os dados: ${snapshot.error}");
+            goalsPercentageChild = Text("Erro ao carregar os dados: ${snapshot.error}");
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            scorePercentageChild = const Center(child: Text("Nenhum dado disponível"));
+            goalsPercentageChild = const Center(child: Text("Nenhum dado disponível"));
+          } else {
+            final records = snapshot.data!;
+            final scorePercentages = Record.calculateScoreMatchPercentages(records);
+            final goalsPercentages = Record.calculateGoalsMatchPercentages(records);
 
-                scorePercentageChild = Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildScorePercentageRow("HOME", scorePercentages["homeWins"] as double, Colors.green),
-                    _buildScorePercentageRow("DRAW", scorePercentages["draws"] as double, Colors.orange),
-                    _buildScorePercentageRow("AWAY", scorePercentages["awayWins"] as double, Colors.red),
-                  ],
-                );
+            scorePercentageChild = Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildScorePercentageRow("HOME", scorePercentages["homeWins"] as double, Colors.green),
+                _buildScorePercentageRow("DRAW", scorePercentages["draws"] as double, Colors.orange),
+                _buildScorePercentageRow("AWAY", scorePercentages["awayWins"] as double, Colors.red),
+              ],
+            );
 
-                goalsPercentageChild = Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildGoalsPercentageBar(
-                      "1T",
-                      goalsPercentages["underHalf"] as double,
-                      goalsPercentages["overHalf"] as double,
-                    ),
-                    _buildGoalsPercentageBar(
-                      "2T",
-                      goalsPercentages["underFull"] as double,
-                      goalsPercentages["overFull"] as double,
-                    ),
-                  ],
-                );
-              }
+            goalsPercentageChild = Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildGoalsPercentageBar(
+                  "1T",
+                  goalsPercentages["underHalf"] as double,
+                  goalsPercentages["overHalf"] as double,
+                ),
+                _buildGoalsPercentageBar(
+                  "2T",
+                  goalsPercentages["underFull"] as double,
+                  goalsPercentages["overFull"] as double,
+                ),
+              ],
+            );
+          }
 
-              return Row(
-                children: [
-                  Container(
-                    height: 150,
-                    width: percentagesContainerWidthFactor * screenWidth,
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    child: Card(
-                      color: Colors.blue.shade50,
-                      elevation: 0,
-                      child: Padding(padding: const EdgeInsets.all(12.0), child: scorePercentageChild),
-                    ),
-                  ),
-                  SizedBox(width: screenWidth * 0.01),
-                  Container(
-                    height: 150,
-                    width: percentagesContainerWidthFactor * screenWidth,
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    child: Card(
-                      color: Colors.blue.shade50,
-                      elevation: 0,
-                      child: Padding(padding: const EdgeInsets.all(12.0), child: goalsPercentageChild),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          SizedBox(width: screenWidth * 0.01),
-          Expanded(
-            child: DataTable(
-              columns: getColumns(screenWidth),
-              rows: getRows(),
-              headingRowColor: WidgetStateColor.resolveWith((states) => Colors.blue.shade100),
-              dataRowColor: WidgetStateColor.resolveWith((states) => Colors.blue.shade50),
-              border: TableBorder.all(color: Colors.blue.shade200, width: 1, borderRadius: BorderRadius.circular(12)),
-              columnSpacing: 20,
-              horizontalMargin: 12,
-              headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-              dataTextStyle: const TextStyle(color: Colors.black87),
-              headingRowHeight: 65,
-              dataRowMinHeight: 85,
-              dataRowMaxHeight: 85,
+          Widget container({child}) => Container(
+            height: 130,
+            width: percentagesContainerWidthFactor * screenWidth,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(2, 2)),
+              ],
             ),
-          ),
-        ],
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                color: Colors.blue.shade50,
+                child: child,
+              ),
+            ),
+          );
+
+          return Row(
+            children: [
+              Expanded(child: container(child: MatchDetails(pivotRecord: pivotRecord))),
+              SizedBox(width: screenWidth * 0.01),
+              container(child: matchOdds(pivotRecord)),
+              SizedBox(width: screenWidth * 0.01),
+              container(child: scorePercentageChild),
+              SizedBox(width: screenWidth * 0.01),
+              container(child: goalsPercentageChild),
+            ],
+          );
+        },
       ),
     );
   }
@@ -173,7 +198,6 @@ class MatchCard extends StatelessWidget {
             Text("Over: ${over.toStringAsFixed(1)}%", style: const TextStyle(color: Colors.green)),
           ],
         ),
-        const SizedBox(height: 4),
         Container(
           height: 20,
           decoration: BoxDecoration(
@@ -208,43 +232,43 @@ class MatchCard extends StatelessWidget {
       ],
     );
   }
+}
 
-  List<DataColumn> getColumns(double screenWidth) {
-    final baseWidth = FixedColumnWidth(screenWidth * 0.05);
-    final largerWidth = FixedColumnWidth(screenWidth * 0.08);
+class MatchDetails extends StatelessWidget {
+  const MatchDetails({super.key, required this.pivotRecord});
 
-    return [
-      DataColumn(label: Text("Dia"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-      DataColumn(label: Text("Liga"), headingRowAlignment: MainAxisAlignment.center, columnWidth: largerWidth),
-      DataColumn(label: Text("Home"), headingRowAlignment: MainAxisAlignment.center, columnWidth: largerWidth),
-      DataColumn(label: Text("Away"), headingRowAlignment: MainAxisAlignment.center, columnWidth: largerWidth),
-      DataColumn(label: Text("Early 1"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-      DataColumn(label: Text("Early X"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-      DataColumn(label: Text("Early 2"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-      DataColumn(label: Text("Final 1"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-      DataColumn(label: Text("Final X"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-      DataColumn(label: Text("Final 2"), headingRowAlignment: MainAxisAlignment.center, columnWidth: baseWidth),
-    ];
-  }
+  final Record pivotRecord;
 
-  List<DataRow> getRows() {
-    final Icon notFound = Icon(Icons.cancel_rounded);
-
-    return [
-      DataRow(
-        cells: [
-          DataCell(Center(child: Text(DateFormat("d 'de' MMMM, HH:mm", "pt-BR").format(pivotRecord.matchDate)))),
-          DataCell(Center(child: Text(pivotRecord.league.name))),
-          DataCell(Center(child: Text(pivotRecord.homeTeam.name))),
-          DataCell(Center(child: Text(pivotRecord.awayTeam.name))),
-          DataCell(Center(child: Text(pivotRecord.earlyOdds1.toString()))),
-          DataCell(Center(child: Text(pivotRecord.earlyOddsX.toString()))),
-          DataCell(Center(child: Text(pivotRecord.earlyOdds2.toString()))),
-          DataCell(Center(child: pivotRecord.finalOdds1 == null ? notFound : Text(pivotRecord.finalOdds1.toString()))),
-          DataCell(Center(child: pivotRecord.finalOddsX == null ? notFound : Text(pivotRecord.finalOddsX.toString()))),
-          DataCell(Center(child: pivotRecord.finalOdds2 == null ? notFound : Text(pivotRecord.finalOdds2.toString()))),
-        ],
-      ),
-    ];
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          pivotRecord.league.name,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(
+              child: Text(pivotRecord.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center),
+            ),
+            const Text("vs", style: TextStyle(fontSize: 14)),
+            Expanded(
+              child: Text(pivotRecord.awayTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          DateFormat("EEEE, d MMM yyyy - HH:mm", "pt_BR").format(pivotRecord.matchDate),
+          style: const TextStyle(color: Colors.grey, fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
   }
 }

@@ -12,7 +12,7 @@ import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeagueFol
 import "package:odds_fetcher/widgets/match_card.dart";
 import "package:odds_fetcher/widgets/past_matches_datatable.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humanisedTime;
-import "package:odds_fetcher/widgets/success_dialog.dart" show showSuccessDialog;
+//import "package:odds_fetcher/widgets/success_dialog.dart" show showSuccessDialog;
 
 class RecordListScreen extends StatefulWidget {
   const RecordListScreen({super.key});
@@ -432,11 +432,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   width: 180,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: LeagueFolderFilterButton(
-                      folders: folders,
-                      leagues: leagues,
-                      screenWidth: MediaQuery.of(context).size.width,
-                    ),
+                    child: LeagueFolderFilterButton(folders: folders, leagues: leagues),
                   ),
                 ),
               ],
@@ -460,6 +456,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     itemCount: pivotRecords.length,
                     itemBuilder: (context, index) {
                       final match = pivotRecords[index];
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: ElevatedButton(
@@ -512,14 +509,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
             ),
             const SizedBox(height: 15),
             if (selectedMatchId != null)
-              MatchCard(
-                records: records,
-                pivotRecord: pivotRecords[pivotRecordIndex as int],
-                screenWidth: MediaQuery.of(context).size.width,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15.0),
+                child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int]),
               ),
-            // Past Matches DataTable
-            if (selectedMatchId != null) const SizedBox(height: 15),
-            PastMachDataTable(records: records, screenWidth: MediaQuery.of(context).size.width),
+            PastMachDataTable(records: records),
           ],
         ),
       ),

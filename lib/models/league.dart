@@ -8,4 +8,9 @@ class League {
   factory League.fromMap(Map<String, dynamic> map) {
     return League(id: map["id"], code: map["leagueCode"], name: map["leagueName"]);
   }
+
+  @override
+  String toString() {
+    return "Liga";
+  }
 }

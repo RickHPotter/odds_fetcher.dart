@@ -7,4 +7,9 @@ class Folder {
   factory Folder.fromMap(Map<String, dynamic> map) {
     return Folder(id: map["id"], name: map["folderName"]);
   }
+
+  @override
+  String toString() {
+    return "Pasta";
+  }
 }

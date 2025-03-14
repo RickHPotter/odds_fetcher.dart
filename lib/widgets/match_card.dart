@@ -5,14 +5,14 @@ import "package:odds_fetcher/models/record.dart";
 class MatchCard extends StatelessWidget {
   final Future<List<Record>>? records;
   final Record pivotRecord;
-  final double screenWidth;
+  final double percentagesContainerWidthFactor = 0.15;
 
-  final percentagesContainerWidthFactor = 0.15;
-
-  const MatchCard({super.key, required this.records, required this.pivotRecord, required this.screenWidth});
+  const MatchCard({super.key, required this.records, required this.pivotRecord});
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -115,7 +115,7 @@ class MatchCard extends StatelessWidget {
           SizedBox(width: screenWidth * 0.01),
           Expanded(
             child: DataTable(
-              columns: getColumns(),
+              columns: getColumns(screenWidth),
               rows: getRows(),
               headingRowColor: WidgetStateColor.resolveWith((states) => Colors.blue.shade100),
               dataRowColor: WidgetStateColor.resolveWith((states) => Colors.blue.shade50),
@@ -209,7 +209,7 @@ class MatchCard extends StatelessWidget {
     );
   }
 
-  List<DataColumn> getColumns() {
+  List<DataColumn> getColumns(double screenWidth) {
     final baseWidth = FixedColumnWidth(screenWidth * 0.05);
     final largerWidth = FixedColumnWidth(screenWidth * 0.08);
 

@@ -4,14 +4,13 @@ import "package:pluto_grid/pluto_grid.dart";
 
 class PastMachDataTable extends StatelessWidget {
   final Future<List<Record>>? records;
-  final double screenWidth;
+  final double percentagesContainerWidthFactor = 0.10;
 
-  final percentagesContainerWidthFactor = 0.10;
-
-  const PastMachDataTable({super.key, required this.records, required this.screenWidth});
+  const PastMachDataTable({super.key, required this.records});
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
     late PlutoGridStateManager stateManager;
 
     return Expanded(
@@ -30,7 +29,7 @@ class PastMachDataTable extends StatelessWidget {
 
           final records = snapshot.data!;
           return PlutoGrid(
-            columns: getColumns(),
+            columns: getColumns(screenWidth),
             rows: getRows(records),
             rowColorCallback: (PlutoRowColorContext context) {
               final record = records[context.rowIdx];
@@ -59,9 +58,9 @@ class PastMachDataTable extends StatelessWidget {
     );
   }
 
-  List<PlutoColumn> getColumns() {
-    final baseWidth = screenWidth * 0.06;
-    final largerWidth = screenWidth * 0.126;
+  List<PlutoColumn> getColumns(double screenWidth) {
+    final double baseWidth = screenWidth * 0.06;
+    final double largerWidth = screenWidth * 0.126;
 
     return [
       PlutoColumn(

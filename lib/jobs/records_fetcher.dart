@@ -33,20 +33,20 @@ class RecordFetcher {
   }
 
   Future<void> fetchAndInsertRecords({
-    required DateTime startDate,
-    required DateTime endDate,
+    required DateTime minDate,
+    required DateTime maxDate,
     required bool Function() isCancelledCallback,
   }) async {
     List<Future<List<Record>>> fetchTasks = [];
     List<Record> recordBuffer = [];
     int completedSteps = 0;
 
-    int totalDays = endDate.difference(startDate).inDays + 1;
+    int totalDays = maxDate.difference(minDate).inDays + 1;
     int totalFetchTasks = totalDays;
 
     for (
-      DateTime date = startDate;
-      date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
+      DateTime date = minDate;
+      date.isBefore(maxDate) || date.isAtSameMomentAs(maxDate);
       date = date.add(Duration(days: 1))
     ) {
       String dateStr = date.toString().split(" ")[0];

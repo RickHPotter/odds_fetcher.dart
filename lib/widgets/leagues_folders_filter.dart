@@ -1,24 +1,108 @@
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
+import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
 
 class LeagueFolderFilterButton extends StatefulWidget {
+  final Filter filter;
   final List<League> leagues;
   final List<Folder> folders;
+  final void Function() onAppyCallback;
 
-  const LeagueFolderFilterButton({super.key, required this.leagues, required this.folders});
+  const LeagueFolderFilterButton({
+    super.key,
+    required this.filter,
+    required this.leagues,
+    required this.folders,
+    required this.onAppyCallback,
+  });
 
   @override
   State<LeagueFolderFilterButton> createState() => _LeagueFolderFilterButtonState();
 }
 
 class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
-  final List<League> selectedLeagues = [];
-  final List<Folder> selectedFolders = [];
+  late List<League> selectedLeagues = [];
+  late List<Folder> selectedFolders = [];
+
+  @override
+  Widget build(BuildContext context) {
+    final filter = widget.filter;
+    selectedLeagues = filter.leagues;
+    selectedFolders = filter.folders;
+
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shadowColor: Colors.purple,
+        backgroundColor: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.blueAccent : null,
+      ),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return LeaguesFoldersFilterModal(
+              filter: widget.filter,
+              leagues: widget.leagues,
+              folders: widget.folders,
+              selectedLeagues: selectedLeagues,
+              selectedFolders: selectedFolders,
+              onAppyCallback: widget.onAppyCallback,
+            );
+          },
+        );
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.folder, color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
+          const SizedBox(width: 2),
+          Text(
+            "Ligas & Pastas",
+            style: TextStyle(color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LeaguesFoldersFilterModal extends StatefulWidget {
+  final Filter filter;
+  final List<League> leagues;
+  final List<Folder> folders;
+  final List<League> selectedLeagues;
+  final List<Folder> selectedFolders;
+  final void Function() onAppyCallback;
+
+  const LeaguesFoldersFilterModal({
+    super.key,
+    required this.filter,
+    required this.leagues,
+    required this.folders,
+    required this.selectedLeagues,
+    required this.selectedFolders,
+    required this.onAppyCallback,
+  });
+
+  @override
+  State<LeaguesFoldersFilterModal> createState() => _LeaguesFoldersFilterModalState();
+}
+
+class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
   dynamic selectedNode = League;
 
-  Widget _showFilterModal() {
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onAppyCallback();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return StatefulBuilder(
       builder: (context, setModalState) {
         void setStates(callback) {
@@ -31,6 +115,7 @@ class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
         }
 
         return Dialog(
+          elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
@@ -44,34 +129,35 @@ class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
                   _buildMultiSelect<League>(
                     shouldFocus: true,
                     items: widget.leagues,
-                    selectedItems: selectedLeagues,
-                    getItemName: (league) => league.name,
+                    selectedItems: widget.selectedLeagues,
+                    getItemName: (league) => league.code,
                     onItemSelected: (league) {
                       setStates(() {
-                        if (!selectedLeagues.contains(league)) selectedLeagues.add(league);
+                        if (widget.filter.futureOnlySameLeague == 1) widget.filter.futureOnlySameLeague = 0;
+                        if (!widget.selectedLeagues.contains(league)) widget.selectedLeagues.add(league);
                         selectedNode = League;
                       });
                     },
                     onItemRemoved: (league) {
                       setStates(() {
-                        selectedLeagues.remove(league);
+                        widget.selectedLeagues.remove(league);
                       });
                     },
                   ),
                   _buildMultiSelect<Folder>(
                     shouldFocus: false,
                     items: widget.folders,
-                    selectedItems: selectedFolders,
+                    selectedItems: widget.selectedFolders,
                     getItemName: (folder) => folder.name,
                     onItemSelected: (folder) {
                       setStates(() {
-                        if (!selectedFolders.contains(folder)) selectedFolders.add(folder);
+                        if (!widget.selectedFolders.contains(folder)) widget.selectedFolders.add(folder);
                         selectedNode = Folder;
                       });
                     },
                     onItemRemoved: (folder) {
                       setStates(() {
-                        selectedFolders.remove(folder);
+                        widget.selectedFolders.remove(folder);
                       });
                     },
                   ),
@@ -87,8 +173,8 @@ class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
                             label: const Text("Limpar", style: TextStyle(color: Colors.black)),
                             onPressed: () {
                               setStates(() {
-                                selectedLeagues.clear();
-                                selectedFolders.clear();
+                                widget.selectedLeagues.clear();
+                                widget.selectedLeagues.clear();
                                 selectedNode = null;
                               });
                             },
@@ -103,7 +189,10 @@ class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.check, color: Colors.green),
                             label: const Text("Aplicar", style: TextStyle(color: Colors.black)),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              widget.onAppyCallback();
+                            },
                           ),
                         ),
                       ),
@@ -206,36 +295,6 @@ class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
               ),
             ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        shadowColor: Colors.purple,
-        backgroundColor: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.blueAccent : null,
-      ),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return _showFilterModal();
-          },
-        );
-      },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.folder, color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
-          const SizedBox(width: 2),
-          Text(
-            "Ligas & Pastas",
-            style: TextStyle(color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
-          ),
-        ],
-      ),
     );
   }
 }

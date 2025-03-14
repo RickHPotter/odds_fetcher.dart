@@ -14,7 +14,7 @@ int parseInteger(String value) {
   return 0;
 }
 
-String humanisedTime(int minutes) {
+String humaniseTime(int minutes) {
   const int hour = 60;
   const int day = hour * 24;
 
@@ -29,5 +29,15 @@ String humanisedTime(int minutes) {
       return "1 dia";
     default:
       return "${minutes ~/ (60 * 24)} dias";
+  }
+}
+
+String humaniseNumber(int number) {
+  if (number >= 1000000) {
+    return "${(number / 1000000).toStringAsFixed(2)}M";
+  } else if (number >= 1000) {
+    return "${(number / 1000).toStringAsFixed(2)}K";
+  } else {
+    return number.toString();
   }
 }

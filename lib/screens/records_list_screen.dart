@@ -11,8 +11,8 @@ import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeagueFolderFilterButton;
 import "package:odds_fetcher/widgets/match_card.dart";
 import "package:odds_fetcher/widgets/past_matches_datatable.dart";
-import "package:odds_fetcher/utils/parse_utils.dart" show humanisedTime;
-//import "package:odds_fetcher/widgets/success_dialog.dart" show showSuccessDialog;
+import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
+import "package:odds_fetcher/widgets/success_dialog.dart" show showSuccessDialog;
 
 class RecordListScreen extends StatefulWidget {
   const RecordListScreen({super.key});
@@ -29,53 +29,76 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   late int filterPastYears = 1;
   late int filterFutureNextMinutes = 60;
-  late Filter filter = Filter(filterName: "Filtro Padrão", startDate: DateTime.now(), endDate: DateTime.now());
+  late Filter filter = Filter(
+    filterName: "Filtro Padrão",
+    minDate: DateTime.now(),
+    maxDate: DateTime.now(),
+    leagues: [],
+    folders: [],
+  );
 
   late RecordFetcher fetcher;
   String currentDate = DateTime.now().toString();
   int progress = 0;
   bool isFetching = false;
   bool isCancelled = false;
-  bool isEarly = true;
-  bool isFinal = false;
+
+  late Map<Odds, bool> selectedOddsMap;
+
+  bool isEarly1 = true;
+  bool isEarlyX = false;
+  bool isEarly2 = true;
+  bool isFinal1 = false;
+  bool isFinalX = false;
+  bool isFinal2 = false;
   bool isSameLeague = false;
 
   int? selectedMatchId;
   int? pivotRecordIndex;
 
-  final futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2];
-  final pastYearsList = [1, 2, 3, 5, 8, 10, 15, 20];
+  bool showFilters = true;
+
+  final List<int> futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3];
+  final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-  void updateFilter() {
+  void updateOddsFilter() {
+    selectedOddsMap = {
+      Odds.earlyOdds1: isEarly1,
+      Odds.earlyOddsX: isEarlyX,
+      Odds.earlyOdds2: isEarly2,
+      Odds.finalOdds1: isFinal1,
+      Odds.finalOddsX: isFinalX,
+      Odds.finalOdds2: isFinal2,
+    };
+
+    filter.futureSameEarlyHome = isEarly1 ? 1 : 0;
+    filter.futureSameEarlyDraw = isEarlyX ? 1 : 0;
+    filter.futureSameEarlyAway = isEarly2 ? 1 : 0;
+
+    filter.futureSameFinalHome = isFinal1 ? 1 : 0;
+    filter.futureSameFinalDraw = isFinalX ? 1 : 0;
+    filter.futureSameFinalAway = isFinal2 ? 1 : 0;
+  }
+
+  void updateTimeFilter() {
     filter.update(pastYears: filterPastYears, futureNextMinutes: filterFutureNextMinutes);
-
-    int isEarlyBoolInt = isEarly ? 1 : 0;
-    int isFinalBoolInt = isFinal ? 1 : 0;
-
-    filter
-      ..futureSameEarlyHome = isEarlyBoolInt
-      ..futureSameEarlyDraw = isEarlyBoolInt
-      ..futureSameEarlyAway = isEarlyBoolInt
-      ..futureSameFinalHome = isFinalBoolInt
-      ..futureSameFinalDraw = isFinalBoolInt
-      ..futureSameFinalAway = isFinalBoolInt;
   }
 
   Future<void> fetchFromMaxMatchDate() async {
-    final startDateToFetch = await DatabaseService.fetchFromMaxMatchDate();
+    final DateTime minDateToFetch = await DatabaseService.fetchFromMaxMatchDate();
 
-    if (startDateToFetch != DateTime.now()) {
-      startFetching(startDate: startDateToFetch);
+    if (minDateToFetch != DateTime.now()) {
+      startFetching(minDate: minDateToFetch);
     }
 
     startFetchingFuture();
   }
 
   void loadFutureMatches() async {
-    final fetchedRecords = await DatabaseService.fetchFutureRecords(filter: filter);
+    final List<Record> fetchedRecords = await DatabaseService.fetchFutureRecords(filter: filter);
 
     if (pivotRecords.isNotEmpty && pivotRecordIndex != null) {
       Record pivotRecord = pivotRecords[pivotRecordIndex as int];
@@ -99,15 +122,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
       return;
     }
 
-    final futurePivotRecord = pivotRecords[index];
-    final fetchedRecords = DatabaseService.fetchRecords(
+    final Record futurePivotRecord = pivotRecords[index];
+    final Future<List<Record>> fetchedRecords = DatabaseService.fetchRecords(
       filter: filter,
-      early1: futurePivotRecord.earlyOdds1,
-      earlyX: futurePivotRecord.earlyOddsX,
-      early2: futurePivotRecord.earlyOdds2,
-      final1: futurePivotRecord.finalOdds1,
-      finalX: futurePivotRecord.finalOddsX,
-      final2: futurePivotRecord.finalOdds2,
+      futureRecord: futurePivotRecord,
     );
 
     setState(() {
@@ -118,8 +136,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void loadLeaguesAndFolders() async {
-    final fetchedLeagues = await DatabaseService.fetchLeagues();
-    final fetchedFolders = await DatabaseService.fetchFolders();
+    final List<League> fetchedLeagues = await DatabaseService.fetchLeagues();
+    final List<Folder> fetchedFolders = await DatabaseService.fetchFolders();
 
     setState(() {
       leagues = fetchedLeagues;
@@ -131,7 +149,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
   void initState() {
     initializeDateFormatting("pt-BR");
 
-    updateFilter();
+    updateOddsFilter();
+    updateTimeFilter();
 
     fetcher = RecordFetcher();
     fetcher.progressStream.listen((value) {
@@ -154,18 +173,18 @@ class _RecordListScreenState extends State<RecordListScreen> {
     super.dispose();
   }
 
-  void startFetching({DateTime? startDate, DateTime? endDate}) async {
-    startDate ??= DateTime.parse("2008-01-01");
-    endDate ??= DateTime.now().subtract(Duration(days: 1));
+  void startFetching({DateTime? minDate, DateTime? maxDate}) async {
+    minDate ??= DateTime.parse("2008-01-01");
+    maxDate ??= DateTime.now().subtract(Duration(days: 1));
 
     setState(() {
       isFetching = true;
       isCancelled = false;
     });
 
-    await fetcher.fetchAndInsertRecords(startDate: startDate, endDate: endDate, isCancelledCallback: () => isCancelled);
+    await fetcher.fetchAndInsertRecords(minDate: minDate, maxDate: maxDate, isCancelledCallback: () => isCancelled);
 
-    //if (mounted && !isCancelled) showSuccessDialog(context, "Jogos passados buscados com sucesso!");
+    if (mounted && !isCancelled) showSuccessDialog(context, "Jogos passados buscados com sucesso!");
 
     setState(() => isFetching = false);
   }
@@ -178,7 +197,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     await fetcher.fetchAndInsertFutureRecords(isCancelledCallback: () => isCancelled);
 
-    //if (mounted && !isCancelled) showSuccessDialog(context, "Jogos futuros buscados com sucesso!");
+    if (mounted && !isCancelled) showSuccessDialog(context, "Jogos futuros buscados com sucesso!");
 
     setState(() => isFetching = false);
   }
@@ -214,7 +233,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                     ),
                     Text(
-                      "${pivotRecords.length} jogos futuros encontrados.",
+                      "${humaniseNumber(pivotRecords.length)} jogos futuros encontrados.",
                       style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                     ),
                     FutureBuilder<List<Record>>(
@@ -239,7 +258,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           );
                         }
                         return Text(
-                          "${snapshot.data!.length} jogos passados encontrados.",
+                          "${humaniseNumber(snapshot.data!.length)} jogos passados encontrados.",
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                         );
                       },
@@ -248,7 +267,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
                 // Fetch Controls
                 SizedBox(
-                  width: 400,
+                  width: MediaQuery.of(context).size.width * 0.25,
                   height: 125,
                   child:
                       isFetching
@@ -277,13 +296,23 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                     backgroundColor: Colors.red,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                                   ),
-                                  child: const Text("Abort", style: TextStyle(color: Colors.white)),
+                                  child: const Text("Abortar", style: TextStyle(color: Colors.white)),
                                 ),
                               ],
                             ),
                           )
                           : Row(
                             children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: ElevatedButton(
+                                  onPressed: () => setState(() => showFilters = !showFilters),
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+                                  ),
+                                  child: Text(showFilters ? "Esconder Filtros" : "Mostrar Filtros"),
+                                ),
+                              ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: ElevatedButton(
@@ -309,136 +338,146 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ],
             ),
-            // Past Matches Filter
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 130,
-                  child: const Text("Jogos Passados:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-                for (var time in pastYearsList)
-                  SizedBox(
-                    width: 140,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () => filterHistoryMatches(time),
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          shadowColor: Colors.purple,
-                          backgroundColor: time == filterPastYears ? Colors.blueAccent : null,
-                        ),
-                        child: Text(
-                          time <= 1 ? "$time ano" : "$time anos",
-                          style: TextStyle(color: time == filterPastYears ? Colors.white : null),
-                        ),
-                      ),
+            if (showFilters)
+              // Past Matches Filter
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 130,
+                      child: const Text("Jogos Passados:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Future Matches Filter
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 130,
-                  child: const Text("Jogos Futuros:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-                for (var minutes in futureMatchesMinutesList)
-                  SizedBox(
-                    width: 140,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: (8.0)),
-                      child: ElevatedButton(
-                        onPressed: () => filterUpcomingMatches(minutes),
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          shadowColor: Colors.purple,
-                          backgroundColor: minutes == filterFutureNextMinutes ? Colors.blueAccent : null,
-                        ),
-                        child: Text(
-                          humanisedTime(minutes),
-                          style: TextStyle(color: minutes == filterFutureNextMinutes ? Colors.white : null),
+                    for (var time in pastYearsList)
+                      SizedBox(
+                        width: 140,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: ElevatedButton(
+                            onPressed: () => filterHistoryMatches(time),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shadowColor: Colors.purple,
+                              backgroundColor: time == filterPastYears ? Colors.blueAccent : null,
+                            ),
+                            child: Text(
+                              time <= 1 ? "$time ano" : "$time anos",
+                              style: TextStyle(color: time == filterPastYears ? Colors.white : null),
+                            ),
+                          ),
                         ),
                       ),
+                  ],
+                ),
+              ),
+            if (showFilters)
+              // Future Matches Filter
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 130,
+                      child: const Text("Jogos Futuros:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 130,
-                  child: const Text("Similaridade:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-                SizedBox(
-                  width: 140,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: ElevatedButton(
-                      onPressed: () => filterMatchesBySimiliarity("early"),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        shadowColor: Colors.purple,
-                        backgroundColor: isEarly ? Colors.blueAccent : null,
+                    for (var minutes in futureMatchesMinutesList)
+                      SizedBox(
+                        width: 140,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: (8.0)),
+                          child: ElevatedButton(
+                            onPressed: () => filterUpcomingMatches(minutes),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shadowColor: Colors.purple,
+                              backgroundColor: minutes == filterFutureNextMinutes ? Colors.blueAccent : null,
+                            ),
+                            child: Text(
+                              humaniseTime(minutes),
+                              style: TextStyle(color: minutes == filterFutureNextMinutes ? Colors.white : null),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Text("Early", style: TextStyle(color: isEarly ? Colors.white : null)),
+                  ],
+                ),
+              ),
+            if (showFilters)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 130,
+                      child: const Text("Similaridade:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
-                  ),
-                ),
-                SizedBox(
-                  width: 140,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: ElevatedButton(
-                      onPressed: () => filterMatchesBySimiliarity("final"),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        shadowColor: Colors.purple,
-                        backgroundColor: isFinal ? Colors.blueAccent : null,
+                    ...[
+                      Odds.earlyOdds1,
+                      Odds.earlyOddsX,
+                      Odds.earlyOdds2,
+                      Odds.finalOdds1,
+                      Odds.finalOddsX,
+                      Odds.finalOdds2,
+                    ].map((oddsType) {
+                      final isSelected = selectedOddsMap[oddsType] ?? false;
+
+                      return SizedBox(
+                        width: 140,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            onPressed: () => filterMatchesBySimiliarity(oddsType),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shadowColor: Colors.purple,
+                              backgroundColor: isSelected ? Colors.blueAccent : null,
+                            ),
+                            child: Text(oddsType.name, style: TextStyle(color: isSelected ? Colors.white : null)),
+                          ),
+                        ),
+                      );
+                    }),
+                    SizedBox(
+                      width: 210,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: ElevatedButton(
+                          onPressed: () => filterMatchesBySameLeague(),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shadowColor: Colors.purple,
+                            backgroundColor: isSameLeague ? Colors.blueAccent : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
+                              const SizedBox(width: 2),
+                              Text("Mesma Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Text("Final", style: TextStyle(color: isFinal ? Colors.white : null)),
                     ),
-                  ),
-                ),
-                SizedBox(
-                  width: 280,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: ElevatedButton(
-                      onPressed: () => filterMatchesBySameLeague(),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        shadowColor: Colors.purple,
-                        backgroundColor: isSameLeague ? Colors.blueAccent : null,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
-                          const SizedBox(width: 2),
-                          Text("Mesma Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
-                        ],
+                    SizedBox(
+                      width: 210,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: LeagueFolderFilterButton(
+                          filter: filter,
+                          folders: folders,
+                          leagues: leagues,
+                          onAppyCallback: () => loadPastMatches(selectedMatchId, pivotRecordIndex),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                SizedBox(
-                  width: 280,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: LeagueFolderFilterButton(folders: folders, leagues: leagues),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Future Matches Carrousel
+              ),
+            // Future Matches Carousel
             SizedBox(
               height: 100,
               child: Listener(
@@ -460,7 +499,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: ElevatedButton(
-                          onPressed: () => loadPastMatches(match.id as int, index),
+                          onPressed: () {
+                            showFilters = false;
+                            loadPastMatches(match.id as int, index);
+                          },
                           style: OutlinedButton.styleFrom(
                             backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
                             shape: RoundedRectangleBorder(
@@ -523,9 +565,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
   // FILTERS
   void filterHistoryMatches(int time) {
     filterPastYears = time;
-    filter.startDate = DateTime.now().subtract(Duration(days: time * 365));
+    filter.minDate = DateTime.now().subtract(Duration(days: time * 365));
 
     loadPastMatches(selectedMatchId, pivotRecordIndex);
+
+    setState(() => filterPastYears = filterPastYears);
   }
 
   void filterUpcomingMatches(int duration) {
@@ -535,40 +579,41 @@ class _RecordListScreenState extends State<RecordListScreen> {
     loadFutureMatches();
   }
 
-  void filterMatchesBySimiliarity(String option) {
-    if (option == "early") {
-      isEarly = !isEarly;
-      int sqliteBool = isEarly ? 1 : 0;
-
-      filter
-        ..futureSameEarlyHome = sqliteBool
-        ..futureSameEarlyDraw = sqliteBool
-        ..futureSameEarlyAway = sqliteBool;
-    }
-
-    if (option == "final") {
-      isFinal = !isFinal;
-      int sqliteBool = isFinal ? 1 : 0;
-
-      filter
-        ..futureSameFinalHome = sqliteBool
-        ..futureSameFinalDraw = sqliteBool
-        ..futureSameFinalAway = sqliteBool;
-    }
-
+  void filterMatchesBySimiliarity(Odds oddType) {
     setState(() {
-      isEarly = isEarly;
-      isFinal = isFinal;
-      filter = filter;
-    });
+      switch (oddType) {
+        case Odds.earlyOdds1:
+          isEarly1 = !isEarly1;
+          break;
+        case Odds.earlyOddsX:
+          isEarlyX = !isEarlyX;
+          break;
+        case Odds.earlyOdds2:
+          isEarly2 = !isEarly2;
+          break;
+        case Odds.finalOdds1:
+          isFinal1 = !isFinal1;
+          break;
+        case Odds.finalOddsX:
+          isFinalX = !isFinalX;
+          break;
+        case Odds.finalOdds2:
+          isFinal2 = !isFinal2;
+          break;
+      }
 
-    loadPastMatches(selectedMatchId, pivotRecordIndex);
+      updateOddsFilter();
+
+      loadPastMatches(selectedMatchId, pivotRecordIndex);
+    });
   }
 
   void filterMatchesBySameLeague() {
     isSameLeague = !isSameLeague;
 
     filter.futureOnlySameLeague = isSameLeague ? 1 : 0;
+
+    filter.leagues.clear();
 
     setState(() {
       isSameLeague = isSameLeague;

@@ -1,13 +1,14 @@
 import "package:intl/intl.dart";
-import "package:odds_fetcher/models/folder.dart";
+import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/league.dart";
+import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/team.dart";
 
 class Filter {
   int? id;
   String filterName;
-  DateTime startDate;
-  DateTime endDate;
+  DateTime minDate;
+  DateTime maxDate;
 
   double? minEarlyHome;
   double? maxEarlyHome;
@@ -45,13 +46,13 @@ class Filter {
   int? futureMinAwayWinPercentage;
 
   List<Team>? teams;
-  List<League>? leagues;
-  List<Folder>? folders;
+  List<League> leagues;
+  List<Folder> folders;
 
   Filter({
     required this.filterName,
-    required this.startDate,
-    required this.endDate,
+    required this.minDate,
+    required this.maxDate,
     this.minEarlyHome,
     this.maxEarlyHome,
     this.minEarlyDraw,
@@ -84,18 +85,18 @@ class Filter {
     this.futureMinDrawPercentage,
     this.futureMinAwayWinPercentage,
     this.teams,
-    this.leagues,
-    this.folders,
+    required this.leagues,
+    required this.folders,
     this.futureNextMinutes,
   });
 
   factory Filter.fromMap(Map<String, dynamic> map) {
     return Filter(
       filterName: map["filterName"],
-      startDate: DateTime.parse(
+      minDate: DateTime.parse(
         "${map["minDateYear"]}-${map["minDateMonth"]}-${map["minDateDay"]} ${map["minDateHour"]}:${map["minDateMinute"]}:00",
       ),
-      endDate: DateTime.parse(
+      maxDate: DateTime.parse(
         "${map["maxDateYear"]}-${map["maxDateMonth"]}-${map["maxDateDay"]} ${map["maxDateHour"]}:${map["maxDateMinute"]}:00",
       ),
       minEarlyHome: map["minEarlyHome"],
@@ -139,42 +140,60 @@ class Filter {
 
   void update({int? pastYears, int? futureNextMinutes}) {
     if (pastYears != null) {
-      startDate = DateTime.now().subtract(Duration(days: pastYears * 365));
+      minDate = DateTime.now().subtract(Duration(days: pastYears * 365));
     }
 
-    endDate = DateTime.now();
+    maxDate = DateTime.now();
     this.futureNextMinutes = futureNextMinutes;
   }
 
-  String whereClause({double? early1, double? earlyX, double? early2, double? final1, double? finalX, double? final2}) {
+  List<int> leaguesIds() {
+    return leagues
+      .map((l) => l.id != null ? [l.id!] : l.ids ?? [])
+      .expand((idList) => idList)
+      .toList();
+  }
+
+  String whereClause({Record? futureRecord}) {
     late String whereClause = "WHERE finished = 1";
+
     whereClause +=
-        " AND (MatchDateYear > ${startDate.year} OR (MatchDateYear >= ${startDate.year} AND MatchDateMonth >= ${startDate.month} AND MatchDateDay >= ${startDate.day}))";
+        " AND (MatchDateYear > ${minDate.year} OR (MatchDateYear >= ${minDate.year} AND MatchDateMonth >= ${minDate.month} AND MatchDateDay >= ${minDate.day}))";
     whereClause +=
-        " AND MatchDateYear <= ${endDate.year} AND MatchDateMonth <= ${endDate.month} AND MatchDateDay <= ${endDate.day}";
+        " AND (MatchDateYear < ${maxDate.year} OR (MatchDateYear = ${maxDate.year} AND MatchDateMonth <= ${maxDate.month} AND MatchDateDay <= ${maxDate.day}))";
 
-    if (futureSameEarlyHome == 1 && early1 != null) {
-      whereClause += " AND earlyOdds1 = $early1";
+    if (futureSameEarlyHome == 1 && futureRecord?.earlyOdds1 != null) {
+      whereClause += " AND earlyOdds1 = ${futureRecord?.earlyOdds1}";
     }
 
-    if (futureSameEarlyDraw == 1 && earlyX != null) {
-      whereClause += " AND earlyOddsX = $earlyX";
+    if (futureSameEarlyDraw == 1 && futureRecord?.earlyOddsX != null) {
+      whereClause += " AND earlyOddsX = ${futureRecord?.earlyOddsX}";
     }
 
-    if (futureSameEarlyAway == 1 && early2 != null) {
-      whereClause += " AND earlyOdds2 = $early2";
+    if (futureSameEarlyAway == 1 && futureRecord?.earlyOdds2 != null) {
+      whereClause += " AND earlyOdds2 = ${futureRecord?.earlyOdds2}";
     }
 
-    if (futureSameFinalHome == 1 && final1 != null) {
-      whereClause += " AND finalOdds1 = $final1";
+    if (futureSameFinalHome == 1 && futureRecord?.finalOdds1 != null) {
+      whereClause += " AND finalOdds1 = ${futureRecord?.finalOdds1}";
     }
 
-    if (futureSameFinalDraw == 1 && finalX != null) {
-      whereClause += " AND finalOddsX = $finalX";
+    if (futureSameFinalDraw == 1 && futureRecord?.finalOddsX != null) {
+      whereClause += " AND finalOddsX = ${futureRecord?.finalOddsX}";
     }
 
-    if (futureSameFinalAway == 1 && final2 != null) {
-      whereClause += " AND finalOdds2 = $final2";
+    if (futureSameFinalAway == 1 && futureRecord?.finalOdds2 != null) {
+      whereClause += " AND finalOdds2 = ${futureRecord?.finalOdds2}";
+    }
+
+    if (futureOnlySameLeague == 1 && futureRecord?.league.id != null) {
+      whereClause += " AND leagueId = ${futureRecord?.league.id}";
+    } else if (leagues.isNotEmpty) {
+      whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
+    }
+
+    if (folders.isNotEmpty) {
+      whereClause += " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
     }
 
     return whereClause;

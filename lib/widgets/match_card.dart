@@ -11,64 +11,6 @@ class MatchCard extends StatelessWidget {
 
   const MatchCard({super.key, required this.records, required this.pivotRecord});
 
-  Widget matchOdds(Record match) {
-    double earlyHome = match.earlyOdds1 ?? 0.0;
-    double earlyDraw = match.earlyOddsX ?? 0.0;
-    double earlyAway = match.earlyOdds2 ?? 0.0;
-    double finalHome = match.finalOdds1 ?? 0.0;
-    double finalDraw = match.finalOddsX ?? 0.0;
-    double finalAway = match.finalOdds2 ?? 0.0;
-
-    Widget oddsChip(double value, Color color) {
-      return Chip(
-        backgroundColor: color,
-        label: Text(value.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold)),
-      );
-    }
-
-    Widget oddsRow(double homeOdds, double drawOdds, double awayOdds) {
-      double lowestOdds = [homeOdds, drawOdds, awayOdds].reduce(min);
-      double highestOdds = [homeOdds, drawOdds, awayOdds].reduce(max);
-
-      Color color(double odds) => switch (odds) {
-        _ when homeOdds == drawOdds && homeOdds == awayOdds => Colors.yellow.shade300,
-        _ when odds == lowestOdds => Colors.green.shade300,
-        _ when odds == highestOdds => Colors.red.shade300,
-        _ => Colors.grey.shade200,
-      };
-
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          oddsChip(homeOdds, color(homeOdds)),
-          oddsChip(drawOdds, color(drawOdds)),
-          oddsChip(awayOdds, color(awayOdds)),
-        ],
-      );
-    }
-
-    return Column(
-      children: [
-        oddsRow(earlyHome, earlyDraw, earlyAway),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Center(child: Icon(Icons.home, size: 16)),
-              Center(child: Icon(Icons.close, size: 16)),
-              Center(child: Icon(Icons.public, size: 16)),
-              //Text("x", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-
-        oddsRow(finalHome, finalDraw, finalAway),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -145,9 +87,9 @@ class MatchCard extends StatelessWidget {
 
           return Row(
             children: [
-              Expanded(child: container(child: MatchDetails(pivotRecord: pivotRecord))),
+              Expanded(child: container(child: MatchDetails(match: pivotRecord))),
               SizedBox(width: screenWidth * 0.01),
-              container(child: matchOdds(pivotRecord)),
+              container(child: MatchOdds(match: pivotRecord)),
               SizedBox(width: screenWidth * 0.01),
               container(child: scorePercentageChild),
               SizedBox(width: screenWidth * 0.01),
@@ -235,9 +177,9 @@ class MatchCard extends StatelessWidget {
 }
 
 class MatchDetails extends StatelessWidget {
-  const MatchDetails({super.key, required this.pivotRecord});
+  const MatchDetails({super.key, required this.match});
 
-  final Record pivotRecord;
+  final Record match;
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +187,7 @@ class MatchDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          pivotRecord.league.name,
+          match.league.name,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -254,20 +196,85 @@ class MatchDetails extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Expanded(
-              child: Text(pivotRecord.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center),
+              child: Text(match.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center),
             ),
             const Text("vs", style: TextStyle(fontSize: 14)),
             Expanded(
-              child: Text(pivotRecord.awayTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
+              child: Text(match.awayTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
-          DateFormat("EEEE, d MMM yyyy - HH:mm", "pt_BR").format(pivotRecord.matchDate),
+          DateFormat("EEEE, d MMM yyyy - HH:mm", "pt_BR").format(match.matchDate),
           style: const TextStyle(color: Colors.grey, fontSize: 14),
           textAlign: TextAlign.center,
         ),
+      ],
+    );
+  }
+}
+
+class MatchOdds extends StatelessWidget {
+  const MatchOdds({super.key, required this.match});
+
+  final Record match;
+
+  @override
+  Widget build(BuildContext context) {
+    double earlyHome = match.earlyOdds1 ?? 0.0;
+    double earlyDraw = match.earlyOddsX ?? 0.0;
+    double earlyAway = match.earlyOdds2 ?? 0.0;
+    double finalHome = match.finalOdds1 ?? 0.0;
+    double finalDraw = match.finalOddsX ?? 0.0;
+    double finalAway = match.finalOdds2 ?? 0.0;
+
+    Widget oddsChip(double value, Color color) {
+      return Chip(
+        backgroundColor: color,
+        label: Text(value.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold)),
+      );
+    }
+
+    Widget oddsRow(double homeOdds, double drawOdds, double awayOdds) {
+      double lowestOdds = [homeOdds, drawOdds, awayOdds].reduce(min);
+      double highestOdds = [homeOdds, drawOdds, awayOdds].reduce(max);
+
+      Color color(double odds) => switch (odds) {
+        _ when homeOdds == drawOdds && homeOdds == awayOdds => Colors.yellow.shade300,
+        _ when odds == lowestOdds => Colors.green.shade300,
+        _ when odds == highestOdds => Colors.red.shade300,
+        _ => Colors.grey.shade200,
+      };
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          oddsChip(homeOdds, color(homeOdds)),
+          oddsChip(drawOdds, color(drawOdds)),
+          oddsChip(awayOdds, color(awayOdds)),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        oddsRow(earlyHome, earlyDraw, earlyAway),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Center(child: Icon(Icons.home, size: 16)),
+              Center(child: Icon(Icons.close, size: 16)),
+              Center(child: Icon(Icons.public, size: 16)),
+              //Text("x", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+
+        oddsRow(finalHome, finalDraw, finalAway),
       ],
     );
   }

@@ -67,7 +67,7 @@ class Record {
         map["matchDateHour"] ?? 0,
         map["matchDateMinute"] ?? 0,
       ),
-      league: League.fromMap(map),
+      league: League(id: map["leagueId"], code: map["leagueCode"], name: map["leagueName"]),
       homeTeam: Team(id: map["homeTeamId"], name: map["homeTeamName"]),
       awayTeam: Team(id: map["awayTeamId"], name: map["awayTeamName"]),
       earlyOdds1: map["earlyOdds1"] != null ? double.tryParse(map["earlyOdds1"]) : null,
@@ -169,5 +169,26 @@ class Record {
       "underFull": ((underFull / totalMatches) * 100).roundToDouble(),
       "overFull": ((overFull / totalMatches) * 100).roundToDouble(),
     };
+  }
+}
+
+enum Odds { earlyOdds1, earlyOddsX, earlyOdds2, finalOdds1, finalOddsX, finalOdds2 }
+
+extension OddsExtension on Odds {
+  String get name {
+    switch (this) {
+      case Odds.earlyOdds1:
+        return "Early Home";
+      case Odds.earlyOddsX:
+        return "Early Draw";
+      case Odds.earlyOdds2:
+        return "Early Away";
+      case Odds.finalOdds1:
+        return "Final Home";
+      case Odds.finalOddsX:
+        return "Final Draw";
+      case Odds.finalOdds2:
+        return "Final Away";
+    }
   }
 }

@@ -92,29 +92,14 @@ class DatabaseService {
     return result.map((row) => Record.fromMap(row)).toList();
   }
 
-  static Future<List<Record>> fetchRecords({
-    Filter? filter,
-    double? early1,
-    double? earlyX,
-    double? early2,
-    double? final1,
-    double? finalX,
-    double? final2,
-  }) async {
+  static Future<List<Record>> fetchRecords({Filter? filter, Record? futureRecord}) async {
     final db = await database;
     late String whereClause;
 
     if (filter == null) {
       whereClause = "WHERE 1 = 1";
     } else {
-      whereClause = filter.whereClause(
-        early1: early1,
-        earlyX: earlyX,
-        early2: early2,
-        final1: final1,
-        finalX: finalX,
-        final2: final2,
-      );
+      whereClause = filter.whereClause(futureRecord: futureRecord);
     }
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
@@ -225,7 +210,7 @@ class DatabaseService {
   static Future<List<League>> fetchLeagues() async {
     final db = await database;
 
-    final result = await db.query("Leagues", orderBy: "leagueName");
+    final result = await db.rawQuery("SELECT GROUP_CONCAT(id, ',') ids, leagueCode, GROUP_CONCAT(leagueName, ',') AS leagueName FROM Leagues GROUP BY leagueCode ORDER BY leagueCode;");
 
     return result.map((row) => League.fromMap(row)).toList();
   }
@@ -233,30 +218,7 @@ class DatabaseService {
   static Future<List<Folder>> fetchFolders() async {
     final db = await database;
 
-    //final result = await db.query("Folders", orderBy: "folderName");
-    final List<Map<String, dynamic>> result = [
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-      {"id": 1, "folderName": "Test"},
-    ];
+    final result = await db.query("Folders", orderBy: "folderName");
 
     return result.map((row) => Folder.fromMap(row)).toList();
   }

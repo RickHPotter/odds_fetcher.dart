@@ -24,7 +24,7 @@ class PastMachDataTable extends StatelessWidget {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No past matches found."));
+            return const Center(child: Text("Nenhum jogo passado encontrado com os critérios informados."));
           }
 
           final records = snapshot.data!;

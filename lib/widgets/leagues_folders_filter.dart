@@ -226,6 +226,7 @@ class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
         );
       },
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.folder, color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
           const SizedBox(width: 2),

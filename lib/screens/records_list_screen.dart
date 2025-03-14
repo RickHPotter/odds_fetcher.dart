@@ -249,7 +249,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 // Fetch Controls
                 SizedBox(
                   width: 400,
-                  height: 140,
+                  height: 125,
                   child:
                       isFetching
                           ? Padding(
@@ -309,18 +309,17 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 5),
             // Past Matches Filter
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: 180,
+                  width: 130,
                   child: const Text("Jogos Passados:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 for (var time in pastYearsList)
                   SizedBox(
-                    width: 180,
+                    width: 140,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: ElevatedButton(
@@ -339,18 +338,18 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
             // Future Matches Filter
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: 180,
+                  width: 130,
                   child: const Text("Jogos Futuros:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 for (var minutes in futureMatchesMinutesList)
                   SizedBox(
-                    width: 180,
+                    width: 140,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: (8.0)),
                       child: ElevatedButton(
@@ -369,16 +368,16 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: 180,
+                  width: 130,
                   child: const Text("Similaridade:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 SizedBox(
-                  width: 180,
+                  width: 140,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: ElevatedButton(
@@ -393,7 +392,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
                 ),
                 SizedBox(
-                  width: 180,
+                  width: 140,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: ElevatedButton(
@@ -408,7 +407,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
                 ),
                 SizedBox(
-                  width: 180,
+                  width: 280,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: ElevatedButton(
@@ -419,9 +418,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         backgroundColor: isSameLeague ? Colors.blueAccent : null,
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
+                          const SizedBox(width: 2),
                           Text("Mesma Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
                         ],
                       ),
@@ -429,7 +429,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
                 ),
                 SizedBox(
-                  width: 180,
+                  width: 280,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: LeagueFolderFilterButton(folders: folders, leagues: leagues),
@@ -437,7 +437,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
             // Future Matches Carrousel
             SizedBox(
               height: 100,
@@ -507,7 +507,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
             if (selectedMatchId != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 15.0),

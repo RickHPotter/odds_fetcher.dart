@@ -1,4 +1,3 @@
-import "dart:ui";
 import "dart:io";
 import "package:flutter/material.dart";
 import "package:odds_fetcher/screens/records_list_screen.dart";
@@ -54,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Row(
         children: [
           NavigationRail(
+            elevation: 2,
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) {
               setState(() => selectedIndex = index);
@@ -63,7 +63,12 @@ class _MyHomePageState extends State<MyHomePage> {
               NavigationRailDestination(icon: Icon(Icons.portrait), label: Text("About")),
             ],
           ),
-          Expanded(child: IndexedStack(index: selectedIndex, children: const [RecordListScreen(), Text("Hello")])),
+          Expanded(
+            child: IndexedStack(
+              index: selectedIndex,
+              children: [const RecordListScreen(), Text(MediaQuery.of(context).size.toString())],
+            ),
+          ),
         ],
       ),
     );

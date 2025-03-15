@@ -72,7 +72,6 @@ class RecordFetcher {
       _progressController.add(((completedSteps / totalFetchTasks) * 100).toInt());
 
       if (isCancelledCallback()) {
-        debugPrint("Fetching aborted by user.");
         break;
       }
     }

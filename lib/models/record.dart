@@ -191,4 +191,21 @@ extension OddsExtension on Odds {
         return "Final Away";
     }
   }
+
+  String get shortName {
+    switch (this) {
+      case Odds.earlyOdds1:
+        return "E1";
+      case Odds.earlyOddsX:
+        return "EX";
+      case Odds.earlyOdds2:
+        return "E2";
+      case Odds.finalOdds1:
+        return "F1";
+      case Odds.finalOddsX:
+        return "FX";
+      case Odds.finalOdds2:
+        return "F2";
+    }
+  }
 }

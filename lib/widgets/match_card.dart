@@ -180,30 +180,28 @@ class MatchDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           match.league.name,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Expanded(
               child: Text(match.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center),
             ),
-            const Text("vs", style: TextStyle(fontSize: 14)),
+            const Text("vs", style: TextStyle(fontSize: 12)),
             Expanded(
               child: Text(match.awayTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
             ),
           ],
         ),
-        const SizedBox(height: 8),
         Text(
           DateFormat("EEEE, d MMM yyyy - HH:mm", "pt_BR").format(match.matchDate),
-          style: const TextStyle(color: Colors.grey, fontSize: 14),
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
           textAlign: TextAlign.center,
         ),
       ],

@@ -8,14 +8,14 @@ class LeaguesFoldersFilterButton extends StatefulWidget {
   final Filter filter;
   final List<League> leagues;
   final List<Folder> folders;
-  final void Function() onAppyCallback;
+  final void Function() onApplyCallback;
 
   const LeaguesFoldersFilterButton({
     super.key,
     required this.filter,
     required this.leagues,
     required this.folders,
-    required this.onAppyCallback,
+    required this.onApplyCallback,
   });
 
   @override
@@ -48,17 +48,17 @@ class _LeaguesFoldersFilterButtonState extends State<LeaguesFoldersFilterButton>
               folders: widget.folders,
               selectedLeagues: selectedLeagues,
               selectedFolders: selectedFolders,
-              onAppyCallback: widget.onAppyCallback,
+              onApplyCallback: widget.onApplyCallback,
             );
           },
         );
       },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Icon(Icons.folder, color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
           Text(
-            "Ligas & Pastas",
+            "Ligas",
             style: TextStyle(color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
           ),
         ],
@@ -73,7 +73,7 @@ class LeaguesFoldersFilterModal extends StatefulWidget {
   final List<Folder> folders;
   final List<League> selectedLeagues;
   final List<Folder> selectedFolders;
-  final void Function() onAppyCallback;
+  final void Function() onApplyCallback;
 
   const LeaguesFoldersFilterModal({
     super.key,
@@ -82,7 +82,7 @@ class LeaguesFoldersFilterModal extends StatefulWidget {
     required this.folders,
     required this.selectedLeagues,
     required this.selectedFolders,
-    required this.onAppyCallback,
+    required this.onApplyCallback,
   });
 
   @override
@@ -96,7 +96,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onAppyCallback();
+      widget.onApplyCallback();
     });
   }
 
@@ -118,7 +118,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.height * 0.35,
+            height: MediaQuery.of(context).size.height * 0.40,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
               child: Column(
@@ -176,7 +176,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                             onPressed: () {
                               setStates(() {
                                 widget.selectedLeagues.clear();
-                                widget.selectedLeagues.clear();
+                                widget.selectedFolders.clear();
                                 selectedNode = null;
                               });
                             },
@@ -193,7 +193,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                             label: const Text("Aplicar", style: TextStyle(color: Colors.black)),
                             onPressed: () {
                               Navigator.pop(context);
-                              widget.onAppyCallback();
+                              widget.onApplyCallback();
                             },
                           ),
                         ),
@@ -224,6 +224,8 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
       children: [
         Autocomplete<T>(
           optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) return [];
+
             return items
                 .where((item) => selectedItems.contains(item) == false)
                 .where((item) => getItemName(item).toLowerCase().contains(textEditingValue.text.toLowerCase()))

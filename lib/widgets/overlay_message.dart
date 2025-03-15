@@ -40,8 +40,8 @@ void showOverlayMessage(
   final overlayEntry = OverlayEntry(
     builder:
         (BuildContext context) => Positioned(
-          top: MediaQuery.of(context).size.height * 0.02,
-          left: MediaQuery.of(context).size.width * 0.5 - 150,
+          top: MediaQuery.of(context).size.height * 0.007,
+          left: MediaQuery.of(context).size.width * 0.75,
           child: Material(
             color: Colors.transparent,
             child: AnimatedOverlayMessage(content: message, color: color, icon: icon),
@@ -91,7 +91,7 @@ class _AnimatedOverlayMessageState extends State<AnimatedOverlayMessage> with Si
     return FadeTransition(
       opacity: _controller!.drive(CurveTween(curve: Curves.easeInOut)),
       child: Container(
-        width: 300,
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.25),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: widget.color,

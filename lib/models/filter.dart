@@ -4,6 +4,21 @@ import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/team.dart";
 
+enum MinMaxOdds {
+  minEarlyHome,
+  maxEarlyHome,
+  minEarlyDraw,
+  maxEarlyDraw,
+  minEarlyAway,
+  maxEarlyAway,
+  minFinalHome,
+  maxFinalHome,
+  minFinalDraw,
+  maxFinalDraw,
+  minFinalAway,
+  maxFinalAway,
+}
+
 class Filter {
   int? id;
   String filterName;
@@ -23,17 +38,17 @@ class Filter {
   double? minFinalAway;
   double? maxFinalAway;
 
-  int? minGoalsFirstHalf;
-  int? maxGoalsFirstHalf;
-  int? minGoalsSecondHalf;
-  int? maxGoalsSecondHalf;
-  int? minGoalsFullTime;
-  int? maxGoalsFullTime;
+  int? minGoalsFirstHalf; // TODO: Missing
+  int? maxGoalsFirstHalf; // TODO: Missing
+  int? minGoalsSecondHalf; // TODO: Missing
+  int? maxGoalsSecondHalf; // TODO: Missing
+  int? minGoalsFullTime; // TODO: Missing
+  int? maxGoalsFullTime; // TODO: Missing
 
   int? futureNextMinutes;
-  int? futureDismissNoEarlyOdds;
-  int? futureDismissNoFinalOdds;
-  int? futureDismissNoHistory;
+  int? futureDismissNoEarlyOdds; // TODO: Missing
+  int? futureDismissNoFinalOdds; // TODO: Missing
+  int? futureDismissNoHistory; // TODO: Missing
   int? futureOnlySameLeague;
   int? futureSameEarlyHome;
   int? futureSameEarlyDraw;
@@ -41,11 +56,11 @@ class Filter {
   int? futureSameFinalHome;
   int? futureSameFinalDraw;
   int? futureSameFinalAway;
-  int? futureMinHomeWinPercentage;
-  int? futureMinDrawPercentage;
-  int? futureMinAwayWinPercentage;
+  int? futureMinHomeWinPercentage; // TODO: Missing
+  int? futureMinDrawPercentage; // TODO: Missing
+  int? futureMinAwayWinPercentage; // TODO: Missing
 
-  List<Team>? teams;
+  List<Team>? teams; // TODO: Missing
   List<League> leagues;
   List<Folder> folders;
 
@@ -138,6 +153,36 @@ class Filter {
     );
   }
 
+  bool anySpecificOddsPresent() {
+    return minEarlyHome != null ||
+        maxEarlyHome != null ||
+        minEarlyDraw != null ||
+        maxEarlyDraw != null ||
+        minEarlyAway != null ||
+        maxEarlyAway != null ||
+        minFinalHome != null ||
+        maxFinalHome != null ||
+        minFinalDraw != null ||
+        maxFinalDraw != null ||
+        minFinalAway != null ||
+        maxFinalAway != null;
+  }
+
+  void removeAllSpecificOdds() {
+    minEarlyHome = null;
+    maxEarlyHome = null;
+    minEarlyDraw = null;
+    maxEarlyDraw = null;
+    minEarlyAway = null;
+    maxEarlyAway = null;
+    minFinalHome = null;
+    maxFinalHome = null;
+    minFinalDraw = null;
+    maxFinalDraw = null;
+    minFinalAway = null;
+    maxFinalAway = null;
+  }
+
   void update({int? pastYears, int? futureNextMinutes}) {
     if (pastYears != null) {
       minDate = DateTime.now().subtract(Duration(days: pastYears * 365));
@@ -148,10 +193,9 @@ class Filter {
   }
 
   List<int> leaguesIds() {
-    return leagues
-      .map((l) => l.id != null ? [l.id!] : l.ids ?? [])
-      .expand((idList) => idList)
-      .toList();
+    final Iterable<List<int>> idsList = leagues.map((l) => l.id != null ? [l.id!] : l.ids ?? []);
+
+    return idsList.expand((idList) => idList).toList();
   }
 
   String whereClause({Record? futureRecord}) {
@@ -193,7 +237,8 @@ class Filter {
     }
 
     if (folders.isNotEmpty) {
-      whereClause += " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
+      whereClause +=
+          " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
     }
 
     return whereClause;

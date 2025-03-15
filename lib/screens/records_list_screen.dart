@@ -63,7 +63,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   void updateOddsFilter() {
     selectedOddsMap = {
@@ -96,6 +95,26 @@ class _RecordListScreenState extends State<RecordListScreen> {
     }
 
     startFetchingFuture();
+  }
+
+  void updateFutureSameOddsTypes() {
+    if (filter.anySpecificOddsPresent()) {
+      isEarly1 = filter.minEarlyHome != null ? false : isFinal1;
+      isEarlyX = filter.minEarlyDraw != null ? false : isFinalX;
+      isEarly2 = filter.minEarlyAway != null ? false : isFinal2;
+      isFinal1 = filter.minFinalHome != null ? false : isEarly1;
+      isFinalX = filter.minFinalDraw != null ? false : isEarlyX;
+      isFinal2 = filter.minFinalAway != null ? false : isEarly2;
+    }
+
+    setState(() {
+      isEarly1 = isEarly1;
+      isEarlyX = isEarlyX;
+      isEarly2 = isEarly2;
+      isFinal1 = isFinal1;
+      isFinalX = isFinalX;
+      isFinal2 = isFinal2;
+    });
   }
 
   void loadFutureMatches() async {
@@ -211,152 +230,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldMessengerKey,
-      persistentFooterButtons: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Filtro: ${filter.filterName}",
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-            ),
-          ],
-        ),
-      ],
-      body: Column(
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
         children: [
-          // Header and Controls
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    filter.filterName.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-                  ),
-                  Text(
-                    "${humaniseNumber(pivotRecords.length)} jogos futuros encontrados.",
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                  ),
-                  FutureBuilder<List<Record>>(
-                    future: records,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Text(
-                          "Carregando jogos passados...",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                        );
-                      }
-                      if (snapshot.hasError) {
-                        return const Text(
-                          "Erro ao carregar jogos passados.",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-                        );
-                      }
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Text(
-                          "0 jogos passados encontrados.",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                        );
-                      }
-                      return Text(
-                        "${humaniseNumber(snapshot.data!.length)} jogos passados encontrados.",
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              // Fetch Controls
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: () => setState(() => showFilters = !showFilters),
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                    ),
-                    child: Text(showFilters ? "Esconder Filtros" : "Mostrar Filtros"),
-                  ),
-                ),
-              ),
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    alignment: WrapAlignment.end,
-                    children: [
-                      if (isFetching)
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.2,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 12.0),
-                            child: Column(
-                              children: [
-                                LinearProgressIndicator(value: progress / 100),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          isCancelled = true;
-                                          isFetching = false;
-                                        });
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                      ),
-                                      child: const Icon(Icons.cancel, size: 16, color: Colors.red),
-                                    ),
-                                    Text(
-                                      currentDate,
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {},
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                      ),
-                                      child: Text("$progress%"),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ElevatedButton(
-                              onPressed: startFetching,
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                              ),
-                              child: const Text("Buscar Jogos"),
-                            ),
-                            ElevatedButton(
-                              onPressed: startFetchingFuture,
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                              ),
-                              child: const Text("Buscar Jogos Futuros"),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
           if (showFilters)
             // Past Matches Filter
             Padding(
@@ -364,7 +241,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Icon(Icons.history),
+                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
                   for (var time in pastYearsList)
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.08,
@@ -394,7 +271,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Icon(Icons.update),
+                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.update)),
                   for (var minutes in futureMatchesMinutesList)
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.08,
@@ -424,7 +301,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Icon(Icons.tune),
+                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.tune)),
                   ...[
                     Odds.earlyOdds1,
                     Odds.earlyOddsX,
@@ -434,8 +311,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     Odds.finalOdds2,
                   ].map((oddsType) {
                     final isSelected = selectedOddsMap[oddsType] ?? false;
-                    final String time = oddsType.name.split(" ")[0];
-                    final String type = oddsType.name.split(" ")[1];
 
                     return SizedBox(
                       width: MediaQuery.of(context).size.width * 0.08,
@@ -448,10 +323,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             shadowColor: Colors.purple,
                             backgroundColor: isSelected ? Colors.blueAccent : null,
                           ),
-                          child: Column(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              Text(time, style: TextStyle(color: isSelected ? Colors.white : null)),
-                              Text(type, style: TextStyle(color: isSelected ? Colors.white : null)),
+                              Icon(Icons.dehaze, color: isSelected ? Colors.white : null),
+                              Text(oddsType.shortName, style: TextStyle(color: isSelected ? Colors.white : null)),
                             ],
                           ),
                         ),
@@ -462,11 +338,32 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     width: MediaQuery.of(context).size.width * 0.08,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: OddsFilterButton(
+                      child: ElevatedButton(
+                        onPressed: () => filterMatchesBySameLeague(),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shadowColor: Colors.purple,
+                          backgroundColor: isSameLeague ? Colors.blueAccent : null,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
+                            Text("Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.08,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: LeaguesFoldersFilterButton(
                         filter: filter,
                         folders: folders,
                         leagues: leagues,
-                        onAppyCallback: () {
+                        onApplyCallback: () {
                           loadPastMatches(selectedMatchId, pivotRecordIndex);
                           if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
                             setState(() => isSameLeague = false);
@@ -476,39 +373,15 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.12,
+                    width: MediaQuery.of(context).size.width * 0.08,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: ElevatedButton(
-                        onPressed: () => filterMatchesBySameLeague(),
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          shadowColor: Colors.purple,
-                          backgroundColor: isSameLeague ? Colors.blueAccent : null,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
-                            Text("Mesma Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.12,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: LeaguesFoldersFilterButton(
+                      child: OddsFilterButton(
                         filter: filter,
-                        folders: folders,
-                        leagues: leagues,
-                        onAppyCallback: () {
+                        onApplyCallback: () {
+                          updateFutureSameOddsTypes();
+                          loadFutureMatches();
                           loadPastMatches(selectedMatchId, pivotRecordIndex);
-                          if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
-                            setState(() => isSameLeague = false);
-                          }
                         },
                       ),
                     ),
@@ -517,6 +390,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               ),
             ),
           // Future Matches Carousel
+          SizedBox(height: MediaQuery.of(context).size.height * 0.015),
           SizedBox(
             height: 100,
             child: Listener(
@@ -595,6 +469,140 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int]),
             ),
           PastMachDataTable(records: records),
+
+          const Divider(),
+          // Footer and Controls
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  ),
+                  onPressed: () {},
+                  child: Text(
+                    filter.filterName.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${humaniseNumber(pivotRecords.length)} jogos futuros encontrados.",
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                    ),
+                    FutureBuilder<List<Record>>(
+                      future: records,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Text(
+                            "Carregando jogos passados...",
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return const Text(
+                            "Erro ao carregar jogos passados.",
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Text(
+                            "0 jogos passados encontrados.",
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                          );
+                        }
+                        return Text(
+                          "${humaniseNumber(snapshot.data!.length)} jogos passados encontrados.",
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                // Fetch Controls
+                ElevatedButton(
+                  onPressed: () => setState(() => showFilters = !showFilters),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  ),
+                  child: Text(showFilters ? "Esconder Filtros" : "Mostrar Filtros"),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child:
+                      isFetching
+                          ? SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.32,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: Column(
+                                children: [
+                                  LinearProgressIndicator(value: progress / 100),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            isCancelled = true;
+                                            isFetching = false;
+                                          });
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                        ),
+                                        child: const Icon(Icons.cancel, size: 16, color: Colors.red),
+                                      ),
+                                      Text(
+                                        currentDate,
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {},
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                        ),
+                                        child: Text("$progress%"),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          : Row(
+                            children: [
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.15,
+                                child: ElevatedButton(
+                                  onPressed: startFetching,
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                  ),
+                                  child: const Text("Buscar Jogos Passados"),
+                                ),
+                              ),
+                              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.15,
+                                child: ElevatedButton(
+                                  onPressed: startFetchingFuture,
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                  ),
+                                  child: const Text("Buscar Jogos Futuros"),
+                                ),
+                              ),
+                            ],
+                          ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

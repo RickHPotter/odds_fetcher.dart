@@ -44,48 +44,81 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class _MyHomePageState extends State<MyHomePage> {
   int selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      key: _scaffoldMessengerKey,
+      body: Column(
         children: [
-          NavigationRail(
+          Material(
             elevation: 4,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() => selectedIndex = index);
-            },
-            destinations: const [
-              NavigationRailDestination(icon: Icon(Icons.home), label: Text("Listagem de Registros")),
-              NavigationRailDestination(icon: Icon(Icons.portrait), label: Text("About")),
-            ],
-            leading: Column(
-              children: [
-                const Text("Odds", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const Text("Fetcher", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              ],
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Divider(height: MediaQuery.of(context).size.height * 0.72),
-                Padding(
-                  padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.03),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset("assets/images/logo.jpg", width: 42, height: 42, fit: BoxFit.cover),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+              child: Row(
+                children: [
+                  Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.asset("assets/images/logo.jpg", width: 40, height: 40, fit: BoxFit.cover),
+                        ),
+                      ),
+                      Text("Odds Fetcher", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        ...[
+                          {"icon": Icons.home, "label": "Listagem de Registros"},
+                          {"icon": Icons.portrait, "label": "About"},
+                        ].asMap().entries.map((entry) {
+                          int index = entry.key;
+                          final item = entry.value;
+
+                          return GestureDetector(
+                            onTap: () => setState(() => selectedIndex = index),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  item["icon"] as IconData,
+                                  color: selectedIndex == index ? Colors.blue : Colors.grey,
+                                ),
+                                Text(
+                                  item["label"] as String,
+                                  style: TextStyle(color: selectedIndex == index ? Colors.blue : Colors.grey),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+
+          // Main Content
           Expanded(
             child: IndexedStack(
               index: selectedIndex,
-              children: [const RecordListScreen(), Text(MediaQuery.of(context).size.toString())],
+              children: [
+                const RecordListScreen(),
+                Padding(padding: const EdgeInsets.all(16.0), child: Text(MediaQuery.of(context).size.toString())),
+              ],
             ),
           ),
         ],

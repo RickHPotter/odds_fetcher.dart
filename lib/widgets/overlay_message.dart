@@ -40,7 +40,7 @@ void showOverlayMessage(
   final overlayEntry = OverlayEntry(
     builder:
         (BuildContext context) => Positioned(
-          top: 10,
+          top: MediaQuery.of(context).size.height * 0.02,
           left: MediaQuery.of(context).size.width * 0.5 - 150,
           child: Material(
             color: Colors.transparent,

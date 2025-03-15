@@ -14,21 +14,31 @@ int parseInteger(String value) {
   return 0;
 }
 
-String humaniseTime(int minutes) {
+String humaniseTime(int minutes, {bool short = false}) {
   const int hour = 60;
   const int day = hour * 24;
 
+  final String minuteStr;
+  final String hourStr;
+  final String dayStr;
+
+  if (short) {
+    minuteStr = "M";
+    hourStr = "H";
+    dayStr = "D";
+  } else {
+    minuteStr = "minutos";
+    hourStr = "hora(s)";
+    dayStr = "dia(s)";
+  }
+
   switch (minutes) {
     case < hour:
-      return "$minutes minutos";
-    case hour:
-      return "1 hora";
+      return "$minutes $minuteStr";
     case < day:
-      return "${minutes ~/ 60} horas";
-    case day:
-      return "1 dia";
+      return "${minutes ~/ 60} $hourStr";
     default:
-      return "${minutes ~/ (60 * 24)} dias";
+      return "${minutes ~/ (60 * 24)} $dayStr";
   }
 }
 

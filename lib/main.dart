@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Row(
         children: [
           NavigationRail(
-            elevation: 2,
+            elevation: 4,
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) {
               setState(() => selectedIndex = index);
@@ -62,6 +62,25 @@ class _MyHomePageState extends State<MyHomePage> {
               NavigationRailDestination(icon: Icon(Icons.home), label: Text("Listagem de Registros")),
               NavigationRailDestination(icon: Icon(Icons.portrait), label: Text("About")),
             ],
+            leading: Column(
+              children: [
+                const Text("Odds", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const Text("Fetcher", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Divider(height: MediaQuery.of(context).size.height * 0.72),
+                Padding(
+                  padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.03),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset("assets/images/logo.jpg", width: 42, height: 42, fit: BoxFit.cover),
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: IndexedStack(

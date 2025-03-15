@@ -10,6 +10,7 @@ import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
 import "package:odds_fetcher/widgets/match_card.dart";
+import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
 import "package:odds_fetcher/widgets/past_matches_datatable.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
 import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
@@ -270,76 +271,105 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ],
               ),
               // Fetch Controls
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.25,
-                height: MediaQuery.of(context).size.width * 0.08,
-                child:
-                    isFetching
-                        ? Column(
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => showFilters = !showFilters),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                    ),
+                    child: Text(showFilters ? "Esconder Filtros" : "Mostrar Filtros"),
+                  ),
+                ),
+              ),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      if (isFetching)
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.2,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: Column(
+                              children: [
+                                LinearProgressIndicator(value: progress / 100),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          isCancelled = true;
+                                          isFetching = false;
+                                        });
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                      ),
+                                      child: const Icon(Icons.cancel, size: 16, color: Colors.red),
+                                    ),
+                                    Text(
+                                      currentDate,
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {},
+                                      style: OutlinedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                      ),
+                                      child: Text("$progress%"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(currentDate, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.001),
-                            LinearProgressIndicator(value: progress / 100),
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.001),
-                            Text("$progress%"),
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.001),
-                            ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  isCancelled = true;
-                                  isFetching = false;
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                              ),
-                              child: const Text("Abortar", style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
-                        )
-                        : Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () => setState(() => showFilters = !showFilters),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-                              ),
-                              child: Text(showFilters ? "Esconder Filtros" : "Mostrar Filtros"),
-                            ),
                             ElevatedButton(
                               onPressed: startFetching,
                               style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                               ),
                               child: const Text("Buscar Jogos"),
                             ),
                             ElevatedButton(
                               onPressed: startFetchingFuture,
                               style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                               ),
                               child: const Text("Buscar Jogos Futuros"),
                             ),
                           ],
                         ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
           if (showFilters)
             // Past Matches Filter
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Icon(Icons.history),
                   for (var time in pastYearsList)
                     SizedBox(
-                      width: 140,
+                      width: MediaQuery.of(context).size.width * 0.08,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
                           onPressed: () => filterHistoryMatches(time),
                           style: ElevatedButton.styleFrom(
@@ -367,9 +397,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   Icon(Icons.update),
                   for (var minutes in futureMatchesMinutesList)
                     SizedBox(
-                      width: 140,
+                      width: MediaQuery.of(context).size.width * 0.08,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: (8.0)),
+                        padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
                           onPressed: () => filterUpcomingMatches(minutes),
                           style: ElevatedButton.styleFrom(
@@ -378,7 +408,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             backgroundColor: minutes == filterFutureNextMinutes ? Colors.blueAccent : null,
                           ),
                           child: Text(
-                            humaniseTime(minutes),
+                            humaniseTime(minutes, short: true),
                             style: TextStyle(color: minutes == filterFutureNextMinutes ? Colors.white : null),
                           ),
                         ),
@@ -388,6 +418,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               ),
             ),
           if (showFilters)
+            // Both Matches Filter
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
@@ -403,9 +434,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     Odds.finalOdds2,
                   ].map((oddsType) {
                     final isSelected = selectedOddsMap[oddsType] ?? false;
+                    final String time = oddsType.name.split(" ")[0];
+                    final String type = oddsType.name.split(" ")[1];
 
                     return SizedBox(
-                      width: 140,
+                      width: MediaQuery.of(context).size.width * 0.08,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: ElevatedButton(
@@ -415,15 +448,37 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             shadowColor: Colors.purple,
                             backgroundColor: isSelected ? Colors.blueAccent : null,
                           ),
-                          child: Text(oddsType.name, style: TextStyle(color: isSelected ? Colors.white : null)),
+                          child: Column(
+                            children: [
+                              Text(time, style: TextStyle(color: isSelected ? Colors.white : null)),
+                              Text(type, style: TextStyle(color: isSelected ? Colors.white : null)),
+                            ],
+                          ),
                         ),
                       ),
                     );
                   }),
                   SizedBox(
-                    width: 210,
+                    width: MediaQuery.of(context).size.width * 0.08,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: OddsFilterButton(
+                        filter: filter,
+                        folders: folders,
+                        leagues: leagues,
+                        onAppyCallback: () {
+                          loadPastMatches(selectedMatchId, pivotRecordIndex);
+                          if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                            setState(() => isSameLeague = false);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.12,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () => filterMatchesBySameLeague(),
                         style: ElevatedButton.styleFrom(
@@ -431,11 +486,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           shadowColor: Colors.purple,
                           backgroundColor: isSameLeague ? Colors.blueAccent : null,
                         ),
-                        child: Row(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
-                            const SizedBox(width: 2),
                             Text("Mesma Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
                           ],
                         ),
@@ -443,9 +497,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: 210,
+                    width: MediaQuery.of(context).size.width * 0.12,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: LeaguesFoldersFilterButton(
                         filter: filter,
                         folders: folders,
@@ -482,7 +536,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     final match = pivotRecords[index];
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () {
                           showFilters = false;

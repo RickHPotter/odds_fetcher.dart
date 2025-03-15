@@ -86,14 +86,15 @@ class MatchCard extends StatelessWidget {
           );
 
           return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(child: container(child: MatchDetails(match: pivotRecord))),
               SizedBox(width: screenWidth * 0.01),
-              container(child: MatchOdds(match: pivotRecord)),
+              Expanded(child: container(child: MatchOdds(match: pivotRecord))),
               SizedBox(width: screenWidth * 0.01),
-              container(child: scorePercentageChild),
+              Expanded(child: container(child: scorePercentageChild)),
               SizedBox(width: screenWidth * 0.01),
-              container(child: goalsPercentageChild),
+              Expanded(child: container(child: goalsPercentageChild)),
             ],
           );
         },
@@ -142,10 +143,7 @@ class MatchCard extends StatelessWidget {
         ),
         Container(
           height: 20,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(4),
-          ),
+          decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
           child: Row(
             children: [
               Expanded(
@@ -260,7 +258,7 @@ class MatchOdds extends StatelessWidget {
       children: [
         oddsRow(earlyHome, earlyDraw, earlyAway),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          padding: const EdgeInsets.symmetric(vertical: 3.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

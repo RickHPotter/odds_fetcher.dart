@@ -28,7 +28,7 @@ class _LeaguesFoldersFilterButtonState extends State<LeaguesFoldersFilterButton>
 
   @override
   Widget build(BuildContext context) {
-    final filter = widget.filter;
+    final Filter filter = widget.filter;
     selectedLeagues = filter.leagues;
     selectedFolders = filter.folders;
 
@@ -53,11 +53,10 @@ class _LeaguesFoldersFilterButtonState extends State<LeaguesFoldersFilterButton>
           },
         );
       },
-      child: Row(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.folder, color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
-          const SizedBox(width: 2),
           Text(
             "Ligas & Pastas",
             style: TextStyle(color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),

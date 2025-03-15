@@ -1,12 +1,25 @@
+import "dart:ui";
+import "dart:io";
 import "package:flutter/material.dart";
 import "package:odds_fetcher/screens/records_list_screen.dart";
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
+
+void logError(Object error, StackTrace? stack) {
+  final logFile = File("${Directory.current.path}/error_log.txt");
+  final errorMessage = "${DateTime.now()} - ERROR: $error\n$stack\n\n";
+  logFile.writeAsStringSync(errorMessage, mode: FileMode.append);
+}
 
 void main() async {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Error Catcher
+  FlutterError.onError = (FlutterErrorDetails details) {
+    logError(details.exception, details.stack);
+  };
 
   runApp(MyApp());
 }

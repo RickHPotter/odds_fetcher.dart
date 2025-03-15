@@ -4,13 +4,13 @@ import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
 
-class LeagueFolderFilterButton extends StatefulWidget {
+class LeaguesFoldersFilterButton extends StatefulWidget {
   final Filter filter;
   final List<League> leagues;
   final List<Folder> folders;
   final void Function() onAppyCallback;
 
-  const LeagueFolderFilterButton({
+  const LeaguesFoldersFilterButton({
     super.key,
     required this.filter,
     required this.leagues,
@@ -19,10 +19,10 @@ class LeagueFolderFilterButton extends StatefulWidget {
   });
 
   @override
-  State<LeagueFolderFilterButton> createState() => _LeagueFolderFilterButtonState();
+  State<LeaguesFoldersFilterButton> createState() => _LeaguesFoldersFilterButtonState();
 }
 
-class _LeagueFolderFilterButtonState extends State<LeagueFolderFilterButton> {
+class _LeaguesFoldersFilterButtonState extends State<LeaguesFoldersFilterButton> {
   late List<League> selectedLeagues = [];
   late List<Folder> selectedFolders = [];
 
@@ -133,7 +133,10 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                     getItemName: (league) => league.code,
                     onItemSelected: (league) {
                       setStates(() {
-                        if (widget.filter.futureOnlySameLeague == 1) widget.filter.futureOnlySameLeague = 0;
+                        if (widget.filter.futureOnlySameLeague == 1) {
+                          widget.filter.futureOnlySameLeague = 0;
+                        }
+
                         if (!widget.selectedLeagues.contains(league)) widget.selectedLeagues.add(league);
                         selectedNode = League;
                       });

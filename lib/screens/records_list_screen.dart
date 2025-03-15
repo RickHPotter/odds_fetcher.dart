@@ -8,7 +8,7 @@ import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
-import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeagueFolderFilterButton;
+import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
 import "package:odds_fetcher/widgets/match_card.dart";
 import "package:odds_fetcher/widgets/past_matches_datatable.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
@@ -466,11 +466,16 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       width: 210,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: LeagueFolderFilterButton(
+                        child: LeaguesFoldersFilterButton(
                           filter: filter,
                           folders: folders,
                           leagues: leagues,
-                          onAppyCallback: () => loadPastMatches(selectedMatchId, pivotRecordIndex),
+                          onAppyCallback: () {
+                            loadPastMatches(selectedMatchId, pivotRecordIndex);
+                            if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                              setState(() => isSameLeague = false);
+                            }
+                          }
                         ),
                       ),
                     ),

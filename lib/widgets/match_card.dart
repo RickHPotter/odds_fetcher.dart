@@ -40,9 +40,9 @@ class MatchCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildScorePercentageRow("HOME", scorePercentages["homeWins"] as double, Colors.green),
-                _buildScorePercentageRow("DRAW", scorePercentages["draws"] as double, Colors.orange),
-                _buildScorePercentageRow("AWAY", scorePercentages["awayWins"] as double, Colors.red),
+                _buildScorePercentageRow("HOME", scorePercentages["homeWins"] as double, Colors.blue),
+                _buildScorePercentageRow("DRAW", scorePercentages["draws"] as double, Colors.grey),
+                _buildScorePercentageRow("AWAY", scorePercentages["awayWins"] as double, Colors.orange),
               ],
             );
 
@@ -114,7 +114,7 @@ class MatchCard extends StatelessWidget {
           Expanded(
             child: LinearProgressIndicator(
               value: value / 100,
-              color: color,
+              color: color.withValues(alpha: 0.8),
               backgroundColor: color.withValues(alpha: 0.2),
               minHeight: 8,
               borderRadius: BorderRadius.circular(4),
@@ -135,35 +135,33 @@ class MatchCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Under: ${under.toStringAsFixed(1)}%", style: const TextStyle(color: Colors.red)),
+            Text("Under: ${under.toStringAsFixed(1)}%", style: TextStyle(color: Colors.orange.shade800)),
             Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text("Over: ${over.toStringAsFixed(1)}%", style: const TextStyle(color: Colors.green)),
+            Text("Over: ${over.toStringAsFixed(1)}%", style: TextStyle(color: Colors.blue.shade800)),
           ],
         ),
         Container(
           height: 20,
           decoration: BoxDecoration(
-            color: Colors.grey.shade200, // Background color
+            color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
             children: [
-              // Under Bar (Red)
               Expanded(
                 flex: under.round(),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: Colors.orange.shade300,
                     borderRadius: BorderRadius.horizontal(left: Radius.circular(4)),
                   ),
                 ),
               ),
-              // Over Bar (Green)
               Expanded(
                 flex: over.round(),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: Colors.blue.shade200,
                     borderRadius: BorderRadius.horizontal(right: Radius.circular(4)),
                   ),
                 ),
@@ -242,8 +240,8 @@ class MatchOdds extends StatelessWidget {
 
       Color color(double odds) => switch (odds) {
         _ when homeOdds == drawOdds && homeOdds == awayOdds => Colors.yellow.shade300,
-        _ when odds == lowestOdds => Colors.green.shade300,
-        _ when odds == highestOdds => Colors.red.shade300,
+        _ when odds == lowestOdds => Colors.blue.shade200,
+        _ when odds == highestOdds => Colors.orange.shade300,
         _ => Colors.grey.shade200,
       };
 
@@ -269,7 +267,6 @@ class MatchOdds extends StatelessWidget {
               Center(child: Icon(Icons.home, size: 16)),
               Center(child: Icon(Icons.close, size: 16)),
               Center(child: Icon(Icons.public, size: 16)),
-              //Text("x", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
             ],
           ),
         ),

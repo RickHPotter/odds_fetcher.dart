@@ -39,9 +39,9 @@ class PastMachDataTable extends StatelessWidget {
               if (home == away) {
                 return Colors.grey.shade200;
               } else if (home > away) {
-                return Colors.green.shade100;
+                return Colors.blue.shade200;
               } else {
-                return Colors.red.shade100;
+                return Colors.orange.shade300;
               }
             },
             onLoaded: (event) {

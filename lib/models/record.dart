@@ -20,6 +20,11 @@ class Record {
   final int? awaySecondHalfScore;
   final bool? finished;
 
+  late int pastRecordsCount;
+  late double homeWinPercentage;
+  late double drawPercentage;
+  late double awayWinPercentage;
+
   Record({
     this.id,
     required this.bettingHouseId,
@@ -122,9 +127,9 @@ class Record {
       int away = record.awaySecondHalfScore ?? 0;
 
       if (home == away) {
-        homeWins++;
-      } else if (home > away) {
         draws++;
+      } else if (home > away) {
+        homeWins++;
       } else {
         awayWins++;
       }

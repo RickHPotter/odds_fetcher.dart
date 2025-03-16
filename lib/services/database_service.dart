@@ -61,15 +61,8 @@ class DatabaseService {
     }
   }
 
-  static Future<List<Record>> fetchFutureRecords({Filter? filter}) async {
-    final db = await database;
-    late String whereClause;
-
-    if (filter == null) {
-      whereClause = "WHERE finished = 0";
-    } else {
-      whereClause = filter.whereClauseFuture();
-    }
+  static Stream<Record> fetchFutureRecords({Filter? filter}) async* {
+    final db = await DatabaseService.database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
     SELECT
@@ -85,24 +78,22 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    $whereClause
-    ;
-    """);
-
-    List<Record> filteredRecords = [];
+    ${filter?.whereClauseFuture() ?? ""}
+  """);
 
     if (filter != null && filter.futureMinHomeWinPercentage == 1) {
+      debugPrint(result.length.toString());
       for (var row in result) {
         Record futureRecord = Record.fromMap(row);
 
         final percentageResult = await db.rawQuery("""
-      SELECT
-        COUNT(*) AS recordsCount,
-        SUM(CASE WHEN r.homeSecondHalfScore > r.awaySecondHalfScore THEN 1 ELSE 0 END) AS homeWins,
-        SUM(CASE WHEN r.homeSecondHalfScore = r.awaySecondHalfScore THEN 1 ELSE 0 END) AS draws,
-        SUM(CASE WHEN r.homeSecondHalfScore < r.awaySecondHalfScore THEN 1 ELSE 0 END) AS awayWins
-      FROM Records r
-      ${filter.whereClause(futureRecord: futureRecord)}
+        SELECT
+          COUNT(*) AS recordsCount,
+          SUM(homeWin) AS homeWins,
+          SUM(draw) AS draws,
+          SUM(awayWin) AS awayWins
+        FROM Records r
+        ${filter.whereClause(futureRecord: futureRecord)}
       """);
 
         final Map<String, dynamic> res = percentageResult[0];
@@ -113,22 +104,24 @@ class DatabaseService {
           final int draws = res["draws"] as int;
           final int awayWins = res["awayWins"] as int;
 
-          if (recordsCount > 0) {
-            double homeWinPercentage = (homeWins / recordsCount) * 100;
-            double drawPercentage = (draws / recordsCount) * 100;
-            double awayWinPercentage = (awayWins / recordsCount) * 100;
+          double homeWinPercentage = (homeWins / recordsCount) * 100;
+          double drawPercentage = (draws / recordsCount) * 100;
+          double awayWinPercentage = (awayWins / recordsCount) * 100;
 
-            if (homeWinPercentage >= 52 || drawPercentage >= 52 || awayWinPercentage >= 52) {
-              filteredRecords.add(futureRecord);
-            }
+          if (homeWinPercentage >= 52 || drawPercentage >= 52 || awayWinPercentage >= 52) {
+            futureRecord.pastRecordsCount = recordsCount;
+            futureRecord.homeWinPercentage = homeWinPercentage;
+            futureRecord.drawPercentage = drawPercentage;
+            futureRecord.awayWinPercentage = awayWinPercentage;
+            yield futureRecord;
           }
         }
       }
     } else {
-      filteredRecords = result.map((row) => Record.fromMap(row)).toList();
+      for (var row in result) {
+        yield Record.fromMap(row);
+      }
     }
-
-    return filteredRecords;
   }
 
   static Future<List<Record>> fetchRecords({Filter? filter, Record? futureRecord}) async {

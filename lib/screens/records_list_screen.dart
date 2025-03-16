@@ -1,3 +1,5 @@
+import "dart:async";
+
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
 import "package:intl/date_symbol_data_local.dart";
@@ -63,6 +65,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   final List<int> futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3];
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
+  StreamSubscription<Record>? _recordSubscription;
   final ScrollController _scrollController = ScrollController();
 
   void updateOddsFilter() {
@@ -121,29 +124,40 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
   }
 
-  void loadFutureMatches() async {
+  //void loadFutureMatches() async {
+  //  if (pivotRecords.isNotEmpty && pivotRecordIndex != null) {
+  //    Record pivotRecord = pivotRecords[pivotRecordIndex as int];
+  //    pivotRecordIndex = fetchedRecords.indexWhere((record) => record.id == pivotRecord.id);
+  //
+  //    if (pivotRecordIndex == -1) {
+  //      pivotRecordIndex = null;
+  //    }
+  //  } else {
+  //    pivotRecordIndex = 0;
+  //  }
+  //}
+
+  void loadFutureMatches() {
     setState(() {
       isLoading = true;
+      pivotRecords.clear();
     });
 
-    final List<Record> fetchedRecords = await DatabaseService.fetchFutureRecords(filter: filter);
-
-    if (pivotRecords.isNotEmpty && pivotRecordIndex != null) {
-      Record pivotRecord = pivotRecords[pivotRecordIndex as int];
-      pivotRecordIndex = fetchedRecords.indexWhere((record) => record.id == pivotRecord.id);
-
-      if (pivotRecordIndex == -1) {
-        pivotRecordIndex = null;
-      }
-    } else {
-      pivotRecordIndex = 0;
-    }
-
-    setState(() {
-      pivotRecords = fetchedRecords;
-      pivotRecordIndex = pivotRecordIndex;
-      isLoading = false;
-    });
+    _recordSubscription = DatabaseService.fetchFutureRecords(filter: filter).listen(
+      (record) {
+        setState(() {
+          pivotRecords.add(record);
+          if (pivotRecords.isNotEmpty && pivotRecordIndex == null) {
+            pivotRecordIndex = 0;
+          }
+        });
+      },
+      onDone: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+    );
   }
 
   void loadPastMatches(int? id, int? index) async {
@@ -199,6 +213,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   @override
   void dispose() {
     fetcher.dispose();
+    _recordSubscription?.cancel();
     super.dispose();
   }
 
@@ -433,79 +448,77 @@ class _RecordListScreenState extends State<RecordListScreen> {
             ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.015),
           // Future Matches Carousel
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SizedBox(
-                height: 100,
-                child: Listener(
-                  onPointerSignal: (event) {
-                    if (event is PointerScrollEvent) {
-                      _scrollController.jumpTo(_scrollController.offset + event.scrollDelta.dy);
-                    }
-                  },
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    controller: _scrollController,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      controller: _scrollController,
-                      itemCount: pivotRecords.length,
-                      itemBuilder: (context, index) {
-                        final match = pivotRecords[index];
+          SizedBox(
+            height: 100,
+            child: Listener(
+              onPointerSignal: (event) {
+                if (event is PointerScrollEvent) {
+                  _scrollController.jumpTo(_scrollController.offset + event.scrollDelta.dy);
+                }
+              },
+              child: Scrollbar(
+                thumbVisibility: true,
+                controller: _scrollController,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  controller: _scrollController,
+                  itemCount: pivotRecords.length,
+                  itemBuilder: (context, index) {
+                    final match = pivotRecords[index];
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              showFilters = false;
-                              loadPastMatches(match.id as int, index);
-                            },
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(3),
-                                side: const BorderSide(color: Colors.black),
-                              ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          showFilters = false;
+                          loadPastMatches(match.id as int, index);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(3),
+                            side: const BorderSide(color: Colors.black),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 5),
+                            Text(
+                              match.homeTeam.name,
+                              style: TextStyle(color: Colors.black),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                            const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                            Text(
+                              match.awayTeam.name,
+                              style: TextStyle(color: Colors.black),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                const SizedBox(height: 5),
                                 Text(
-                                  match.homeTeam.name,
-                                  style: TextStyle(color: Colors.black),
-                                  overflow: TextOverflow.ellipsis,
+                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
                                 ),
-                                const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                                SizedBox(width: 10),
                                 Text(
-                                  match.awayTeam.name,
-                                  style: TextStyle(color: Colors.black),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Text(
-                                      DateFormat.MMMMd("pt-BR").format(match.matchDate),
-                                      style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                    ),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      DateFormat.Hm("pt-BR").format(match.matchDate),
-                                      style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                    ),
-                                  ],
+                                  DateFormat.Hm("pt-BR").format(match.matchDate),
+                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
+            ),
+          ),
           const SizedBox(height: 10),
           if (selectedMatchId != null && pivotRecords.isNotEmpty && pivotRecordIndex != null)
             Padding(
@@ -531,6 +544,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
                 ),
+                isLoading
+                    ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
+                    : SizedBox(width: 20, height: 20),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

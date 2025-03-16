@@ -43,6 +43,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   int progress = 0;
   bool isFetching = false;
   bool isCancelled = false;
+  bool isLoading = false;
 
   late Map<Odds, bool> selectedOddsMap;
 
@@ -121,6 +122,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void loadFutureMatches() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final List<Record> fetchedRecords = await DatabaseService.fetchFutureRecords(filter: filter);
 
     if (pivotRecords.isNotEmpty && pivotRecordIndex != null) {
@@ -137,6 +142,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
     setState(() {
       pivotRecords = fetchedRecords;
       pivotRecordIndex = pivotRecordIndex;
+      isLoading = false;
     });
   }
 
@@ -390,82 +396,116 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          // Future Matches Carousel
-          SizedBox(height: MediaQuery.of(context).size.height * 0.015),
-          SizedBox(
-            height: 100,
-            child: Listener(
-              onPointerSignal: (event) {
-                if (event is PointerScrollEvent) {
-                  _scrollController.jumpTo(_scrollController.offset + event.scrollDelta.dy);
-                }
-              },
-              child: Scrollbar(
-                thumbVisibility: true,
-                controller: _scrollController,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  controller: _scrollController,
-                  itemCount: pivotRecords.length,
-                  itemBuilder: (context, index) {
-                    final match = pivotRecords[index];
-
-                    return Padding(
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.08,
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          showFilters = false;
-                          loadPastMatches(match.id as int, index);
+                          setState(() {
+                            filter.futureMinHomeWinPercentage = filter.futureMinHomeWinPercentage == 1 ? 0 : 1;
+                            loadFutureMatches();
+                          });
                         },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(3),
-                            side: const BorderSide(color: Colors.black),
-                          ),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shadowColor: Colors.purple,
+                          backgroundColor: filter.futureMinHomeWinPercentage == 1 ? Colors.blueAccent : null,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            const SizedBox(height: 5),
-                            Text(
-                              match.homeTeam.name,
-                              style: TextStyle(color: Colors.black),
-                              overflow: TextOverflow.ellipsis,
+                            Icon(
+                              Icons.filter_list,
+                              color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null,
                             ),
-                            const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                             Text(
-                              match.awayTeam.name,
-                              style: TextStyle(color: Colors.black),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
-                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  DateFormat.Hm("pt-BR").format(match.matchDate),
-                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                ),
-                              ],
+                              "52%",
+                              style: TextStyle(color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+          // Future Matches Carousel
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SizedBox(
+                height: 100,
+                child: Listener(
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      _scrollController.jumpTo(_scrollController.offset + event.scrollDelta.dy);
+                    }
+                  },
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    controller: _scrollController,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      controller: _scrollController,
+                      itemCount: pivotRecords.length,
+                      itemBuilder: (context, index) {
+                        final match = pivotRecords[index];
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              showFilters = false;
+                              loadPastMatches(match.id as int, index);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(3),
+                                side: const BorderSide(color: Colors.black),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: 5),
+                                Text(
+                                  match.homeTeam.name,
+                                  style: TextStyle(color: Colors.black),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                                Text(
+                                  match.awayTeam.name,
+                                  style: TextStyle(color: Colors.black),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Text(
+                                      DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                      style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      DateFormat.Hm("pt-BR").format(match.matchDate),
+                                      style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
           const SizedBox(height: 10),
           if (selectedMatchId != null && pivotRecords.isNotEmpty && pivotRecordIndex != null)
             Padding(
@@ -653,6 +693,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
       }
 
       updateOddsFilter();
+
+      if (filter.futureMinHomeWinPercentage == 1) {
+        loadFutureMatches();
+      }
 
       loadPastMatches(selectedMatchId, pivotRecordIndex);
     });

@@ -89,7 +89,46 @@ class DatabaseService {
     ;
     """);
 
-    return result.map((row) => Record.fromMap(row)).toList();
+    List<Record> filteredRecords = [];
+
+    if (filter != null && filter.futureMinHomeWinPercentage == 1) {
+      for (var row in result) {
+        Record futureRecord = Record.fromMap(row);
+
+        final percentageResult = await db.rawQuery("""
+      SELECT
+        COUNT(*) AS recordsCount,
+        SUM(CASE WHEN r.homeSecondHalfScore > r.awaySecondHalfScore THEN 1 ELSE 0 END) AS homeWins,
+        SUM(CASE WHEN r.homeSecondHalfScore = r.awaySecondHalfScore THEN 1 ELSE 0 END) AS draws,
+        SUM(CASE WHEN r.homeSecondHalfScore < r.awaySecondHalfScore THEN 1 ELSE 0 END) AS awayWins
+      FROM Records r
+      ${filter.whereClause(futureRecord: futureRecord)}
+      """);
+
+        final Map<String, dynamic> res = percentageResult[0];
+        final int recordsCount = res["recordsCount"] as int;
+
+        if (recordsCount > 0) {
+          final int homeWins = res["homeWins"] as int;
+          final int draws = res["draws"] as int;
+          final int awayWins = res["awayWins"] as int;
+
+          if (recordsCount > 0) {
+            double homeWinPercentage = (homeWins / recordsCount) * 100;
+            double drawPercentage = (draws / recordsCount) * 100;
+            double awayWinPercentage = (awayWins / recordsCount) * 100;
+
+            if (homeWinPercentage >= 52 || drawPercentage >= 52 || awayWinPercentage >= 52) {
+              filteredRecords.add(futureRecord);
+            }
+          }
+        }
+      }
+    } else {
+      filteredRecords = result.map((row) => Record.fromMap(row)).toList();
+    }
+
+    return filteredRecords;
   }
 
   static Future<List<Record>> fetchRecords({Filter? filter, Record? futureRecord}) async {
@@ -210,7 +249,9 @@ class DatabaseService {
   static Future<List<League>> fetchLeagues() async {
     final db = await database;
 
-    final result = await db.rawQuery("SELECT GROUP_CONCAT(id, ',') ids, leagueCode, GROUP_CONCAT(leagueName, ',') AS leagueName FROM Leagues GROUP BY leagueCode ORDER BY leagueCode;");
+    final result = await db.rawQuery(
+      "SELECT GROUP_CONCAT(id, ',') ids, leagueCode, GROUP_CONCAT(leagueName, ',') AS leagueName FROM Leagues GROUP BY leagueCode ORDER BY leagueCode;",
+    );
 
     return result.map((row) => League.fromMap(row)).toList();
   }

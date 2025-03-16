@@ -27,7 +27,7 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return OddsFilterModal(filter: widget.filter, onApplyCallback: widget.onApplyCallback);
+            return OddsFilterModal(filter: filter, onApplyCallback: widget.onApplyCallback);
           },
         );
       },
@@ -53,9 +53,75 @@ class OddsFilterModal extends StatefulWidget {
 }
 
 class _OddsFilterModalState extends State<OddsFilterModal> {
+  final List<MinMaxOdds> earlyHome = [MinMaxOdds.minEarlyHome, MinMaxOdds.maxEarlyHome];
+  final List<MinMaxOdds> earlyDraw = [MinMaxOdds.minEarlyDraw, MinMaxOdds.maxEarlyDraw];
+  final List<MinMaxOdds> earlyAway = [MinMaxOdds.minEarlyAway, MinMaxOdds.maxEarlyAway];
+  final List<MinMaxOdds> finalHome = [MinMaxOdds.minFinalHome, MinMaxOdds.maxFinalHome];
+  final List<MinMaxOdds> finalDraw = [MinMaxOdds.minFinalDraw, MinMaxOdds.maxFinalDraw];
+  final List<MinMaxOdds> finalAway = [MinMaxOdds.minFinalAway, MinMaxOdds.maxFinalAway];
+
+  late List<TextEditingController> earlyHomeControllers;
+  late List<TextEditingController> earlyDrawControllers;
+  late List<TextEditingController> earlyAwayControllers;
+  late List<TextEditingController> finalHomeControllers;
+  late List<TextEditingController> finalDrawControllers;
+  late List<TextEditingController> finalAwayControllers;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+
+    earlyHomeControllers = [
+      TextEditingController(text: (widget.filter.minEarlyHome ?? "").toString()),
+      TextEditingController(text: (widget.filter.maxEarlyHome ?? "").toString()),
+    ];
+    earlyDrawControllers = [
+      TextEditingController(text: (widget.filter.minEarlyDraw ?? "").toString()),
+      TextEditingController(text: (widget.filter.maxEarlyDraw ?? "").toString()),
+    ];
+    earlyAwayControllers = [
+      TextEditingController(text: (widget.filter.minEarlyAway ?? "").toString()),
+      TextEditingController(text: (widget.filter.maxEarlyAway ?? "").toString()),
+    ];
+    finalHomeControllers = [
+      TextEditingController(text: (widget.filter.minFinalHome ?? "").toString()),
+      TextEditingController(text: (widget.filter.maxFinalHome ?? "").toString()),
+    ];
+    finalDrawControllers = [
+      TextEditingController(text: (widget.filter.minFinalDraw ?? "").toString()),
+      TextEditingController(text: (widget.filter.maxFinalDraw ?? "").toString()),
+    ];
+    finalAwayControllers = [
+      TextEditingController(text: (widget.filter.minFinalAway ?? "").toString()),
+      TextEditingController(text: (widget.filter.maxFinalAway ?? "").toString()),
+    ];
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
   @override
   void dispose() {
     super.dispose();
+
+    final List<List<TextEditingController>> controllersList = [
+      earlyHomeControllers,
+      earlyDrawControllers,
+      earlyAwayControllers,
+      finalHomeControllers,
+      finalDrawControllers,
+      finalAwayControllers,
+    ];
+    final List<TextEditingController> controllers = controllersList.expand((e) => e).toList();
+
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+
+    _focusNode.dispose();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onApplyCallback();
     });
@@ -63,15 +129,10 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
 
   @override
   Widget build(BuildContext context) {
-    return StatefulBuilder(
-      builder: (context, setModalState) {
-        final List<MinMaxOdds> earlyHome = [MinMaxOdds.minEarlyHome, MinMaxOdds.maxEarlyHome];
-        final List<MinMaxOdds> earlyDraw = [MinMaxOdds.minEarlyDraw, MinMaxOdds.maxEarlyDraw];
-        final List<MinMaxOdds> earlyAway = [MinMaxOdds.minEarlyAway, MinMaxOdds.maxEarlyAway];
-        final List<MinMaxOdds> finalHome = [MinMaxOdds.minFinalHome, MinMaxOdds.maxFinalHome];
-        final List<MinMaxOdds> finalDraw = [MinMaxOdds.minFinalDraw, MinMaxOdds.maxFinalDraw];
-        final List<MinMaxOdds> finalAway = [MinMaxOdds.minFinalAway, MinMaxOdds.maxFinalAway];
+    final Filter filter = widget.filter;
 
+    return StatefulBuilder(
+      builder: (BuildContext context, setModalState) {
         void setStates(callback) {
           setModalState(() {
             callback();
@@ -79,6 +140,40 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
           setState(() {
             callback();
           });
+        }
+
+        void clearAllTextFields() {
+          earlyHomeControllers[0].clear();
+          earlyHomeControllers[1].clear();
+          earlyDrawControllers[0].clear();
+          earlyDrawControllers[1].clear();
+          earlyAwayControllers[0].clear();
+          earlyAwayControllers[1].clear();
+          finalHomeControllers[0].clear();
+          finalHomeControllers[1].clear();
+          finalDrawControllers[0].clear();
+          finalDrawControllers[1].clear();
+          finalAwayControllers[0].clear();
+          finalAwayControllers[1].clear();
+        }
+
+        void updateSpecificOddsAndApplyCallback() {
+          setStates(() {
+            filter.minEarlyHome = double.tryParse(earlyHomeControllers[0].text);
+            filter.maxEarlyHome = double.tryParse(earlyHomeControllers[1].text);
+            filter.minEarlyDraw = double.tryParse(earlyDrawControllers[0].text);
+            filter.maxEarlyDraw = double.tryParse(earlyDrawControllers[1].text);
+            filter.minEarlyAway = double.tryParse(earlyAwayControllers[0].text);
+            filter.maxEarlyAway = double.tryParse(earlyAwayControllers[1].text);
+            filter.minFinalHome = double.tryParse(finalHomeControllers[0].text);
+            filter.maxFinalHome = double.tryParse(finalHomeControllers[1].text);
+            filter.minFinalDraw = double.tryParse(finalDrawControllers[0].text);
+            filter.maxFinalDraw = double.tryParse(finalDrawControllers[1].text);
+            filter.minFinalAway = double.tryParse(finalAwayControllers[0].text);
+            filter.maxFinalAway = double.tryParse(finalAwayControllers[1].text);
+          });
+
+          widget.onApplyCallback();
         }
 
         return Dialog(
@@ -93,12 +188,18 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  buildOddsColumn("Early Home", earlyHome),
-                  buildOddsColumn("Early Draw", earlyDraw),
-                  buildOddsColumn("Early Away", earlyAway),
-                  buildOddsColumn("Final Home", finalHome),
-                  buildOddsColumn("Final Draw", finalDraw),
-                  buildOddsColumn("Final Away", finalAway),
+                  buildOddsColumn(
+                    "Early Home",
+                    earlyHome,
+                    earlyHomeControllers,
+                    updateSpecificOddsAndApplyCallback,
+                    focusNode: _focusNode,
+                  ),
+                  buildOddsColumn("Early Draw", earlyDraw, earlyDrawControllers, updateSpecificOddsAndApplyCallback),
+                  buildOddsColumn("Early Away", earlyAway, earlyAwayControllers, updateSpecificOddsAndApplyCallback),
+                  buildOddsColumn("Final Home", finalHome, finalHomeControllers, updateSpecificOddsAndApplyCallback),
+                  buildOddsColumn("Final Draw", finalDraw, finalDrawControllers, updateSpecificOddsAndApplyCallback),
+                  buildOddsColumn("Final Away", finalAway, finalAwayControllers, updateSpecificOddsAndApplyCallback),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -111,7 +212,9 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                             label: const Text("Limpar", style: TextStyle(color: Colors.black)),
                             onPressed: () {
                               setStates(() {
-                                widget.filter.removeAllSpecificOdds();
+                                filter.removeAllSpecificOdds();
+                                clearAllTextFields();
+                                updateSpecificOddsAndApplyCallback();
                               });
                             },
                           ),
@@ -126,8 +229,8 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                             icon: const Icon(Icons.check, color: Colors.green),
                             label: const Text("Aplicar", style: TextStyle(color: Colors.black)),
                             onPressed: () {
+                              updateSpecificOddsAndApplyCallback();
                               Navigator.pop(context);
-                              widget.onApplyCallback();
                             },
                           ),
                         ),
@@ -143,7 +246,13 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
     );
   }
 
-  Widget buildOddsColumn(String title, List<MinMaxOdds> oddsList) {
+  Widget buildOddsColumn(
+    String title,
+    List<MinMaxOdds> oddsList,
+    List<TextEditingController> controllers,
+    onApplyCallback, {
+    FocusNode? focusNode,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,6 +263,8 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                 children: [
                   Expanded(
                     child: TextFormField(
+                      focusNode: focusNode,
+                      controller: controllers[i],
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: "Min $title",
@@ -168,12 +279,13 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                      onChanged: (value) {},
+                      onChanged: (_) => onApplyCallback(),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
+                      controller: controllers[i + 1],
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: "Max $title",
@@ -188,7 +300,7 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                      onChanged: (value) {},
+                      onChanged: (_) => onApplyCallback(),
                     ),
                   ),
                 ],

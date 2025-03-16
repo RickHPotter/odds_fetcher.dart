@@ -99,15 +99,18 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   void updateFutureSameOddsTypes() {
     if (filter.anySpecificOddsPresent()) {
-      isEarly1 = filter.minEarlyHome != null ? false : isFinal1;
-      isEarlyX = filter.minEarlyDraw != null ? false : isFinalX;
-      isEarly2 = filter.minEarlyAway != null ? false : isFinal2;
-      isFinal1 = filter.minFinalHome != null ? false : isEarly1;
-      isFinalX = filter.minFinalDraw != null ? false : isEarlyX;
-      isFinal2 = filter.minFinalAway != null ? false : isEarly2;
+      isEarly1 = filter.minEarlyHome != null ? false : isEarly1;
+      isEarlyX = filter.minEarlyDraw != null ? false : isEarlyX;
+      isEarly2 = filter.minEarlyAway != null ? false : isEarly2;
+      isFinal1 = filter.minFinalHome != null ? false : isFinal1;
+      isFinalX = filter.minFinalDraw != null ? false : isFinalX;
+      isFinal2 = filter.minFinalAway != null ? false : isFinal2;
+
+      updateOddsFilter();
     }
 
     setState(() {
+      filter = filter;
       isEarly1 = isEarly1;
       isEarlyX = isEarlyX;
       isEarly2 = isEarly2;
@@ -138,7 +141,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void loadPastMatches(int? id, int? index) async {
-    if (id == null || index == null) {
+    if (id == null || index == null || pivotRecords.isEmpty) {
       return;
     }
 
@@ -364,6 +367,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         folders: folders,
                         leagues: leagues,
                         onApplyCallback: () {
+                          loadFutureMatches();
                           loadPastMatches(selectedMatchId, pivotRecordIndex);
                           if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
                             setState(() => isSameLeague = false);
@@ -463,7 +467,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          if (selectedMatchId != null)
+          if (selectedMatchId != null && pivotRecords.isNotEmpty && pivotRecordIndex != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 15.0),
               child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int]),

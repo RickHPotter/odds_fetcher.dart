@@ -81,7 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         ...[
                           {"icon": Icons.home, "label": "Listagem de Registros"},
-                          {"icon": Icons.portrait, "label": "About"},
+                          {"icon": Icons.construction, "label": "Sobre"},
                         ].asMap().entries.map((entry) {
                           int index = entry.key;
                           final item = entry.value;
@@ -95,6 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   item["icon"] as IconData,
                                   color: selectedIndex == index ? Colors.blue : Colors.grey,
                                 ),
+                                const SizedBox(width: 4),
                                 Text(
                                   item["label"] as String,
                                   style: TextStyle(color: selectedIndex == index ? Colors.blue : Colors.grey),

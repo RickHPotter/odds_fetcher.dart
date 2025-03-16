@@ -183,6 +183,56 @@ class Filter {
     maxFinalAway = null;
   }
 
+  void fillInAllRangeOdds() {
+    if (minEarlyHome != null && maxEarlyHome == null) {
+      maxEarlyHome = minEarlyHome;
+    }
+
+    if (maxEarlyHome != null && minEarlyHome == null) {
+      minEarlyHome = maxEarlyHome;
+    }
+
+    if (minEarlyDraw != null && maxEarlyDraw == null) {
+      maxEarlyDraw = minEarlyDraw;
+    }
+
+    if (maxEarlyDraw != null && minEarlyDraw == null) {
+      minEarlyDraw = maxEarlyDraw;
+    }
+
+    if (minEarlyAway != null && maxEarlyAway == null) {
+      maxEarlyAway = minEarlyAway;
+    }
+
+    if (maxEarlyAway != null && minEarlyAway == null) {
+      minEarlyAway = maxEarlyAway;
+    }
+
+    if (minFinalHome != null && maxFinalHome == null) {
+      maxFinalHome = minFinalHome;
+    }
+
+    if (maxFinalHome != null && minFinalHome == null) {
+      minFinalHome = maxFinalHome;
+    }
+
+    if (minFinalDraw != null && maxFinalDraw == null) {
+      maxFinalDraw = minFinalDraw;
+    }
+
+    if (maxFinalDraw != null && minFinalDraw == null) {
+      minFinalDraw = maxFinalDraw;
+    }
+
+    if (minFinalAway != null && maxFinalAway == null) {
+      maxFinalAway = minFinalAway;
+    }
+
+    if (maxFinalAway != null && minFinalAway == null) {
+      minFinalAway = maxFinalAway;
+    }
+  }
+
   void update({int? pastYears, int? futureNextMinutes}) {
     if (pastYears != null) {
       minDate = DateTime.now().subtract(Duration(days: pastYears * 365));
@@ -199,6 +249,8 @@ class Filter {
   }
 
   String whereClause({Record? futureRecord}) {
+    fillInAllRangeOdds();
+
     late String whereClause = "WHERE finished = 1";
 
     whereClause +=
@@ -241,10 +293,36 @@ class Filter {
           " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
     }
 
+    if (minEarlyHome != null) {
+      whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
+    }
+
+    if (minEarlyDraw != null) {
+      whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
+    }
+
+    if (minEarlyAway != null) {
+      whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
+    }
+
+    if (minFinalHome != null) {
+      whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
+    }
+
+    if (minFinalDraw != null) {
+      whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
+    }
+
+    if (minFinalAway != null) {
+      whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
+    }
+
     return whereClause;
   }
 
   String whereClauseFuture() {
+    fillInAllRangeOdds();
+
     late String whereClause = "WHERE finished = 0";
 
     if (futureNextMinutes == null) {
@@ -265,6 +343,39 @@ class Filter {
         " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) >= '$minDate'";
     whereClause +=
         " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$maxDate'";
+
+    if (leagues.isNotEmpty) {
+      whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
+    }
+
+    if (folders.isNotEmpty) {
+      whereClause +=
+          " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
+    }
+
+    if (minEarlyHome != null) {
+      whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
+    }
+
+    if (minEarlyDraw != null) {
+      whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
+    }
+
+    if (minEarlyAway != null) {
+      whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
+    }
+
+    if (minFinalHome != null) {
+      whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
+    }
+
+    if (minFinalDraw != null) {
+      whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
+    }
+
+    if (minFinalAway != null) {
+      whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
+    }
 
     return whereClause;
   }

@@ -20,10 +20,10 @@ class Record {
   final int? awaySecondHalfScore;
   final bool? finished;
 
-  late int pastRecordsCount;
-  late double homeWinPercentage;
-  late double drawPercentage;
-  late double awayWinPercentage;
+  late int? pastRecordsCount = 0;
+  late double? homeWinPercentage = 0.00;
+  late double? drawPercentage = 0.00;
+  late double? awayWinPercentage = 0.00;
 
   Record({
     this.id,
@@ -59,6 +59,16 @@ class Record {
     }
 
     return "$homeSecondHalfScore - $awaySecondHalfScore";
+  }
+
+  bool anyPercentageHigherThan(double percentage) {
+    if (homeWinPercentage == null || drawPercentage == null || awayWinPercentage == null) {
+      return false;
+    }
+
+    return homeWinPercentage as double > percentage ||
+        drawPercentage as double > percentage ||
+        awayWinPercentage as double > percentage;
   }
 
   factory Record.fromMap(Map<String, dynamic> map) {

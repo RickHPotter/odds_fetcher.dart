@@ -10,12 +10,13 @@ void logError(Object error, StackTrace? stack) {
 }
 
 void main() async {
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Error Catcher
+  if (Platform.isWindows || Platform.isLinux) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   FlutterError.onError = (FlutterErrorDetails details) {
     logError(details.exception, details.stack);
   };

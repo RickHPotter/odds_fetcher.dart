@@ -449,7 +449,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
           SizedBox(height: MediaQuery.of(context).size.height * 0.015),
           // Future Matches Carousel
           SizedBox(
-            height: 100,
+            height: 60,
             child: Listener(
               onPointerSignal: (event) {
                 if (event is PointerScrollEvent) {
@@ -474,7 +474,17 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           loadPastMatches(match.id as int, index);
                         },
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
+                          //backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
+                          backgroundColor:
+                              selectedMatchId == match.id
+                                  ? Colors.grey[400]
+                                  : match.anyPercentageHigherThan(80)
+                                  ? Colors.red
+                                  : match.anyPercentageHigherThan(65)
+                                  ? Colors.orange
+                                  : match.anyPercentageHigherThan(52)
+                                  ? Colors.amber
+                                  : Colors.grey[100],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(3),
                             side: const BorderSide(color: Colors.black),
@@ -483,32 +493,25 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 5),
                             Text(
                               match.homeTeam.name,
                               style: TextStyle(color: Colors.black),
+                              textAlign: TextAlign.start,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const Text("x", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                            Text(
-                              match.awayTeam.name,
-                              style: TextStyle(color: Colors.black),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 5),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                Text(
-                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
-                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                ),
+                                Text(DateFormat.MMMMd("pt-BR").format(match.matchDate), style: TextStyle(fontSize: 12)),
                                 SizedBox(width: 10),
-                                Text(
-                                  DateFormat.Hm("pt-BR").format(match.matchDate),
-                                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
-                                ),
+                                Text(DateFormat.Hm("pt-BR").format(match.matchDate), style: TextStyle(fontSize: 12)),
                               ],
+                            ),
+                            Text(
+                              match.awayTeam.name,
+                              style: TextStyle(color: Colors.black),
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

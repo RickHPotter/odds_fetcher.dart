@@ -1,12 +1,14 @@
 import "dart:io";
 
-import "package:flutter/foundation.dart" show debugPrint;
-import "package:flutter/services.dart" show ByteData, rootBundle;
+import "package:flutter/foundation.dart" show ByteData, debugPrint;
+import "package:flutter/services.dart" show rootBundle;
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
 import "package:sqflite/sqflite.dart";
+import "package:sqflite_common_ffi/sqflite_ffi.dart";
 import "package:path/path.dart" show join;
+//import "package:path_provider/path_provider.dart";
 import "package:odds_fetcher/models/record.dart";
 
 class DatabaseService {
@@ -50,6 +52,19 @@ class DatabaseService {
 
     return await openDatabase(path, version: 1);
   }
+
+  //static Future<Database> _initDb() async {
+  //  final appSupportDir = await getApplicationSupportDirectory();
+  //  final path = join(appSupportDir.path, dbName);
+  //
+  //  if (!await File(path).exists()) {
+  //    final byteData = await rootBundle.load(assetDbPath);
+  //    final buffer = byteData.buffer;
+  //    await File(path).writeAsBytes(buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+  //  }
+  //
+  //  return await databaseFactory.openDatabase(path);
+  //}
 
   static Future<void> executeSchema(Database db, String version) async {
     final script = await rootBundle.loadString("assets/migrations/$version.sql");

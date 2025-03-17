@@ -243,9 +243,12 @@ class Filter {
   }
 
   List<int> leaguesIds() {
-    final Iterable<List<int>> idsList = leagues.map((l) => l.id != null ? [l.id!] : l.ids ?? []);
+    final List<int> leagueIds =
+        leagues.map((l) => l.id != null ? [l.id!] : l.ids ?? []).expand((idList) => idList).toList();
+    final List<int> folderIds =
+        folders.expand((folder) => folder.leagues).where((l) => l.id != null).map((l) => l.id as int).toList();
 
-    return idsList.expand((idList) => idList).toList();
+    return leagueIds + folderIds;
   }
 
   String whereClause({Record? futureRecord}) {
@@ -344,13 +347,8 @@ class Filter {
     whereClause +=
         " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$maxDate'";
 
-    if (leagues.isNotEmpty) {
+    if (leagues.isNotEmpty || folders.isNotEmpty) {
       whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
-    }
-
-    if (folders.isNotEmpty) {
-      whereClause +=
-          " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
     }
 
     if (minEarlyHome != null) {
@@ -376,6 +374,8 @@ class Filter {
     if (minFinalAway != null) {
       whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
     }
+
+    print(whereClause);
 
     return whereClause;
   }

@@ -8,6 +8,7 @@ import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
+import "package:odds_fetcher/models/league_folder.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
@@ -29,6 +30,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   late List<Record> pivotRecords = [];
   late List<League> leagues = [];
   late List<Folder> folders = [];
+  late List<LeagueFolder> leaguesFolders = [];
 
   late int filterPastYears = 1;
   late int filterFutureNextMinutes = 60;
@@ -38,6 +40,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
     maxDate: DateTime.now(),
     leagues: [],
     folders: [],
+    futureMinHomeWinPercentage: 1,
   );
 
   late RecordFetcher fetcher;
@@ -180,7 +183,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   void loadLeaguesAndFolders() async {
     final List<League> fetchedLeagues = await DatabaseService.fetchLeagues();
-    final List<Folder> fetchedFolders = await DatabaseService.fetchFolders();
+    final List<Folder> fetchedFolders = await DatabaseService.fetchFoldersWithLeagues();
 
     setState(() {
       leagues = fetchedLeagues;
@@ -268,7 +271,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
                   for (var time in pastYearsList)
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.08,
+                      width: MediaQuery.of(context).size.width * 0.085,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
@@ -298,7 +301,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.update)),
                   for (var minutes in futureMatchesMinutesList)
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.08,
+                      width: MediaQuery.of(context).size.width * 0.085,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
@@ -337,7 +340,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     final isSelected = selectedOddsMap[oddsType] ?? false;
 
                     return SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.08,
+                      width: MediaQuery.of(context).size.width * 0.085,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: ElevatedButton(
@@ -348,9 +351,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             backgroundColor: isSelected ? Colors.blueAccent : null,
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.dehaze, color: isSelected ? Colors.white : null),
+                              const SizedBox(width: 1),
                               Text(oddsType.shortName, style: TextStyle(color: isSelected ? Colors.white : null)),
                             ],
                           ),
@@ -359,7 +363,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     );
                   }),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.08,
+                    width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
@@ -370,9 +374,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           backgroundColor: isSameLeague ? Colors.blueAccent : null,
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
+                            const SizedBox(width: 1),
                             Text("Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
                           ],
                         ),
@@ -380,13 +385,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.08,
+                    width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: LeaguesFoldersFilterButton(
                         filter: filter,
-                        folders: folders,
                         leagues: leagues,
+                        folders: folders,
                         onApplyCallback: () {
                           loadFutureMatches();
                           loadPastMatches(selectedMatchId, pivotRecordIndex);
@@ -398,7 +403,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.08,
+                    width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: OddsFilterButton(
@@ -412,7 +417,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.08,
+                    width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
@@ -428,12 +433,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           backgroundColor: filter.futureMinHomeWinPercentage == 1 ? Colors.blueAccent : null,
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.filter_list,
                               color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null,
                             ),
+                            const SizedBox(width: 1),
                             Text(
                               "52%",
                               style: TextStyle(color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null),
@@ -474,16 +480,15 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           loadPastMatches(match.id as int, index);
                         },
                         style: OutlinedButton.styleFrom(
-                          //backgroundColor: selectedMatchId == match.id ? Colors.grey[400] : Colors.grey[100],
                           backgroundColor:
                               selectedMatchId == match.id
-                                  ? Colors.grey[400]
+                                  ? Colors.grey[300]
                                   : match.anyPercentageHigherThan(80)
-                                  ? Colors.red
+                                  ? Colors.red[300]
                                   : match.anyPercentageHigherThan(65)
-                                  ? Colors.orange
+                                  ? Colors.orange[300]
                                   : match.anyPercentageHigherThan(52)
-                                  ? Colors.amber
+                                  ? Colors.amber[300]
                                   : Colors.grey[100],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(3),
@@ -500,7 +505,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(DateFormat.MMMMd("pt-BR").format(match.matchDate), style: TextStyle(fontSize: 12)),
                                 SizedBox(width: 10),

@@ -1,6 +1,9 @@
+import "package:odds_fetcher/models/league.dart";
+
 class Folder {
   final int id;
   final String name;
+  late List<League> leagues = [];
 
   Folder({required this.id, required this.name});
 

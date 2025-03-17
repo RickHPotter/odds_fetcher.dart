@@ -264,11 +264,42 @@ class DatabaseService {
     return result.map((row) => League.fromMap(row)).toList();
   }
 
-  static Future<List<Folder>> fetchFolders() async {
+  static Future<List<Folder>> fetchFoldersWithLeagues() async {
     final db = await database;
 
-    final result = await db.query("Folders", orderBy: "folderName");
+    final result = await db.rawQuery("""
+      SELECT
+      lf.id,
+      l.id as leagueId, l.leagueName, l.leagueCode,
+      f.id as folderId, f.folderName
+      FROM LeaguesFolders lf
+      INNER JOIN Leagues l ON l.id = lf.leagueId
+      INNER JOIN Folders f ON f.id = lf.folderId
+      ORDER BY lf.folderId;""");
 
-    return result.map((row) => Folder.fromMap(row)).toList();
+    final List<Folder> folders = [];
+
+    for (var row in result) {
+      final league = League(
+        id: row["leagueId"] as int,
+        code: row["leagueCode"] as String,
+        name: row["leagueName"] as String,
+      );
+
+      final int folderId = row["folderId"] as int;
+      final String folderName = row["folderName"] as String;
+
+      final int index = folders.indexWhere((folder) => folder.id == folderId);
+
+      if (index != -1) {
+        folders[index].leagues.add(league);
+      } else {
+        final Folder folder = Folder(id: folderId, name: folderName);
+        folder.leagues.add(league);
+        folders.add(folder);
+      }
+    }
+
+    return folders;
   }
 }

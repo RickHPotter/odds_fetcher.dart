@@ -119,7 +119,15 @@ class _MyHomePageState extends State<MyHomePage> {
               index: selectedIndex,
               children: [
                 const RecordListScreen(),
-                Padding(padding: const EdgeInsets.all(16.0), child: Text(MediaQuery.of(context).size.toString())),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(MediaQuery.of(context).size.height.toString()),
+                      Text(MediaQuery.of(context).size.width.toString()),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

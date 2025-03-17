@@ -9,6 +9,10 @@ class LeagueFolder {
   LeagueFolder({required this.id, required this.league, required this.folder});
 
   factory LeagueFolder.fromMap(Map<String, dynamic> map) {
-    return LeagueFolder(id: map["id"], league: League.fromMap(map["league"]), folder: Folder.fromMap(map["folder"]));
+    return LeagueFolder(
+      id: map["id"],
+      league: League(id: map["leagueId"], name: map["leagueName"], code: map["leagueCode"]),
+      folder: Folder(id: map["folderId"], name: map["folderName"]),
+    );
   }
 }

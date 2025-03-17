@@ -32,9 +32,10 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
         );
       },
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.trending_up, color: filter.anySpecificOddsPresent() ? Colors.white : null),
+          const SizedBox(width: 1),
           Text("Odds", style: TextStyle(color: filter.anySpecificOddsPresent() ? Colors.white : null)),
         ],
       ),

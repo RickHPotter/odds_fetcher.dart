@@ -3,6 +3,7 @@ import "package:flutter/material.dart";
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
+import "package:odds_fetcher/models/league_folder.dart";
 
 class LeaguesFoldersFilterButton extends StatefulWidget {
   final Filter filter;
@@ -91,6 +92,7 @@ class LeaguesFoldersFilterModal extends StatefulWidget {
 
 class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
   dynamic selectedNode = League;
+  late List<League> selectedLeaguesFromFolders = [];
 
   @override
   void dispose() {
@@ -113,12 +115,26 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
           });
         }
 
+        final ScrollController folderLeaguesScrollController = ScrollController();
+
+        void populateSelectedLeaguesFolders() {
+          selectedLeaguesFromFolders.clear();
+
+          for (Folder folder in widget.selectedFolders) {
+            final List<League> leagues = folder.leagues;
+
+            selectedLeaguesFromFolders.addAll(leagues);
+          }
+        }
+
+        populateSelectedLeaguesFolders();
+
         return Dialog(
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.height * 0.40,
+            height: MediaQuery.of(context).size.height * 0.50,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
               child: Column(
@@ -155,6 +171,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                       setStates(() {
                         if (!widget.selectedFolders.contains(folder)) widget.selectedFolders.add(folder);
                         selectedNode = Folder;
+                        populateSelectedLeaguesFolders();
                       });
                     },
                     onItemRemoved: (folder) {
@@ -162,6 +179,42 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                         widget.selectedFolders.remove(folder);
                       });
                     },
+                  ),
+                  Listener(
+                    onPointerSignal: (event) {
+                      if (event is PointerScrollEvent) {
+                        folderLeaguesScrollController.jumpTo(
+                          folderLeaguesScrollController.offset + event.scrollDelta.dy,
+                        );
+                      }
+                    },
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      controller: folderLeaguesScrollController,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        controller: folderLeaguesScrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Wrap(
+                          spacing: 8.0,
+                          children:
+                              selectedLeaguesFromFolders.map((league) {
+                                return Chip(
+                                  label: Tooltip(message: league.name, child: Text(league.code)),
+                                  deleteIconColor: Colors.red,
+                                  onDeleted: () {
+                                    setStates(() {
+                                      for (var folder in widget.selectedFolders) {
+                                        folder.leagues.removeWhere((folderLeague) => league.code == folderLeague.code);
+                                      }
+                                      populateSelectedLeaguesFolders();
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                      ),
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -177,6 +230,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                               setStates(() {
                                 widget.selectedLeagues.clear();
                                 widget.selectedFolders.clear();
+                                selectedLeaguesFromFolders.clear();
                                 selectedNode = null;
                               });
                             },

@@ -124,7 +124,15 @@ class Record {
     };
   }
 
-  static Map<String, double> calculateScoreMatchPercentages(List<Record> records) {
+  static Map<String, double> calculateScoreMatchPercentages(Record futureRecord, List<Record> records) {
+    if (futureRecord.pastRecordsCount! > 0) {
+      return {
+        "homeWins": futureRecord.homeWinPercentage as double,
+        "draws": futureRecord.drawPercentage as double,
+        "awayWins": futureRecord.awayWinPercentage as double,
+      };
+    }
+
     if (records.isEmpty) return {"homeWins": 0, "draws": 0, "awayWins": 0};
 
     int totalMatches = records.length;

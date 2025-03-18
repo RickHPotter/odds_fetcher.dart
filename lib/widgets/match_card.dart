@@ -33,13 +33,19 @@ class MatchCard extends StatelessWidget {
             goalsPercentageChild = const Center(child: Text("Nenhum dado disponível"));
           } else {
             final records = snapshot.data!;
-            final scorePercentages = Record.calculateScoreMatchPercentages(records);
+            final scorePercentages = Record.calculateScoreMatchPercentages(pivotRecord, records);
             final goalsPercentages = Record.calculateGoalsMatchPercentages(records);
 
             scorePercentageChild = Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Text(
+                    "${records.length} jogos passados encontrados",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
                 _buildScorePercentageRow("HOME", scorePercentages["homeWins"] as double, Colors.blue),
                 _buildScorePercentageRow("DRAW", scorePercentages["draws"] as double, Colors.grey),
                 _buildScorePercentageRow("AWAY", scorePercentages["awayWins"] as double, Colors.orange),
@@ -65,7 +71,7 @@ class MatchCard extends StatelessWidget {
           }
 
           Widget container({child}) => Container(
-            height: 130,
+            height: 125,
             width: percentagesContainerWidthFactor * screenWidth,
             decoration: BoxDecoration(
               color: Colors.blue.shade50,
@@ -75,7 +81,7 @@ class MatchCard extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(4.0),
               child: Card(
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -182,39 +188,31 @@ class MatchDetails extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
+        Tooltip(
+          message: match.league.name,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue.shade200,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(2, 2)),
+              ],
+            ),
+            padding: const EdgeInsets.all(4),
+            child: Text(
               match.league.code,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                decorationStyle: TextDecorationStyle.dashed,
+              ),
               textAlign: TextAlign.center,
             ),
-
-            const Text(" - "),
-            Expanded(
-              child: Text(
-                match.league.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-              ),
-            ),
-          ],
+          ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Expanded(
-              child: Text(match.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center),
-            ),
-            const Text("vs", style: TextStyle(fontSize: 12)),
-            Expanded(
-              child: Text(match.awayTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-            ),
-          ],
-        ),
+        Expanded(child: Text(match.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center)),
+        const Text("vs", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
+        Expanded(child: Text(match.awayTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center)),
         Text(
           DateFormat("EEEE, d MMM yyyy - HH:mm", "pt_BR").format(match.matchDate),
           style: const TextStyle(color: Colors.grey, fontSize: 12),
@@ -246,7 +244,7 @@ class MatchOdds extends StatelessWidget {
       );
     }
 
-    Widget oddsRow(double homeOdds, double drawOdds, double awayOdds) {
+    Widget oddsRow(String label, String shortLabel, double homeOdds, double drawOdds, double awayOdds) {
       double lowestOdds = [homeOdds, drawOdds, awayOdds].reduce(min);
       double highestOdds = [homeOdds, drawOdds, awayOdds].reduce(max);
 
@@ -261,6 +259,7 @@ class MatchOdds extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Tooltip(message: label, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
           oddsChip(homeOdds, color(homeOdds)),
           oddsChip(drawOdds, color(drawOdds)),
           oddsChip(awayOdds, color(awayOdds)),
@@ -270,7 +269,7 @@ class MatchOdds extends StatelessWidget {
 
     return Column(
       children: [
-        oddsRow(earlyHome, earlyDraw, earlyAway),
+        oddsRow("E", "Early", earlyHome, earlyDraw, earlyAway),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 3.0),
           child: Row(
@@ -282,8 +281,7 @@ class MatchOdds extends StatelessWidget {
             ],
           ),
         ),
-
-        oddsRow(finalHome, finalDraw, finalAway),
+        oddsRow("F", "Final", finalHome, finalDraw, finalAway),
       ],
     );
   }

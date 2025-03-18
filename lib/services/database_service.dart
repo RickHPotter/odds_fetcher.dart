@@ -97,7 +97,6 @@ class DatabaseService {
   """);
 
     if (filter != null && filter.futureMinHomeWinPercentage == 1) {
-      debugPrint(result.length.toString());
       for (var row in result) {
         Record futureRecord = Record.fromMap(row);
 
@@ -129,6 +128,8 @@ class DatabaseService {
             futureRecord.drawPercentage = drawPercentage;
             futureRecord.awayWinPercentage = awayWinPercentage;
             yield futureRecord;
+          } else {
+            print("skipping: $recordsCount, $homeWinPercentage, $drawPercentage, $awayWinPercentage");
           }
         }
       }
@@ -184,6 +185,7 @@ class DatabaseService {
       printf('%02d', MatchDateMonth) || '-' ||
       printf('%02d', MatchDateDay) As MatchDateStr
     FROM Records
+    WHERE FINISHED = 1
     LIMIT 1;
     """);
 

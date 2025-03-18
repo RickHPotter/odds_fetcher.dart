@@ -127,37 +127,23 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
   }
 
-  //void loadFutureMatches() async {
-  //  if (pivotRecords.isNotEmpty && pivotRecordIndex != null) {
-  //    Record pivotRecord = pivotRecords[pivotRecordIndex as int];
-  //    pivotRecordIndex = fetchedRecords.indexWhere((record) => record.id == pivotRecord.id);
-  //
-  //    if (pivotRecordIndex == -1) {
-  //      pivotRecordIndex = null;
-  //    }
-  //  } else {
-  //    pivotRecordIndex = 0;
-  //  }
-  //}
-
   void loadFutureMatches() {
     setState(() {
       isLoading = true;
       pivotRecords.clear();
     });
 
+    pivotRecordIndex = 0;
     _recordSubscription = DatabaseService.fetchFutureRecords(filter: filter).listen(
       (record) {
         setState(() {
           pivotRecords.add(record);
-          if (pivotRecords.isNotEmpty && pivotRecordIndex == null) {
-            pivotRecordIndex = 0;
-          }
         });
       },
       onDone: () {
         setState(() {
           isLoading = false;
+          pivotRecordIndex ??= 0;
         });
       },
     );

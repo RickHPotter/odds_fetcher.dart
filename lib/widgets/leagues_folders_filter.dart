@@ -3,7 +3,6 @@ import "package:flutter/material.dart";
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
-import "package:odds_fetcher/models/league_folder.dart";
 
 class LeaguesFoldersFilterButton extends StatefulWidget {
   final Filter filter;

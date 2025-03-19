@@ -3,6 +3,7 @@ import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/team.dart";
+import "package:odds_fetcher/utils/date_utils.dart" show rawDateTime;
 
 enum MinMaxOdds {
   minEarlyHome,
@@ -259,10 +260,8 @@ class Filter {
 
     late String whereClause = "WHERE finished = 1";
 
-    whereClause +=
-        " AND (MatchDateYear > ${minDate.year} OR (MatchDateYear >= ${minDate.year} AND MatchDateMonth >= ${minDate.month} AND MatchDateDay >= ${minDate.day}))";
-    whereClause +=
-        " AND (MatchDateYear < ${maxDate.year} OR (MatchDateYear = ${maxDate.year} AND MatchDateMonth <= ${maxDate.month} AND MatchDateDay <= ${maxDate.day}))";
+    whereClause += " AND MatchDate >= ${rawDateTime(minDate)}";
+    whereClause += " AND MatchDate <= ${rawDateTime(maxDate)}";
 
     if (futureSameEarlyHome == 1 && futureRecord?.earlyOdds1 != null) {
       whereClause += " AND earlyOdds1 = ${futureRecord?.earlyOdds1}";
@@ -318,8 +317,6 @@ class Filter {
       whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
     }
 
-    print(whereClause);
-
     return whereClause;
   }
 
@@ -332,20 +329,18 @@ class Filter {
       return whereClause;
     }
 
-    final date = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
+    final maxDate = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
 
-    final minDate = DateFormat("yyyyMMddHHm").format(DateTime.now());
-    final maxDate =
-        "${date.year.toString().padLeft(4, '0')}"
-        "${date.month.toString().padLeft(2, '0')}"
-        "${date.day.toString().padLeft(2, '0')}"
-        "${date.hour.toString().padLeft(2, '0')}"
-        "${date.minute.toString().padLeft(2, '0')}";
+    //final minDate = DateFormat("yyyyMMddHHm").format(DateTime.now());
+    //final maxDate =
+    //    "${date.year.toString().padLeft(4, '0')}"
+    //    "${date.month.toString().padLeft(2, '0')}"
+    //    "${date.day.toString().padLeft(2, '0')}"
+    //    "${date.hour.toString().padLeft(2, '0')}"
+    //    "${date.minute.toString().padLeft(2, '0')}";
 
-    whereClause +=
-        " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) >= '$minDate'";
-    whereClause +=
-        " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$maxDate'";
+    whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
+    whereClause += " AND MatchDate <= ${rawDateTime(maxDate)}";
 
     if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";

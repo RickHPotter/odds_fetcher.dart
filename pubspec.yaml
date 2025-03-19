@@ -19,6 +19,7 @@ dependencies:
   path_provider: ^2.1.3
   http: ^1.1.0
   pluto_grid: ^8.0.0
+  archive: ^4.0.4
 
 dev_dependencies:
   flutter_test:
@@ -31,9 +32,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/odds_fetcher_template.db
+    - assets/db.zip
     - assets/migrations/0001.sql
     - assets/migrations/0002.sql
     - assets/migrations/0003.sql
-    - assets/migrations/0004.sql
     - assets/images/logo.jpg

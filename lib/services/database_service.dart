@@ -1,21 +1,24 @@
 import "dart:io";
-
 import "package:flutter/foundation.dart" show ByteData, debugPrint;
 import "package:flutter/services.dart" show rootBundle;
-import "package:odds_fetcher/models/filter.dart";
-import "package:odds_fetcher/models/folder.dart";
-import "package:odds_fetcher/models/league.dart";
 import "package:path_provider/path_provider.dart" show getApplicationSupportDirectory;
 import "package:sqflite/sqflite.dart";
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
 import "package:path/path.dart" show join;
-//import "package:path_provider/path_provider.dart";
+import "package:archive/archive.dart";
+import "package:archive/archive_io.dart";
+
+import "package:odds_fetcher/models/filter.dart";
+import "package:odds_fetcher/models/folder.dart";
+import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/record.dart";
+
+import "package:odds_fetcher/utils/date_utils.dart" show parseRawDate;
 
 class DatabaseService {
   static Database? _db;
   static const String dbName = "odds_fetcher.db";
-  static const String assetDbPath = "assets/odds_fetcher_template.db";
+  static const String assetDbZipPath = "assets/db.zip";
 
   static Future<Database> get database async {
     if (_db != null) return _db!;
@@ -40,29 +43,45 @@ class DatabaseService {
     final dbExists = await databaseExists(path);
 
     if (!dbExists) {
-      debugPrint("Database does not exist, copying from assets...");
+      debugPrint("Database does not exist, copying and unzipping from assets...");
       try {
-        ByteData data = await rootBundle.load(assetDbPath);
+        ByteData data = await rootBundle.load(assetDbZipPath);
         List<int> bytes = data.buffer.asUint8List();
 
-        await File(path).writeAsBytes(bytes, flush: true);
-        debugPrint("Database copied successfully.");
+        // Unzip
+        final archive = ZipDecoder().decodeBytes(bytes);
+        bool dbCopied = false;
+        for (var file in archive) {
+          if (file.isFile) {
+            final filename = file.name;
+            if (filename == dbName) {
+              final dbFile = File(path);
+              await dbFile.writeAsBytes(file.content, flush: true);
+              dbCopied = true;
+              debugPrint("Database unzipped successfully to $path");
+              break;
+            }
+          }
+        }
+
+        if (!dbCopied) {
+          throw Exception("Database file not found in zip!");
+        }
       } catch (e) {
-        debugPrint("Error copying database: $e");
+        debugPrint("Error copying and unzipping database: $e");
+        rethrow;
       }
+    } else {
+      debugPrint("Database already exists at: $path");
+    }
+
+    // Verify the file exists and has content
+    final dbFile = File(path);
+    if (!dbFile.existsSync() || dbFile.lengthSync() < 1024) {
+      throw Exception("Unzipped database is too small or missing.");
     }
 
     return await openDatabase(path, version: 1);
-  }
-
-  static Future<void> executeSchema(Database db, String version) async {
-    final script = await rootBundle.loadString("assets/migrations/$version.sql");
-    final statements = script.split(";");
-    for (final statement in statements) {
-      if (statement.trim().isNotEmpty) {
-        await db.execute(statement);
-      }
-    }
   }
 
   static Stream<Record> fetchFutureRecords({Filter? filter}) async* {
@@ -83,7 +102,7 @@ class DatabaseService {
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
     ${filter?.whereClauseFuture() ?? ""}
-    ORDER BY MatchDateYear || printf('%02d', MatchDateMonth) || printf('%02d', MatchDateDay) || printf('%02d', MatchDateHour) || printf('%02d', MatchDateMinute), ID
+    ORDER BY MatchDate, ID
   """);
 
     if (filter != null && filter.futureMinHomeWinPercentage == 1) {
@@ -163,25 +182,18 @@ class DatabaseService {
     final db = await database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
-    SELECT
-      MAX(
-        MatchDateYear ||
-        printf('%02d', MatchDateMonth) ||
-        printf('%02d', MatchDateDay)
-      ) AS MatchDate,
-      MatchDateYear || '-' ||
-      printf('%02d', MatchDateMonth) || '-' ||
-      printf('%02d', MatchDateDay) As MatchDateStr
+    SELECT MAX(MatchDate) AS MatchDate
     FROM Records
     WHERE FINISHED = 1
     LIMIT 1;
     """);
 
-    if (result.isEmpty || result.first["MatchDateStr"] == null) {
+    if (result.isEmpty || result.first["MatchDate"] == null) {
       return DateTime.parse("2008-01-01");
     }
 
-    return DateTime.parse(result.first["MatchDateStr"]);
+    String matchDateStr = result.first["MatchDate"].toString();
+    return parseRawDate(matchDateStr);
   }
 
   static Future<void> insertRecord(Record record) async {

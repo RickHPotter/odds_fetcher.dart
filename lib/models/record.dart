@@ -1,5 +1,6 @@
 import "package:odds_fetcher/models/league.dart" show League;
 import "package:odds_fetcher/models/team.dart" show Team;
+import "package:odds_fetcher/utils/date_utils.dart" show parseRawDateTime, rawDateTime;
 
 class Record {
   final int? id;
@@ -18,6 +19,9 @@ class Record {
   final int? awayFirstHalfScore;
   final int? homeSecondHalfScore;
   final int? awaySecondHalfScore;
+  final int? homeWin;
+  final int? draw;
+  final int? awayWin;
   final bool? finished;
 
   late int? pastRecordsCount = 0;
@@ -42,6 +46,9 @@ class Record {
     this.awayFirstHalfScore,
     this.homeSecondHalfScore,
     this.awaySecondHalfScore,
+    this.homeWin,
+    this.draw,
+    this.awayWin,
     this.finished = true,
   });
 
@@ -72,16 +79,12 @@ class Record {
   }
 
   factory Record.fromMap(Map<String, dynamic> map) {
+    DateTime formattedDateString = parseRawDateTime(map["matchDate"].toString());
+
     return Record(
       id: map["id"],
       bettingHouseId: map["bettingHouseId"] ?? 17, // Default to 17
-      matchDate: DateTime(
-        map["matchDateYear"],
-        map["matchDateMonth"],
-        map["matchDateDay"],
-        map["matchDateHour"] ?? 0,
-        map["matchDateMinute"] ?? 0,
-      ),
+      matchDate: formattedDateString,
       league: League(id: map["leagueId"], code: map["leagueCode"], name: map["leagueName"]),
       homeTeam: Team(id: map["homeTeamId"], name: map["homeTeamName"]),
       awayTeam: Team(id: map["awayTeamId"], name: map["awayTeamName"]),
@@ -95,6 +98,9 @@ class Record {
       awayFirstHalfScore: map["awayFirstHalfScore"],
       homeSecondHalfScore: map["homeSecondHalfScore"],
       awaySecondHalfScore: map["awaySecondHalfScore"],
+      homeWin: map["homeWin"],
+      draw: map["draw"],
+      awayWin: map["awayWin"],
       finished: map["finished"].toString() == "1",
     );
   }
@@ -102,11 +108,7 @@ class Record {
   Map<String, dynamic> toMap() {
     return {
       "bettingHouseId": bettingHouseId,
-      "matchDateYear": matchDate.year,
-      "matchDateMonth": matchDate.month,
-      "matchDateDay": matchDate.day,
-      "matchDateHour": matchDate.hour,
-      "matchDateMinute": matchDate.minute,
+      "matchDate": rawDateTime(matchDate),
       "leagueId": league.id,
       "homeTeamId": homeTeam.id,
       "awayTeamId": awayTeam.id,

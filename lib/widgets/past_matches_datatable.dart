@@ -46,11 +46,18 @@ class PastMachDataTable extends StatelessWidget {
             },
             onLoaded: (event) {
               stateManager = event.stateManager;
-              stateManager.setShowColumnFilter(true);
+              stateManager.setShowColumnFilter(false);
             },
             configuration: PlutoGridConfiguration(
-              scrollbar: const PlutoGridScrollbarConfig(isAlwaysShown: true, draggableScrollbar: true),
-              style: PlutoGridStyleConfig(gridBorderRadius: BorderRadius.circular(8), rowHeight: 30),
+              localeText: const PlutoGridLocaleText.brazilianPortuguese(),
+              scrollbar: const PlutoGridScrollbarConfig(isAlwaysShown: true, draggableScrollbar: true, scrollbarThickness: 8),
+              style: PlutoGridStyleConfig(
+                gridBorderRadius: BorderRadius.circular(8),
+                columnHeight: 32,
+                rowHeight: 24,
+                columnTextStyle: TextStyle(fontWeight: FontWeight.bold),
+                cellTextStyle: const TextStyle(fontSize: 13),
+              ),
             ),
           );
         },

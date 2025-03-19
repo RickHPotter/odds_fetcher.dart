@@ -133,13 +133,49 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.height * 0.50,
+            height: MediaQuery.of(context).size.height * 0.60,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: widget.filter.filterFutureRecordsByLeagues,
+                              onChanged: (value) {
+                                setStates(() {
+                                  widget.filter.filterFutureRecordsByLeagues = value as bool;
+                                });
+                              },
+                            ),
+                            const Text("Filtrar jogos futuros"),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: widget.filter.filterPastRecordsByLeagues,
+                              onChanged: (value) {
+                                setStates(() {
+                                  widget.filter.filterPastRecordsByLeagues = value as bool;
+                                });
+                              },
+                            ),
+                            const Text("Filtrar jogos anteriores"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   _buildMultiSelect<League>(
                     shouldFocus: true,
                     items: widget.leagues,

@@ -60,6 +60,9 @@ class Filter {
   int? futureMinDrawPercentage; // TODO: Missing
   int? futureMinAwayWinPercentage; // TODO: Missing
 
+  bool filterPastRecordsByLeagues = true;
+  bool filterFutureRecordsByLeagues = true;
+
   List<Team>? teams; // TODO: Missing
   List<League> leagues;
   List<Folder> folders;
@@ -285,7 +288,7 @@ class Filter {
       whereClause += " AND finalOdds2 = ${futureRecord?.finalOdds2}";
     }
 
-    if (futureOnlySameLeague == 1 && futureRecord?.league.id != null) {
+    if ((filterPastRecordsByLeagues || futureOnlySameLeague == 1) && futureRecord?.league.id != null) {
       whereClause += " AND leagueId = ${futureRecord?.league.id}";
     } else if (leagues.isNotEmpty) {
       whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
@@ -347,7 +350,7 @@ class Filter {
     whereClause +=
         " AND printf('%04d%02d%02d%02d%02d', MatchDateYear, MatchDateMonth, MatchDateDay, MatchDateHour, MatchDateMinute) <= '$maxDate'";
 
-    if (leagues.isNotEmpty || folders.isNotEmpty) {
+    if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
     }
 

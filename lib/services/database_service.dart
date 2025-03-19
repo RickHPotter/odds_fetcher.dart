@@ -53,19 +53,6 @@ class DatabaseService {
     return await openDatabase(path, version: 1);
   }
 
-  //static Future<Database> _initDb() async {
-  //  final appSupportDir = await getApplicationSupportDirectory();
-  //  final path = join(appSupportDir.path, dbName);
-  //
-  //  if (!await File(path).exists()) {
-  //    final byteData = await rootBundle.load(assetDbPath);
-  //    final buffer = byteData.buffer;
-  //    await File(path).writeAsBytes(buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
-  //  }
-  //
-  //  return await databaseFactory.openDatabase(path);
-  //}
-
   static Future<void> executeSchema(Database db, String version) async {
     final script = await rootBundle.loadString("assets/migrations/$version.sql");
     final statements = script.split(";");
@@ -94,6 +81,7 @@ class DatabaseService {
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
     ${filter?.whereClauseFuture() ?? ""}
+    ORDER BY MatchDateYear || printf('%02d', MatchDateMonth) || printf('%02d', MatchDateDay) || printf('%02d', MatchDateHour) || printf('%02d', MatchDateMinute), ID
   """);
 
     if (filter != null && filter.futureMinHomeWinPercentage == 1) {
@@ -128,8 +116,6 @@ class DatabaseService {
             futureRecord.drawPercentage = drawPercentage;
             futureRecord.awayWinPercentage = awayWinPercentage;
             yield futureRecord;
-          } else {
-            print("skipping: $recordsCount, $homeWinPercentage, $drawPercentage, $awayWinPercentage");
           }
         }
       }

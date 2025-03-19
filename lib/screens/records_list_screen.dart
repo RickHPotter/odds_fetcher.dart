@@ -2,6 +2,7 @@ import "dart:async";
 
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
+import "package:flutter/services.dart" show FilteringTextInputFormatter;
 import "package:intl/date_symbol_data_local.dart";
 import "package:intl/intl.dart";
 import "package:odds_fetcher/jobs/records_fetcher.dart";
@@ -70,6 +71,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   StreamSubscription<Record>? _recordSubscription;
   final ScrollController _scrollController = ScrollController();
+  late TextEditingController yearController = TextEditingController();
+
+  bool? hideFiltersOnFutureRecordSelect = true;
 
   void updateOddsFilter() {
     selectedOddsMap = {
@@ -128,16 +132,23 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void loadFutureMatches() {
+    _recordSubscription?.cancel();
+
     setState(() {
       isLoading = true;
       pivotRecords.clear();
+      selectedMatchId = null;
+      pivotRecordIndex = null;
+      records = Future.value([]);
     });
 
-    pivotRecordIndex = 0;
     _recordSubscription = DatabaseService.fetchFutureRecords(filter: filter).listen(
       (record) {
         setState(() {
           pivotRecords.add(record);
+          if (pivotRecordIndex == null) {
+            loadPastMatches(record.id, 0);
+          }
         });
       },
       onDone: () {
@@ -150,20 +161,14 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void loadPastMatches(int? id, int? index) async {
-    if (id == null || index == null || pivotRecords.isEmpty) {
-      return;
-    }
-
-    final Record futurePivotRecord = pivotRecords[index];
-    final Future<List<Record>> fetchedRecords = DatabaseService.fetchRecords(
-      filter: filter,
-      futureRecord: futurePivotRecord,
-    );
-
     setState(() {
       selectedMatchId = id;
-      records = fetchedRecords;
       pivotRecordIndex = index;
+
+      if (id != null && index != null && pivotRecords.isNotEmpty) {
+        final Record futurePivotRecord = pivotRecords[index];
+        records = DatabaseService.fetchRecords(filter: filter, futureRecord: futurePivotRecord);
+      }
     });
   }
 
@@ -261,7 +266,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
-                          onPressed: () => filterHistoryMatches(time),
+                          onPressed: () => filterHistoryMatches(time: time),
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
@@ -274,6 +279,24 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         ),
                       ),
                     ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.085,
+                    height: MediaQuery.of(context).size.height * 0.042,
+                    child: TextFormField(
+                      controller: yearController,
+                      keyboardType: TextInputType.number,
+                      validator: (value) => value == null ? "Ano Inválido" : null,
+                      decoration: InputDecoration(
+                        labelText: "Ano",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.all(12),
+                      ),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                      onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -304,6 +327,24 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         ),
                       ),
                     ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.085,
+                    height: MediaQuery.of(context).size.height * 0.042,
+                    child: TextFormField(
+                      controller: yearController,
+                      keyboardType: TextInputType.number,
+                      validator: (value) => value == null ? "Ano Inválido" : null,
+                      decoration: InputDecoration(
+                        labelText: "Ano",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.all(12),
+                      ),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                      onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -380,7 +421,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         folders: folders,
                         onApplyCallback: () {
                           loadFutureMatches();
-                          loadPastMatches(selectedMatchId, pivotRecordIndex);
                           if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
                             setState(() => isSameLeague = false);
                           }
@@ -397,7 +437,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         onApplyCallback: () {
                           updateFutureSameOddsTypes();
                           loadFutureMatches();
-                          loadPastMatches(selectedMatchId, pivotRecordIndex);
                         },
                       ),
                     ),
@@ -435,13 +474,22 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       ),
                     ),
                   ),
+                  Checkbox(
+                    value: hideFiltersOnFutureRecordSelect,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        hideFiltersOnFutureRecordSelect = value;
+                      });
+                    },
+                  ),
+                  const Text("Ocultar Filtros"),
                 ],
               ),
             ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.015),
           // Future Matches Carousel
           SizedBox(
-            height: 60,
+            height: 66,
             child: Listener(
               onPointerSignal: (event) {
                 if (event is PointerScrollEvent) {
@@ -451,6 +499,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: Scrollbar(
                 thumbVisibility: true,
                 controller: _scrollController,
+                trackVisibility: true,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   controller: _scrollController,
@@ -462,7 +511,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          showFilters = false;
+                          showFilters =
+                              hideFiltersOnFutureRecordSelect != null && hideFiltersOnFutureRecordSelect!
+                                  ? false
+                                  : showFilters;
                           loadPastMatches(match.id as int, index);
                         },
                         style: OutlinedButton.styleFrom(
@@ -504,6 +556,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               textAlign: TextAlign.end,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            const SizedBox(height: 8),
                           ],
                         ),
                       ),
@@ -520,7 +573,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int]),
             ),
           PastMachDataTable(records: records),
-
           const Divider(),
           // Footer and Controls
           Padding(
@@ -583,7 +635,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                   ),
-                  child: Text(showFilters ? "Esconder Filtros" : "Mostrar Filtros"),
+                  child: Text(showFilters ? "Ocultar Filtros" : "Mostrar Filtros"),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -663,13 +715,26 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   // FILTERS
-  void filterHistoryMatches(int time) {
-    filterPastYears = time;
-    filter.minDate = DateTime.now().subtract(Duration(days: time * 365));
+  void filterHistoryMatches({int? time, int? specificYear}) {
+    if (time == null && specificYear == null) {
+      showOverlayMessage(context, "Filtro de Tempo Passado preenchido incompletamente!", type: MessageType.info);
+      return;
+    }
+
+    if (time != null && specificYear == null) {
+      filterPastYears = time;
+      filter.minDate = DateTime.now().subtract(Duration(days: time * 365));
+    } else if (time == null && specificYear != null) {
+      filterPastYears = 0;
+      filter.minDate = DateTime(specificYear, 1, 1);
+      filter.maxDate = DateTime(specificYear, 12, 31);
+    }
 
     loadPastMatches(selectedMatchId, pivotRecordIndex);
 
-    setState(() => filterPastYears = filterPastYears);
+    setState(() {
+      filterPastYears = filterPastYears;
+    });
   }
 
   void filterUpcomingMatches(int duration) {
@@ -706,9 +771,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
       if (filter.futureMinHomeWinPercentage == 1) {
         loadFutureMatches();
+      } else {
+        loadPastMatches(selectedMatchId, pivotRecordIndex);
       }
-
-      loadPastMatches(selectedMatchId, pivotRecordIndex);
     });
   }
 

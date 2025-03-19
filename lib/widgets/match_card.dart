@@ -259,7 +259,7 @@ class MatchOdds extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Tooltip(message: label, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Tooltip(message: label, child: Text(shortLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
           oddsChip(homeOdds, color(homeOdds)),
           oddsChip(drawOdds, color(drawOdds)),
           oddsChip(awayOdds, color(awayOdds)),
@@ -269,7 +269,7 @@ class MatchOdds extends StatelessWidget {
 
     return Column(
       children: [
-        oddsRow("E", "Early", earlyHome, earlyDraw, earlyAway),
+        oddsRow("Early", "E", earlyHome, earlyDraw, earlyAway),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 3.0),
           child: Row(
@@ -281,7 +281,7 @@ class MatchOdds extends StatelessWidget {
             ],
           ),
         ),
-        oddsRow("F", "Final", finalHome, finalDraw, finalAway),
+        oddsRow("Final", "F", finalHome, finalDraw, finalAway),
       ],
     );
   }

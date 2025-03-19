@@ -5,6 +5,7 @@ import "package:flutter/services.dart" show rootBundle;
 import "package:odds_fetcher/models/filter.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league.dart";
+import "package:path_provider/path_provider.dart" show getApplicationSupportDirectory;
 import "package:sqflite/sqflite.dart";
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
 import "package:path/path.dart" show join;
@@ -26,7 +27,8 @@ class DatabaseService {
   }
 
   static Future<Database> _initDb() async {
-    final dbPath = await getDatabasesPath();
+    final dbPath =
+        Platform.isWindows ? await getApplicationSupportDirectory().then((dir) => dir.path) : await getDatabasesPath();
     final path = join(dbPath, dbName);
 
     final dbDir = Directory(dbPath);

@@ -50,7 +50,7 @@ class PastMachDataTable extends StatelessWidget {
             },
             configuration: PlutoGridConfiguration(
               scrollbar: const PlutoGridScrollbarConfig(isAlwaysShown: true, draggableScrollbar: true),
-              style: PlutoGridStyleConfig(gridBorderRadius: BorderRadius.circular(8)),
+              style: PlutoGridStyleConfig(gridBorderRadius: BorderRadius.circular(8), rowHeight: 30),
             ),
           );
         },

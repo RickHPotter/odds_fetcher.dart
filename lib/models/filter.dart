@@ -288,15 +288,10 @@ class Filter {
       whereClause += " AND finalOdds2 = ${futureRecord?.finalOdds2}";
     }
 
-    if ((filterPastRecordsByLeagues || futureOnlySameLeague == 1) && futureRecord?.league.id != null) {
-      whereClause += " AND leagueId = ${futureRecord?.league.id}";
-    } else if (leagues.isNotEmpty) {
+    if (filterPastRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
-    }
-
-    if (folders.isNotEmpty) {
-      whereClause +=
-          " AND leagueId IN (SELECT leagueId FROM LeaguesFolders WHERE folderId IN (${folders.map((f) => f.id).join(', ')})) ";
+    } else if (futureOnlySameLeague == 1 && futureRecord?.league.id != null) {
+      whereClause += " AND leagueId = ${futureRecord?.league.id}";
     }
 
     if (minEarlyHome != null) {
@@ -322,6 +317,8 @@ class Filter {
     if (minFinalAway != null) {
       whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
     }
+
+    print(whereClause);
 
     return whereClause;
   }
@@ -377,8 +374,6 @@ class Filter {
     if (minFinalAway != null) {
       whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
     }
-
-    print(whereClause);
 
     return whereClause;
   }

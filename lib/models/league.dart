@@ -5,7 +5,7 @@ class League {
   final String name;
 
   League({this.id, this.ids, required this.code, required this.name})
-      : assert(id != null || ids != null, "Either id or ids must be provided.");
+    : assert(id != null || ids != null, "Either id or ids must be provided.");
 
   factory League.fromMap(Map<String, dynamic> map) {
     int? id;
@@ -23,16 +23,15 @@ class League {
       id = int.parse(map["id"].toString());
     }
 
-    return League(
-      id: id,
-      ids: ids,
-      code: map["leagueCode"],
-      name: map["leagueName"],
-    );
+    return League(id: id, ids: ids, code: map["leagueCode"], name: map["leagueName"]);
   }
 
   @override
   String toString() {
     return "Liga";
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"id": id, "leagueCode": code, "leagueName": name};
   }
 }

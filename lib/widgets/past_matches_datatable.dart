@@ -16,7 +16,7 @@ class PastMachDataTable extends StatelessWidget {
     return Expanded(
       child: FutureBuilder<List<Record>>(
         future: records,
-        builder: (context, snapshot) {
+        builder: (BuildContext context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -27,12 +27,12 @@ class PastMachDataTable extends StatelessWidget {
             return const Center(child: Text("Nenhum jogo passado encontrado com os critérios informados."));
           }
 
-          final records = snapshot.data!;
+          final List<Record> records = snapshot.data!;
           return PlutoGrid(
             columns: getColumns(screenWidth),
             rows: getRows(records),
             rowColorCallback: (PlutoRowColorContext context) {
-              final record = records[context.rowIdx];
+              final Record record = records[context.rowIdx];
               final int home = record.homeSecondHalfScore ?? 0;
               final int away = record.awaySecondHalfScore ?? 0;
 
@@ -173,7 +173,7 @@ class PastMachDataTable extends StatelessWidget {
   }
 
   List<PlutoRow> getRows(List<Record> records) {
-    return records.map((record) {
+    return records.map((Record record) {
       return PlutoRow(
         cells: {
           "dia": PlutoCell(value: record.matchDate.toString()),

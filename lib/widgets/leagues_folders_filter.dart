@@ -58,8 +58,11 @@ class _LeaguesFoldersFilterButtonState extends State<LeaguesFoldersFilterButton>
         children: [
           Icon(Icons.folder, color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
           Text(
-            "Ligas",
-            style: TextStyle(color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null),
+            "LIGAS",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.white : null,
+            ),
           ),
         ],
       ),

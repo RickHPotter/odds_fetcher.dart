@@ -15,4 +15,8 @@ class Folder {
   String toString() {
     return "Pasta";
   }
+
+  Map<String, dynamic> toMap() {
+    return {"id": id, "folderName": name};
+  }
 }

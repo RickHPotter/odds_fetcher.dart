@@ -213,6 +213,31 @@ class DatabaseService {
     }
   }
 
+  static Future<void> insertFilter(Filter filter) async {
+    int? filterId = await _db?.insert("Filters", filter.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
+
+    for (Team team in filter.teams) {
+      await _db?.insert("FilterTeams", {
+        "filterId": filterId,
+        "teamId": team.id,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+
+    for (League league in filter.leagues) {
+      await _db?.insert("FilterLeagues", {
+        "filterId": filterId,
+        "leagueId": league.id,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+
+    for (Folder folder in filter.folders) {
+      await _db?.insert("FilterFolders", {
+        "filterId": filterId,
+        "folderId": folder.id,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+  }
+
   static Future<int> getOrCreateLeague(String leagueCode, String? leagueName) async {
     final db = await database;
 

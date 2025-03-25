@@ -283,8 +283,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             backgroundColor: time == filterPastYears ? Colors.blueAccent : null,
                           ),
                           child: Text(
-                            time <= 1 ? "$time ano" : "$time anos",
-                            style: TextStyle(color: time == filterPastYears ? Colors.white : null),
+                            time <= 1 ? "$time ANO" : "$time ANOS",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: time == filterPastYears ? Colors.white : null,
+                            ),
                           ),
                         ),
                       ),
@@ -295,9 +298,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     child: TextFormField(
                       controller: yearController,
                       keyboardType: TextInputType.number,
-                      validator: (value) => value == null ? "Ano Inválido" : null,
+                      validator: (value) => value == null ? "ANO INVÁLIDO" : null,
                       decoration: InputDecoration(
-                        labelText: "Ano",
+                        labelText: "ANO",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -319,7 +322,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       },
                     ),
                   ),
-                  const Text("Ocultar Filtros"),
+                  const Text("OCULTAR FILTROS"),
                 ],
               ),
             ),
@@ -345,7 +348,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           ),
                           child: Text(
                             humaniseTime(minutes, short: true),
-                            style: TextStyle(color: minutes == filterFutureNextMinutes ? Colors.white : null),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: minutes == filterFutureNextMinutes ? Colors.white : null,
+                            ),
                           ),
                         ),
                       ),
@@ -400,7 +406,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             children: [
                               Icon(Icons.dehaze, color: isSelected ? Colors.white : null),
                               const SizedBox(width: 1),
-                              Text(oddsType.shortName, style: TextStyle(color: isSelected ? Colors.white : null)),
+                              Text(
+                                oddsType.shortName,
+                                style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : null),
+                              ),
                             ],
                           ),
                         ),
@@ -436,7 +445,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           children: [
                             Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
                             const SizedBox(width: 1),
-                            Text("Liga", style: TextStyle(color: isSameLeague ? Colors.white : null)),
+                            Text(
+                              "LIGA",
+                              style: TextStyle(fontWeight: FontWeight.bold, color: isSameLeague ? Colors.white : null),
+                            ),
                           ],
                         ),
                       ),
@@ -485,7 +497,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             const SizedBox(width: 1),
                             Text(
                               "52%",
-                              style: TextStyle(color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null,
+                              ),
                             ),
                           ],
                         ),
@@ -591,10 +606,25 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                   ),
                   onPressed: () {},
+                  child: Icon(Icons.restart_alt),
+                ),
+                ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  ),
+                  onPressed: () {},
                   child: Text(
                     filter.filterName.toUpperCase(),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
+                ),
+
+                ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  ),
+                  onPressed: () {},
+                  child: Icon(Icons.save),
                 ),
                 isLoading
                     ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
@@ -641,7 +671,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                   ),
-                  child: Text(showFilters ? "Ocultar Filtros" : "Mostrar Filtros"),
+                  child: Text(
+                    showFilters ? "OCULTAR FILTROS" : "MOSTRAR FILTROS",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -695,7 +728,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                   style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                                   ),
-                                  child: const Text("Buscar Jogos Passados"),
+                                  child: const Text(
+                                    "BUSCAR JOGOS PASSADOS",
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
                                 ),
                               ),
                               SizedBox(width: MediaQuery.of(context).size.width * 0.02),
@@ -706,7 +742,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                   style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                                   ),
-                                  child: const Text("Buscar Jogos Futuros"),
+                                  child: const Text(
+                                    "BUSCAR JOGOS FUTUROS",
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
                                 ),
                               ),
                             ],

@@ -42,7 +42,7 @@ class MatchCard extends StatelessWidget {
               children: [
                 Center(
                   child: Text(
-                    "${records.length} jogos passados encontrados",
+                    "${records.length} JOGOS PASSADOS ENCONTRADOS",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -142,9 +142,9 @@ class MatchCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Under: ${under.toStringAsFixed(1)}%", style: TextStyle(color: Colors.orange.shade800)),
+            Text("UNDER: ${under.toStringAsFixed(1)}%", style: TextStyle(color: Colors.orange.shade800)),
             Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text("Over: ${over.toStringAsFixed(1)}%", style: TextStyle(color: Colors.blue.shade800)),
+            Text("OVER: ${over.toStringAsFixed(1)}%", style: TextStyle(color: Colors.blue.shade800)),
           ],
         ),
         Container(
@@ -210,9 +210,9 @@ class MatchDetails extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(child: Text(match.homeTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center)),
+        Expanded(child: Text(match.homeTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center)),
         const Text("vs", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
-        Expanded(child: Text(match.awayTeam.name, style: const TextStyle(fontSize: 15), textAlign: TextAlign.center)),
+        Expanded(child: Text(match.awayTeam.name, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center)),
         Text(
           DateFormat("EEEE, d MMM yyyy - HH:mm", "pt_BR").format(match.matchDate),
           style: const TextStyle(color: Colors.grey, fontSize: 12),

@@ -2,6 +2,9 @@ import "dart:async";
 
 import "dart:io";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart" show Clipboard, ClipboardData;
+import "package:font_awesome_flutter/font_awesome_flutter.dart";
+import "package:google_fonts/google_fonts.dart" show GoogleFonts;
 import "package:odds_fetcher/screens/records_list_screen.dart";
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/services/api_service.dart" show ApiService;
@@ -39,12 +42,18 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  ThemeData _buildTheme(brightness) {
+    ThemeData baseTheme = ThemeData(brightness: brightness);
+
+    return baseTheme.copyWith(textTheme: GoogleFonts.asapCondensedTextTheme(baseTheme.textTheme));
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "Odds Fetcher",
-      theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
+      theme: _buildTheme(Brightness.light),
       home: MyHomePage(),
     );
   }
@@ -61,6 +70,7 @@ final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<Scaffo
 
 class _MyHomePageState extends State<MyHomePage> {
   int selectedIndex = 0;
+  final String githubLink = "https://github.com/RickHPotter/odds_fetcher.dart";
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +94,14 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Image.asset("assets/images/logo.jpg", width: 40, height: 40, fit: BoxFit.cover),
                         ),
                       ),
-                      Text("Odds Fetcher", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                      Text(
+                        "ODDS FETCHER",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          fontFamily: GoogleFonts.monomaniacOne().fontFamily,
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(
@@ -93,8 +110,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         ...[
-                          {"icon": Icons.home, "label": "Listagem de Registros"},
-                          {"icon": Icons.construction, "label": "Sobre"},
+                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS"},
+                          {"icon": Icons.construction, "label": "SOBRE"},
                         ].asMap().entries.map((entry) {
                           int index = entry.key;
                           final item = entry.value;
@@ -133,11 +150,30 @@ class _MyHomePageState extends State<MyHomePage> {
                 const RecordListScreen(),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text(MediaQuery.of(context).size.height.toString()),
-                      Text(MediaQuery.of(context).size.width.toString()),
-                    ],
+                  child: Card(
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Text("Height/Altura: ${MediaQuery.of(context).size.height.toString()}"),
+                          Text("Width/Largura: ${MediaQuery.of(context).size.width.toString()}"),
+                          InkWell(
+                            onTap: () async {
+                              Clipboard.setData(ClipboardData(text: githubLink));
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(FontAwesomeIcons.github),
+                                const SizedBox(width: 8),
+                                const Text("Clique para copiar o link do meu Github ou acesse "),
+                                Text(githubLink, style: const TextStyle(decoration: TextDecoration.underline)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],

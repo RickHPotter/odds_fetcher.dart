@@ -45,7 +45,10 @@ class _TeamsFilterButtonState extends State<TeamsFilterButton> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Icon(Icons.group, color: selectedTeams.isNotEmpty ? Colors.white : null),
-          Text("Times", style: TextStyle(color: selectedTeams.isNotEmpty ? Colors.white : null)),
+          Text(
+            "TIMES",
+            style: TextStyle(fontWeight: FontWeight.bold, color: selectedTeams.isNotEmpty ? Colors.white : null),
+          ),
         ],
       ),
     );

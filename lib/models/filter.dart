@@ -71,6 +71,7 @@ class Filter {
   List<Folder> folders;
 
   Filter({
+    this.id,
     required this.filterName,
     required this.minDate,
     required this.maxDate,
@@ -154,9 +155,60 @@ class Filter {
       futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
 
       teams: map["teams"].map((t) => Team.fromMap(t)).toList(),
-      folders: map["folders"].map((f) => Folder.fromMap(f)).toList(),
       leagues: map["leagues"].map((l) => League.fromMap(l)).toList(),
+      folders: map["folders"].map((f) => Folder.fromMap(f)).toList(),
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "filterName": filterName,
+      "minDateYear": minDate.year,
+      "minDateMonth": minDate.month,
+      "minDateDay": minDate.day,
+      "minDateHour": minDate.hour,
+      "minDateMinute": minDate.minute,
+      "maxDateYear": maxDate.year,
+      "maxDateMonth": maxDate.month,
+      "maxDateDay": maxDate.day,
+      "maxDateHour": maxDate.hour,
+      "maxDateMinute": maxDate.minute,
+      "minEarlyHome": minEarlyHome,
+      "maxEarlyHome": maxEarlyHome,
+      "minEarlyDraw": minEarlyDraw,
+      "maxEarlyDraw": maxEarlyDraw,
+      "minEarlyAway": minEarlyAway,
+      "maxEarlyAway": maxEarlyAway,
+      "minFinalHome": minFinalHome,
+      "maxFinalHome": maxFinalHome,
+      "minFinalDraw": minFinalDraw,
+      "maxFinalDraw": maxFinalDraw,
+      "minFinalAway": minFinalAway,
+      "maxFinalAway": maxFinalAway,
+      "minGoalsFirstHalf": minGoalsFirstHalf,
+      "maxGoalsFirstHalf": maxGoalsFirstHalf,
+      "minGoalsSecondHalf": minGoalsSecondHalf,
+      "maxGoalsSecondHalf": maxGoalsSecondHalf,
+      "minGoalsFullTime": minGoalsFullTime,
+      "maxGoalsFullTime": maxGoalsFullTime,
+      "futureNextMinutes": futureNextMinutes,
+      "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds,
+      "futureDismissNoFinalOdds": futureDismissNoFinalOdds,
+      "futureDismissNoHistory": futureDismissNoHistory,
+      "futureOnlySameLeague": futureOnlySameLeague,
+      "futureSameEarlyHome": futureSameEarlyHome,
+      "futureSameEarlyDraw": futureSameEarlyDraw,
+      "futureSameEarlyAway": futureSameEarlyAway,
+      "futureSameFinalHome": futureSameFinalHome,
+      "futureSameFinalDraw": futureSameFinalDraw,
+      "futureSameFinalAway": futureSameFinalAway,
+      "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
+      "futureMinDrawPercentage": futureMinDrawPercentage,
+      "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
+      "teams": teams.map((t) => t.toMap()).toList(),
+      "leagues": leagues.map((l) => l.toMap()).toList(),
+      "folders": folders.map((f) => f.toMap()).toList(),
+    };
   }
 
   bool anySpecificOddsPresent() {

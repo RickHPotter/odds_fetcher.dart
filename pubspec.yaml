@@ -20,6 +20,8 @@ dependencies:
   http: ^1.1.0
   pluto_grid: ^8.0.0
   archive: ^4.0.4
+  google_fonts: ^6.2.1
+  font_awesome_flutter: ^10.8.0
 
 dev_dependencies:
   flutter_test:

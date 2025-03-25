@@ -36,7 +36,10 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
         children: [
           Icon(Icons.trending_up, color: filter.anySpecificOddsPresent() ? Colors.white : null),
           const SizedBox(width: 1),
-          Text("Odds", style: TextStyle(color: filter.anySpecificOddsPresent() ? Colors.white : null)),
+          Text(
+            "ODDS",
+            style: TextStyle(fontWeight: FontWeight.bold, color: filter.anySpecificOddsPresent() ? Colors.white : null),
+          ),
         ],
       ),
     );

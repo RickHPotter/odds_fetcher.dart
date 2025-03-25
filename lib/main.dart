@@ -1,6 +1,11 @@
+import "dart:async";
+
 import "dart:io";
 import "package:flutter/material.dart";
 import "package:odds_fetcher/screens/records_list_screen.dart";
+import "package:odds_fetcher/models/record.dart";
+import "package:odds_fetcher/services/api_service.dart" show ApiService;
+import "package:odds_fetcher/services/database_service.dart" show DatabaseService;
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
 
 void logError(Object error, StackTrace? stack) {
@@ -20,6 +25,13 @@ void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     logError(details.exception, details.stack);
   };
+
+  Timer.periodic(Duration(minutes: 5), (timer) async {
+    List<Record> records = [];
+    records = await ApiService().fetchFutureData();
+    await DatabaseService.deleteOldFutureRecords();
+    await DatabaseService.insertRecordsBatch(records);
+  });
 
   runApp(MyApp());
 }

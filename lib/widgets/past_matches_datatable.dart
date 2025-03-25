@@ -50,13 +50,16 @@ class PastMachDataTable extends StatelessWidget {
             },
             configuration: PlutoGridConfiguration(
               localeText: const PlutoGridLocaleText.brazilianPortuguese(),
-              scrollbar: const PlutoGridScrollbarConfig(isAlwaysShown: true, draggableScrollbar: true, scrollbarThickness: 8),
+              scrollbar: const PlutoGridScrollbarConfig(
+                isAlwaysShown: true,
+                draggableScrollbar: true,
+                scrollbarThickness: 8,
+              ),
               style: PlutoGridStyleConfig(
                 gridBorderRadius: BorderRadius.circular(8),
                 columnHeight: 32,
                 rowHeight: 24,
                 columnTextStyle: TextStyle(fontWeight: FontWeight.bold),
-                cellTextStyle: const TextStyle(fontSize: 13),
               ),
             ),
           );

@@ -48,7 +48,6 @@ class DatabaseService {
         ByteData data = await rootBundle.load(assetDbZipPath);
         List<int> bytes = data.buffer.asUint8List();
 
-        // Unzip
         final archive = ZipDecoder().decodeBytes(bytes);
         bool dbCopied = false;
         for (var file in archive) {
@@ -71,11 +70,8 @@ class DatabaseService {
         debugPrint("Error copying and unzipping database: $e");
         rethrow;
       }
-    } else {
-      debugPrint("Database already exists at: $path");
     }
 
-    // Verify the file exists and has content
     final dbFile = File(path);
     if (!dbFile.existsSync() || dbFile.lengthSync() < 1024) {
       throw Exception("Unzipped database is too small or missing.");

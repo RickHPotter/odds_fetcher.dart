@@ -1,4 +1,3 @@
-import "package:intl/intl.dart";
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/folder.dart";

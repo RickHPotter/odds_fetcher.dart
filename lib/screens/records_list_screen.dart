@@ -1,23 +1,29 @@
 import "dart:async";
 
-import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
+import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/services.dart" show FilteringTextInputFormatter;
-import "package:intl/date_symbol_data_local.dart";
-import "package:intl/intl.dart";
-import "package:odds_fetcher/jobs/records_fetcher.dart";
-import "package:odds_fetcher/models/filter.dart";
-import "package:odds_fetcher/models/folder.dart";
-import "package:odds_fetcher/models/league.dart";
-import "package:odds_fetcher/models/league_folder.dart";
-import "package:odds_fetcher/services/database_service.dart";
+
+import "package:intl/intl.dart" show DateFormat;
+import "package:intl/date_symbol_data_local.dart" show initializeDateFormatting;
+
 import "package:odds_fetcher/models/record.dart";
+import "package:odds_fetcher/models/filter.dart";
+import "package:odds_fetcher/models/team.dart";
+import "package:odds_fetcher/models/league.dart";
+import "package:odds_fetcher/models/folder.dart";
+import "package:odds_fetcher/models/league_folder.dart";
+import "package:odds_fetcher/jobs/records_fetcher.dart";
+import "package:odds_fetcher/services/database_service.dart";
+
+import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
-import "package:odds_fetcher/widgets/match_card.dart";
+import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
-import "package:odds_fetcher/widgets/past_matches_datatable.dart";
-import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
+import "package:odds_fetcher/widgets/past_matches_datatable.dart" show PastMachDataTable;
 import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
+
+import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
 
 class RecordListScreen extends StatefulWidget {
   const RecordListScreen({super.key});
@@ -29,6 +35,7 @@ class RecordListScreen extends StatefulWidget {
 class _RecordListScreenState extends State<RecordListScreen> {
   Future<List<Record>>? records;
   late List<Record> pivotRecords = [];
+  late List<Team> teams = [];
   late List<League> leagues = [];
   late List<Folder> folders = [];
   late List<LeagueFolder> leaguesFolders = [];
@@ -39,6 +46,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
     filterName: "Filtro Padrão",
     minDate: DateTime.now(),
     maxDate: DateTime.now(),
+    teams: [],
     leagues: [],
     folders: [],
     futureMinHomeWinPercentage: 1,
@@ -73,7 +81,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   final ScrollController _scrollController = ScrollController();
   late TextEditingController yearController = TextEditingController();
 
-  bool? hideFiltersOnFutureRecordSelect = true;
+  bool hideFiltersOnFutureRecordSelect = true;
 
   void updateOddsFilter() {
     selectedOddsMap = {
@@ -172,11 +180,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
   }
 
-  void loadLeaguesAndFolders() async {
+  void loadTeamsAndLeaguesAndFolders() async {
+    final List<Team> fetchedTeams = await DatabaseService.fetchTeams();
     final List<League> fetchedLeagues = await DatabaseService.fetchLeagues();
     final List<Folder> fetchedFolders = await DatabaseService.fetchFoldersWithLeagues();
 
     setState(() {
+      teams = fetchedTeams;
       leagues = fetchedLeagues;
       folders = fetchedFolders;
     });
@@ -199,7 +209,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     fetchFromMaxMatchDate();
     loadFutureMatches();
-    loadLeaguesAndFolders();
+    loadTeamsAndLeaguesAndFolders();
 
     super.initState();
   }
@@ -297,6 +307,19 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
                     ),
                   ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.042,
+                    child: Switch(
+                      value: hideFiltersOnFutureRecordSelect,
+                      activeColor: Colors.blueAccent,
+                      onChanged: (bool value) {
+                        setState(() {
+                          hideFiltersOnFutureRecordSelect = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const Text("Ocultar Filtros"),
                 ],
               ),
             ),
@@ -329,20 +352,15 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.085,
-                    height: MediaQuery.of(context).size.height * 0.042,
-                    child: TextFormField(
-                      controller: yearController,
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value == null ? "Ano Inválido" : null,
-                      decoration: InputDecoration(
-                        labelText: "Ano",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.all(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: OddsFilterButton(
+                        filter: filter,
+                        onApplyCallback: () {
+                          updateFutureSameOddsTypes();
+                          loadFutureMatches();
+                        },
                       ),
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                      onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
                     ),
                   ),
                 ],
@@ -393,6 +411,19 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: TeamsFilterButton(
+                        filter: filter,
+                        teams: teams,
+                        onApplyCallback: () {
+                          loadFutureMatches();
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.085,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () => filterMatchesBySameLeague(),
                         style: ElevatedButton.styleFrom(
@@ -432,19 +463,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: OddsFilterButton(
-                        filter: filter,
-                        onApplyCallback: () {
-                          updateFutureSameOddsTypes();
-                          loadFutureMatches();
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () {
                           setState(() {
@@ -474,15 +492,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       ),
                     ),
                   ),
-                  Checkbox(
-                    value: hideFiltersOnFutureRecordSelect,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        hideFiltersOnFutureRecordSelect = value;
-                      });
-                    },
-                  ),
-                  const Text("Ocultar Filtros"),
                 ],
               ),
             ),
@@ -511,10 +520,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          showFilters =
-                              hideFiltersOnFutureRecordSelect != null && hideFiltersOnFutureRecordSelect!
-                                  ? false
-                                  : showFilters;
+                          if (hideFiltersOnFutureRecordSelect) showFilters = false;
                           loadPastMatches(match.id as int, index);
                         },
                         style: OutlinedButton.styleFrom(
@@ -721,10 +727,12 @@ class _RecordListScreenState extends State<RecordListScreen> {
       return;
     }
 
-    if (time != null && specificYear == null) {
+    if (time != null) {
       filterPastYears = time;
       filter.minDate = DateTime.now().subtract(Duration(days: time * 365));
-    } else if (time == null && specificYear != null) {
+      filter.maxDate = DateTime.now();
+      yearController.clear();
+    } else if (specificYear != null) {
       filterPastYears = 0;
       filter.minDate = DateTime(specificYear, 1, 1);
       filter.maxDate = DateTime(specificYear, 12, 31);

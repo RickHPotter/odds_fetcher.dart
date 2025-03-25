@@ -60,10 +60,13 @@ class Filter {
   int? futureMinDrawPercentage; // TODO: Missing
   int? futureMinAwayWinPercentage; // TODO: Missing
 
+  bool filterPastRecordsByTeams = true;
+  bool filterFutureRecordsByTeams = true;
+
   bool filterPastRecordsByLeagues = true;
   bool filterFutureRecordsByLeagues = true;
 
-  List<Team>? teams; // TODO: Missing
+  List<Team> teams;
   List<League> leagues;
   List<Folder> folders;
 
@@ -102,7 +105,7 @@ class Filter {
     this.futureMinHomeWinPercentage,
     this.futureMinDrawPercentage,
     this.futureMinAwayWinPercentage,
-    this.teams,
+    required this.teams,
     required this.leagues,
     required this.folders,
     this.futureNextMinutes,
@@ -254,6 +257,12 @@ class Filter {
     return leagueIds + folderIds;
   }
 
+  List<int> teamsIds() {
+    final List<int> teamIds = teams.map((t) => t.id).toList();
+
+    return teamIds;
+  }
+
   String whereClause({Record? futureRecord}) {
     fillInAllRangeOdds();
 
@@ -284,6 +293,11 @@ class Filter {
 
     if (futureSameFinalAway == 1 && futureRecord?.finalOdds2 != null) {
       whereClause += " AND finalOdds2 = ${futureRecord?.finalOdds2}";
+    }
+
+    if (filterPastRecordsByTeams && teams.isNotEmpty) {
+      final String teamsIdsString = teamsIds().join(", ");
+      whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
     }
 
     if (filterPastRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
@@ -328,18 +342,15 @@ class Filter {
       return whereClause;
     }
 
-    final maxDate = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
-
-    //final minDate = DateFormat("yyyyMMddHHm").format(DateTime.now());
-    //final maxDate =
-    //    "${date.year.toString().padLeft(4, '0')}"
-    //    "${date.month.toString().padLeft(2, '0')}"
-    //    "${date.day.toString().padLeft(2, '0')}"
-    //    "${date.hour.toString().padLeft(2, '0')}"
-    //    "${date.minute.toString().padLeft(2, '0')}";
+    final DateTime maxDate = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
 
     whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
     whereClause += " AND MatchDate <= ${rawDateTime(maxDate)}";
+
+    if (filterFutureRecordsByTeams && teams.isNotEmpty) {
+      final String teamsIdsString = teamsIds().join(", ");
+      whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
+    }
 
     if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";

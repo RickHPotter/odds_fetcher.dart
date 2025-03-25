@@ -1,6 +1,7 @@
 import "dart:io";
 import "package:flutter/foundation.dart" show ByteData, debugPrint;
 import "package:flutter/services.dart" show rootBundle;
+import "package:odds_fetcher/models/team.dart";
 import "package:path_provider/path_provider.dart" show getApplicationSupportDirectory;
 import "package:sqflite/sqflite.dart";
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
@@ -250,6 +251,14 @@ class DatabaseService {
 
   static Future<int>? deleteOldFutureRecords() {
     return _db?.delete("Records", where: "finished = ?", whereArgs: [0]);
+  }
+
+  static Future<List<Team>> fetchTeams() async {
+    final db = await database;
+
+    final result = await db.query("Teams");
+
+    return result.map((row) => Team.fromMap(row)).toList();
   }
 
   static Future<List<League>> fetchLeagues() async {

@@ -33,46 +33,50 @@ class RecordListScreen extends StatefulWidget {
 }
 
 class _RecordListScreenState extends State<RecordListScreen> {
-  Future<List<Record>>? records;
+  late Future<List<Record>>? records;
   late List<Record> pivotRecords = [];
   late List<Team> teams = [];
   late List<League> leagues = [];
   late List<Folder> folders = [];
   late List<LeagueFolder> leaguesFolders = [];
 
-  late int filterPastYears = 1;
-  late int filterFutureNextMinutes = 60;
-  late Filter filter = Filter(
-    filterName: "Filtro Padrão",
-    minDate: DateTime.now(),
-    maxDate: DateTime.now(),
-    teams: [],
-    leagues: [],
-    folders: [],
-    futureMinHomeWinPercentage: 1,
-  );
-
   late RecordFetcher fetcher;
   String currentDate = DateTime.now().toString();
   int progress = 0;
   bool isFetching = false;
-  bool isCancelled = false;
   bool isLoading = false;
-
-  late Map<Odds, bool> selectedOddsMap;
-
-  bool isEarly1 = true;
-  bool isEarlyX = false;
-  bool isEarly2 = true;
-  bool isFinal1 = false;
-  bool isFinalX = false;
-  bool isFinal2 = false;
-  bool isSameLeague = false;
+  bool isCancelled = false;
 
   int? selectedMatchId;
   int? pivotRecordIndex;
 
   bool showFilters = true;
+  bool hideFiltersOnFutureRecordSelect = true;
+
+  // <-- FILTERS
+  late Filter filter = Filter.base();
+
+  late int filterPastYears = filter.pastYears ?? 0;
+  late int filterFutureNextMinutes = filter.futureNextMinutes ?? 0;
+
+  late bool isSameLeague = filter.futureOnlySameLeague == 1;
+
+  late bool isEarly1 = filter.futureSameEarlyHome == 1;
+  late bool isEarlyX = filter.futureSameEarlyDraw == 1;
+  late bool isEarly2 = filter.futureSameEarlyAway == 1;
+  late bool isFinal1 = filter.futureSameFinalHome == 1;
+  late bool isFinalX = filter.futureSameFinalDraw == 1;
+  late bool isFinal2 = filter.futureSameFinalAway == 1;
+
+  late Map<Odds, bool> selectedOddsMap = {
+    Odds.earlyOdds1: isEarly1,
+    Odds.earlyOddsX: isEarlyX,
+    Odds.earlyOdds2: isEarly2,
+    Odds.finalOdds1: isFinal1,
+    Odds.finalOddsX: isFinalX,
+    Odds.finalOdds2: isFinal2,
+  };
+  // FILTERS -->
 
   final List<int> futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3];
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
@@ -80,31 +84,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
   StreamSubscription<Record>? _recordSubscription;
   final ScrollController _scrollController = ScrollController();
   late TextEditingController yearController = TextEditingController();
-
-  bool hideFiltersOnFutureRecordSelect = true;
-
-  void updateOddsFilter() {
-    selectedOddsMap = {
-      Odds.earlyOdds1: isEarly1,
-      Odds.earlyOddsX: isEarlyX,
-      Odds.earlyOdds2: isEarly2,
-      Odds.finalOdds1: isFinal1,
-      Odds.finalOddsX: isFinalX,
-      Odds.finalOdds2: isFinal2,
-    };
-
-    filter.futureSameEarlyHome = isEarly1 ? 1 : 0;
-    filter.futureSameEarlyDraw = isEarlyX ? 1 : 0;
-    filter.futureSameEarlyAway = isEarly2 ? 1 : 0;
-
-    filter.futureSameFinalHome = isFinal1 ? 1 : 0;
-    filter.futureSameFinalDraw = isFinalX ? 1 : 0;
-    filter.futureSameFinalAway = isFinal2 ? 1 : 0;
-  }
-
-  void updateTimeFilter() {
-    filter.update(pastYears: filterPastYears, futureNextMinutes: filterFutureNextMinutes);
-  }
 
   Future<void> fetchFromMaxMatchDate() async {
     final DateTime minDateToFetch = await DatabaseService.fetchFromMaxMatchDate();
@@ -114,29 +93,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
     }
 
     startFetchingFuture();
-  }
-
-  void updateFutureSameOddsTypes() {
-    if (filter.anySpecificOddsPresent()) {
-      isEarly1 = filter.minEarlyHome != null ? false : isEarly1;
-      isEarlyX = filter.minEarlyDraw != null ? false : isEarlyX;
-      isEarly2 = filter.minEarlyAway != null ? false : isEarly2;
-      isFinal1 = filter.minFinalHome != null ? false : isFinal1;
-      isFinalX = filter.minFinalDraw != null ? false : isFinalX;
-      isFinal2 = filter.minFinalAway != null ? false : isFinal2;
-
-      updateOddsFilter();
-    }
-
-    setState(() {
-      filter = filter;
-      isEarly1 = isEarly1;
-      isEarlyX = isEarlyX;
-      isEarly2 = isEarly2;
-      isFinal1 = isFinal1;
-      isFinalX = isFinalX;
-      isFinal2 = isFinal2;
-    });
   }
 
   void loadFutureMatches() {
@@ -192,12 +148,77 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
   }
 
+  void retrieveFilter(int id) async {
+    filter = await DatabaseService.fetchFilter(id);
+
+    setState(() {
+      //isEarly1 = filter.futureSameEarlyHome == 1;
+      //isEarlyX = filter.futureSameEarlyDraw == 1;
+      //isEarly2 = filter.futureSameEarlyAway == 1;
+      //
+      //isFinal1 = filter.futureSameFinalHome == 1;
+      //isFinalX = filter.futureSameFinalDraw == 1;
+      //isFinal2 = filter.futureSameFinalAway == 1;
+      //
+      //selectedOddsMap = {
+      //  Odds.earlyOdds1: isEarly1,
+      //  Odds.earlyOddsX: isEarlyX,
+      //  Odds.earlyOdds2: isEarly2,
+      //  Odds.finalOdds1: isFinal1,
+      //  Odds.finalOddsX: isFinalX,
+      //  Odds.finalOdds2: isFinal2,
+      //};
+
+      filter = filter;
+    });
+  }
+
+  void updateOddsFilter() {
+    selectedOddsMap = {
+      Odds.earlyOdds1: isEarly1,
+      Odds.earlyOddsX: isEarlyX,
+      Odds.earlyOdds2: isEarly2,
+      Odds.finalOdds1: isFinal1,
+      Odds.finalOddsX: isFinalX,
+      Odds.finalOdds2: isFinal2,
+    };
+
+    filter.futureSameEarlyHome = isEarly1 ? 1 : 0;
+    filter.futureSameEarlyDraw = isEarlyX ? 1 : 0;
+    filter.futureSameEarlyAway = isEarly2 ? 1 : 0;
+    filter.futureSameFinalHome = isFinal1 ? 1 : 0;
+    filter.futureSameFinalDraw = isFinalX ? 1 : 0;
+    filter.futureSameFinalAway = isFinal2 ? 1 : 0;
+  }
+
+  void updateFutureSameOddsTypes() {
+    if (filter.anySpecificOddsPresent()) {
+      isEarly1 = filter.minEarlyHome != null ? false : isEarly1;
+      isEarlyX = filter.minEarlyDraw != null ? false : isEarlyX;
+      isEarly2 = filter.minEarlyAway != null ? false : isEarly2;
+      isFinal1 = filter.minFinalHome != null ? false : isFinal1;
+      isFinalX = filter.minFinalDraw != null ? false : isFinalX;
+      isFinal2 = filter.minFinalAway != null ? false : isFinal2;
+
+      updateOddsFilter();
+    }
+
+    setState(() {
+      filter = filter;
+      isEarly1 = isEarly1;
+      isEarlyX = isEarlyX;
+      isEarly2 = isEarly2;
+      isFinal1 = isFinal1;
+      isFinalX = isFinalX;
+      isFinal2 = isFinal2;
+    });
+  }
+
   @override
   void initState() {
     initializeDateFormatting("pt-BR");
 
-    updateOddsFilter();
-    updateTimeFilter();
+    retrieveFilter(1);
 
     fetcher = RecordFetcher();
     fetcher.progressStream.listen((value) {
@@ -618,12 +639,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
                 ),
-
                 ElevatedButton(
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    saveFilter();
+                  },
                   child: Icon(Icons.save),
                 ),
                 isLoading
@@ -633,7 +655,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "${humaniseNumber(pivotRecords.length)} jogos futuros encontrados.",
+                      "${humaniseNumber(pivotRecords.length)} JOGOS FUTUROS.",
                       style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                     ),
                     FutureBuilder<List<Record>>(
@@ -653,12 +675,12 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Text(
-                            "0 jogos passados encontrados.",
+                            "0 JOGOS PASSADOS.",
                             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                           );
                         }
                         return Text(
-                          "${humaniseNumber(snapshot.data!.length)} jogos passados encontrados.",
+                          "${humaniseNumber(snapshot.data!.length)} JOGOS PASSADOS.",
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                         );
                       },
@@ -768,13 +790,11 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
     if (time != null) {
       filterPastYears = time;
-      filter.minDate = DateTime.now().subtract(Duration(days: time * 365));
-      filter.maxDate = DateTime.now();
+      filter.pastYears = time;
       yearController.clear();
     } else if (specificYear != null) {
       filterPastYears = 0;
-      filter.minDate = DateTime(specificYear, 1, 1);
-      filter.maxDate = DateTime(specificYear, 12, 31);
+      filter.specificYears = specificYear;
     }
 
     loadPastMatches(selectedMatchId, pivotRecordIndex);
@@ -837,5 +857,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
     });
 
     loadPastMatches(selectedMatchId, pivotRecordIndex);
+  }
+
+  void saveFilter() async {
+    if (filter.id == null) {
+      await DatabaseService.insertFilter(filter);
+    } else {
+      await DatabaseService.updateFilter(filter);
+    }
   }
 }

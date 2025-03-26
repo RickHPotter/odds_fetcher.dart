@@ -22,8 +22,8 @@ enum MinMaxOdds {
 class Filter {
   int? id;
   String filterName;
-  DateTime minDate;
-  DateTime maxDate;
+  int? pastYears;
+  int? specificYears;
 
   double? minEarlyHome;
   double? maxEarlyHome;
@@ -73,8 +73,8 @@ class Filter {
   Filter({
     this.id,
     required this.filterName,
-    required this.minDate,
-    required this.maxDate,
+    this.pastYears,
+    this.specificYears,
     this.minEarlyHome,
     this.maxEarlyHome,
     this.minEarlyDraw,
@@ -110,17 +110,14 @@ class Filter {
     required this.leagues,
     required this.folders,
     this.futureNextMinutes,
-  });
+  }) : assert(pastYears != null || specificYears != null);
 
   factory Filter.fromMap(Map<String, dynamic> map) {
     return Filter(
+      id: map["id"],
       filterName: map["filterName"],
-      minDate: DateTime.parse(
-        "${map["minDateYear"]}-${map["minDateMonth"]}-${map["minDateDay"]} ${map["minDateHour"]}:${map["minDateMinute"]}:00",
-      ),
-      maxDate: DateTime.parse(
-        "${map["maxDateYear"]}-${map["maxDateMonth"]}-${map["maxDateDay"]} ${map["maxDateHour"]}:${map["maxDateMinute"]}:00",
-      ),
+      pastYears: map["pastYears"],
+      specificYears: map["specificYears"],
       minEarlyHome: map["minEarlyHome"],
       maxEarlyHome: map["maxEarlyHome"],
       minEarlyDraw: map["minEarlyDraw"],
@@ -162,17 +159,8 @@ class Filter {
 
   Map<String, dynamic> toMap() {
     return {
+      "id": id,
       "filterName": filterName,
-      "minDateYear": minDate.year,
-      "minDateMonth": minDate.month,
-      "minDateDay": minDate.day,
-      "minDateHour": minDate.hour,
-      "minDateMinute": minDate.minute,
-      "maxDateYear": maxDate.year,
-      "maxDateMonth": maxDate.month,
-      "maxDateDay": maxDate.day,
-      "maxDateHour": maxDate.hour,
-      "maxDateMinute": maxDate.minute,
       "minEarlyHome": minEarlyHome,
       "maxEarlyHome": maxEarlyHome,
       "minEarlyDraw": minEarlyDraw,
@@ -205,10 +193,27 @@ class Filter {
       "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
       "futureMinDrawPercentage": futureMinDrawPercentage,
       "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
-      "teams": teams.map((t) => t.toMap()).toList(),
-      "leagues": leagues.map((l) => l.toMap()).toList(),
-      "folders": folders.map((f) => f.toMap()).toList(),
     };
+  }
+
+  DateTime minDate() {
+    if (pastYears != null) {
+      return DateTime.now().subtract(Duration(days: (pastYears as int) * 365));
+    } else if (specificYears != null) {
+      return DateTime(specificYears as int, 1, 1);
+    } else {
+      return DateTime.parse("2008-01-01");
+    }
+  }
+
+  DateTime maxDate() {
+    if (pastYears != null) {
+      return DateTime.now();
+    } else if (specificYears != null) {
+      return DateTime(specificYears as int, 12, 31);
+    } else {
+      return DateTime.now();
+    }
   }
 
   bool anySpecificOddsPresent() {
@@ -291,15 +296,6 @@ class Filter {
     }
   }
 
-  void update({int? pastYears, int? futureNextMinutes}) {
-    if (pastYears != null) {
-      minDate = DateTime.now().subtract(Duration(days: pastYears * 365));
-    }
-
-    maxDate = DateTime.now();
-    this.futureNextMinutes = futureNextMinutes;
-  }
-
   List<int> leaguesIds() {
     final List<int> leagueIds =
         leagues.map((l) => l.id != null ? [l.id!] : l.ids ?? []).expand((idList) => idList).toList();
@@ -320,8 +316,8 @@ class Filter {
 
     late String whereClause = "WHERE finished = 1";
 
-    whereClause += " AND MatchDate >= ${rawDateTime(minDate)}";
-    whereClause += " AND MatchDate <= ${rawDateTime(maxDate)}";
+    whereClause += " AND MatchDate >= ${rawDateTime(minDate())}";
+    whereClause += " AND MatchDate <= ${rawDateTime(maxDate())}";
 
     if (futureSameEarlyHome == 1 && futureRecord?.earlyOdds1 != null) {
       whereClause += " AND earlyOdds1 = ${futureRecord?.earlyOdds1}";
@@ -381,6 +377,7 @@ class Filter {
     if (minFinalAway != null) {
       whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
     }
+    print(whereClause);
 
     return whereClause;
   }
@@ -394,10 +391,10 @@ class Filter {
       return whereClause;
     }
 
-    final DateTime maxDate = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
+    final DateTime futureMaxDate = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
 
     whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
-    whereClause += " AND MatchDate <= ${rawDateTime(maxDate)}";
+    whereClause += " AND MatchDate <= ${rawDateTime(futureMaxDate)}";
 
     if (filterFutureRecordsByTeams && teams.isNotEmpty) {
       final String teamsIdsString = teamsIds().join(", ");
@@ -433,5 +430,19 @@ class Filter {
     }
 
     return whereClause;
+  }
+
+  static Filter base() {
+    return Filter(
+      filterName: "FILTRO PADRÃO",
+      pastYears: 1,
+      teams: [],
+      leagues: [],
+      folders: [],
+      futureNextMinutes: 60,
+      futureMinHomeWinPercentage: 1,
+      futureSameEarlyHome: 1,
+      futureSameEarlyAway: 1,
+    );
   }
 }

@@ -213,29 +213,33 @@ class DatabaseService {
     }
   }
 
-  static Future<void> insertFilter(Filter filter) async {
-    int? filterId = await _db?.insert("Filters", filter.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
+  static Future<void> insertFilter(
+    Filter filter, {
+    ConflictAlgorithm conflictAlgorithm = ConflictAlgorithm.ignore,
+  }) async {
+    int? filterId = await _db?.insert("Filters", filter.toMap(), conflictAlgorithm: conflictAlgorithm);
 
     for (Team team in filter.teams) {
-      await _db?.insert("FilterTeams", {
-        "filterId": filterId,
-        "teamId": team.id,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      await _db?.insert("FilterTeams", {"filterId": filterId, "teamId": team.id}, conflictAlgorithm: conflictAlgorithm);
     }
 
     for (League league in filter.leagues) {
       await _db?.insert("FilterLeagues", {
         "filterId": filterId,
         "leagueId": league.id,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }, conflictAlgorithm: conflictAlgorithm);
     }
 
     for (Folder folder in filter.folders) {
       await _db?.insert("FilterFolders", {
         "filterId": filterId,
         "folderId": folder.id,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }, conflictAlgorithm: conflictAlgorithm);
     }
+  }
+
+  static Future<void> updateFilter(Filter filter) async {
+    await insertFilter(filter, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   static Future<int> getOrCreateLeague(String leagueCode, String? leagueName) async {
@@ -333,5 +337,26 @@ class DatabaseService {
     }
 
     return folders;
+  }
+
+  static Future<List<Filter>> fetchFilters() async {
+    final db = await database;
+
+    final result = await db.query("Filters");
+
+    return result.map((row) => Filter.fromMap(row)).toList();
+  }
+
+  static Future<Filter> fetchFilter(int id) async {
+    final db = await database;
+
+    final result = await db.query("Filters", where: "id = ?", whereArgs: [id]);
+
+    if (result.isEmpty) {
+      debugPrint("fallback to base filter");
+      return Filter.base();
+    }
+
+    return result.map((row) => Filter.fromMap(row)).toList().first;
   }
 }

@@ -214,33 +214,48 @@ class DatabaseService {
     }
   }
 
-  static Future<void> insertFilter(
-    Filter filter, {
-    ConflictAlgorithm conflictAlgorithm = ConflictAlgorithm.ignore,
-  }) async {
-    int? filterId = await _db?.insert("Filters", filter.toMap(), conflictAlgorithm: conflictAlgorithm);
+  static Future<void> insertFilter(Filter filter) async {
+    final db = await database;
+
+    int? filterId =
+        filter.id ?? await db.insert("Filters", filter.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
+
+    if (filterId == 0) {
+      return;
+    }
+
+    await db.delete("FiltersTeams", where: "filterId = ?", whereArgs: [filterId]);
+    await db.delete("FiltersLeagues", where: "filterId = ?", whereArgs: [filterId]);
+    await db.delete("FiltersFolders", where: "filterId = ?", whereArgs: [filterId]);
 
     for (Team team in filter.teams) {
-      await _db?.insert("FilterTeams", {"filterId": filterId, "teamId": team.id}, conflictAlgorithm: conflictAlgorithm);
+      await db.insert("FiltersTeams", {
+        "filterId": filterId,
+        "teamId": team.id,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
 
     for (League league in filter.leagues) {
-      await _db?.insert("FilterLeagues", {
+      await db.insert("FiltersLeagues", {
         "filterId": filterId,
         "leagueId": league.id,
-      }, conflictAlgorithm: conflictAlgorithm);
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
 
     for (Folder folder in filter.folders) {
-      await _db?.insert("FilterFolders", {
+      await db.insert("FiltersFolders", {
         "filterId": filterId,
         "folderId": folder.id,
-      }, conflictAlgorithm: conflictAlgorithm);
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
   }
 
   static Future<void> updateFilter(Filter filter) async {
-    await insertFilter(filter, conflictAlgorithm: ConflictAlgorithm.replace);
+    final db = await database;
+
+    await db.update("Filters", filter.toMap(), where: "id = ?", whereArgs: [filter.id]);
+
+    await insertFilter(filter);
   }
 
   static Future<int> getOrCreateLeague(String leagueCode, String? leagueName) async {

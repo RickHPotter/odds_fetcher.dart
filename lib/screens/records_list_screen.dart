@@ -15,6 +15,7 @@ import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league_folder.dart";
 import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/services/database_service.dart";
+import "package:odds_fetcher/widgets/filter_select.dart";
 
 import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
@@ -608,20 +609,12 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   width: MediaQuery.of(context).size.width * 0.2,
                   child: Tooltip(
                     message: filter.filterName,
-                    child: ElevatedButton(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                      ),
-                      onPressed: () {},
-                      child: Text(
-                        filter.filterName.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        maxLines: 1,
-                      ),
+                    child: FilterSelectButton(
+                      filter: filter,
+                      onApplyCallback: () {
+                        loadFutureMatches();
+                        retrieveFilter(filter.id as int);
+                      },
                     ),
                   ),
                 ),

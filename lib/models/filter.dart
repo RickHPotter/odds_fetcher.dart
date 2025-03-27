@@ -151,9 +151,9 @@ class Filter {
       futureMinDrawPercentage: map["futureMinDrawPercentage"],
       futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
 
-      teams: map["teams"].map((t) => Team.fromMap(t)).toList(),
-      leagues: map["leagues"].map((l) => League.fromMap(l)).toList(),
-      folders: map["folders"].map((f) => Folder.fromMap(f)).toList(),
+      teams: map["teams"] == null ? [] : map["teams"].map((t) => Team.fromMap(t)).toList(),
+      leagues: map["leagues"] == null ? [] : map["leagues"].map((l) => League.fromMap(l)).toList(),
+      folders: map["folders"] == null ? [] : map["folders"].map((f) => Folder.fromMap(f)).toList(),
     );
   }
 
@@ -161,6 +161,8 @@ class Filter {
     return {
       "id": id,
       "filterName": filterName,
+      "pastYears": pastYears,
+      "specificYears": specificYears,
       "minEarlyHome": minEarlyHome,
       "maxEarlyHome": maxEarlyHome,
       "minEarlyDraw": minEarlyDraw,
@@ -444,5 +446,16 @@ class Filter {
       futureSameEarlyHome: 1,
       futureSameEarlyAway: 1,
     );
+  }
+
+  Filter copyWith() {
+    Filter filter = Filter.fromMap(toMap());
+
+    //filter.bettingHouses = bettingHouses;
+    filter.teams = teams;
+    filter.leagues = leagues;
+    filter.folders = folders;
+
+    return filter;
   }
 }

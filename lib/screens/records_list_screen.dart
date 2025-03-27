@@ -55,11 +55,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   // <-- FILTERS
   late Filter filter = Filter.base();
-
-  late int filterPastYears = filter.pastYears ?? 0;
-  late int filterFutureNextMinutes = filter.futureNextMinutes ?? 0;
-
-  late bool isSameLeague = filter.futureOnlySameLeague == 1;
+  late Filter placeholderFilter = filter.copyWith();
 
   late bool isEarly1 = filter.futureSameEarlyHome == 1;
   late bool isEarlyX = filter.futureSameEarlyDraw == 1;
@@ -67,6 +63,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
   late bool isFinal1 = filter.futureSameFinalHome == 1;
   late bool isFinalX = filter.futureSameFinalDraw == 1;
   late bool isFinal2 = filter.futureSameFinalAway == 1;
+
+  late bool isSameLeague = filter.futureOnlySameLeague == 1;
 
   late Map<Odds, bool> selectedOddsMap = {
     Odds.earlyOdds1: isEarly1,
@@ -152,24 +150,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
     filter = await DatabaseService.fetchFilter(id);
 
     setState(() {
-      //isEarly1 = filter.futureSameEarlyHome == 1;
-      //isEarlyX = filter.futureSameEarlyDraw == 1;
-      //isEarly2 = filter.futureSameEarlyAway == 1;
-      //
-      //isFinal1 = filter.futureSameFinalHome == 1;
-      //isFinalX = filter.futureSameFinalDraw == 1;
-      //isFinal2 = filter.futureSameFinalAway == 1;
-      //
-      //selectedOddsMap = {
-      //  Odds.earlyOdds1: isEarly1,
-      //  Odds.earlyOddsX: isEarlyX,
-      //  Odds.earlyOdds2: isEarly2,
-      //  Odds.finalOdds1: isFinal1,
-      //  Odds.finalOddsX: isFinalX,
-      //  Odds.finalOdds2: isFinal2,
-      //};
-
       filter = filter;
+      placeholderFilter = filter.copyWith();
     });
   }
 
@@ -218,7 +200,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   void initState() {
     initializeDateFormatting("pt-BR");
 
-    retrieveFilter(1);
+    retrieveFilter(0);
 
     fetcher = RecordFetcher();
     fetcher.progressStream.listen((value) {
@@ -301,13 +283,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
-                            backgroundColor: time == filterPastYears ? Colors.blueAccent : null,
+                            backgroundColor: time == filter.pastYears ? Colors.blueAccent : null,
                           ),
                           child: Text(
                             time <= 1 ? "$time ANO" : "$time ANOS",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: time == filterPastYears ? Colors.white : null,
+                              color: time == filter.pastYears ? Colors.white : null,
                             ),
                           ),
                         ),
@@ -365,13 +347,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
-                            backgroundColor: minutes == filterFutureNextMinutes ? Colors.blueAccent : null,
+                            backgroundColor: minutes == filter.futureNextMinutes ? Colors.blueAccent : null,
                           ),
                           child: Text(
                             humaniseTime(minutes, short: true),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: minutes == filterFutureNextMinutes ? Colors.white : null,
+                              color: minutes == filter.futureNextMinutes ? Colors.white : null,
                             ),
                           ),
                         ),
@@ -622,22 +604,38 @@ class _RecordListScreenState extends State<RecordListScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.2,
+                  child: Tooltip(
+                    message: filter.filterName,
+                    child: ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      ),
+                      onPressed: () {},
+                      child: Text(
+                        filter.filterName.toUpperCase(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
                   ),
-                  onPressed: () {},
-                  child: Icon(Icons.restart_alt),
                 ),
                 ElevatedButton(
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                   ),
-                  onPressed: () {},
-                  child: Text(
-                    filter.filterName.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-                  ),
+                  onPressed: () {
+                    setState(() {
+                      filter = placeholderFilter.copyWith();
+                      loadFutureMatches();
+                    });
+                  },
+                  child: Icon(Icons.restart_alt),
                 ),
                 ElevatedButton(
                   style: OutlinedButton.styleFrom(
@@ -789,24 +787,26 @@ class _RecordListScreenState extends State<RecordListScreen> {
     }
 
     if (time != null) {
-      filterPastYears = time;
       filter.pastYears = time;
       yearController.clear();
     } else if (specificYear != null) {
-      filterPastYears = 0;
+      filter.pastYears = 0;
       filter.specificYears = specificYear;
     }
 
     loadPastMatches(selectedMatchId, pivotRecordIndex);
 
     setState(() {
-      filterPastYears = filterPastYears;
+      filter = filter;
     });
   }
 
   void filterUpcomingMatches(int duration) {
-    filterFutureNextMinutes = duration;
     filter.futureNextMinutes = duration;
+
+    setState(() {
+      filter = filter;
+    });
 
     loadFutureMatches();
   }
@@ -865,5 +865,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
     } else {
       await DatabaseService.updateFilter(filter);
     }
+
+    setState(() => placeholderFilter = filter.copyWith());
   }
 }

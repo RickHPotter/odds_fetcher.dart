@@ -36,11 +36,7 @@ CREATE TABLE Teams (
 CREATE TABLE Records (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
   bettingHouseId      INTEGER REFERENCES BettingHouses(id),
-  matchDateYear       INTEGER NOT NULL,
-  matchDateMonth      INTEGER NOT NULL,
-  matchDateDay        INTEGER NOT NULL,
-  matchDateHour       INTEGER NOT NULL DEFAULT 0,
-  matchDateMinute     INTEGER NOT NULL DEFAULT 0,
+  matchDate           INTEGER NOT NULL,
   leagueId            INTEGER NOT NULL REFERENCES Leagues(id),
   homeTeamId          INTEGER NOT NULL REFERENCES Teams(id),
   awayTeamId          INTEGER NOT NULL REFERENCES Teams(id),
@@ -54,9 +50,12 @@ CREATE TABLE Records (
   homeSecondHalfScore INTEGER,
   awayFirstHalfScore  INTEGER,
   awaySecondHalfScore INTEGER,
+  homeWin             INTEGER NOT NULL DEFAULT 0,
+  draw                INTEGER NOT NULL DEFAULT 0,
+  awayWin             INTEGER NOT NULL DEFAULT 0,
   finished            INTEGER NOT NULL DEFAULT 0,
 
-  UNIQUE(bettingHouseId, matchDateYear, matchDateMonth, matchDateDay, matchDateHour, matchDateMinute, homeTeamId, awayTeamId)
+  UNIQUE(bettingHouseId, matchDate, leagueId, homeTeamId, awayTeamId)
 );
 
 CREATE TABLE Filters (

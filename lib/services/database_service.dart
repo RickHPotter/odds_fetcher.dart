@@ -169,6 +169,7 @@ class DatabaseService {
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
     $whereClause
+    ORDER BY MatchDate
     ;
     """);
 
@@ -350,13 +351,51 @@ class DatabaseService {
   static Future<Filter> fetchFilter(int id) async {
     final db = await database;
 
-    final result = await db.query("Filters", where: "id = ?", whereArgs: [id]);
+    final filterResult =
+        (id != 0)
+            ? await db.query("Filters", where: "id = ?", whereArgs: [id])
+            : await db.rawQuery("SELECT * FROM Filters ORDER BY ID LIMIT 1");
 
-    if (result.isEmpty) {
+    if (filterResult.isEmpty) {
       debugPrint("fallback to base filter");
       return Filter.base();
     }
 
-    return result.map((row) => Filter.fromMap(row)).toList().first;
+    final filter = Filter.fromMap(filterResult.first);
+
+    final teamResults = await db.rawQuery(
+      """
+    SELECT t.* FROM Teams t
+    INNER JOIN FiltersTeams ft ON t.id = ft.teamId
+    WHERE ft.filterId = ?;
+    """,
+      [id],
+    );
+
+    filter.teams = teamResults.map((t) => Team.fromMap(t)).toList();
+
+    final leagueResults = await db.rawQuery(
+      """
+    SELECT l.* FROM Leagues l
+    INNER JOIN FiltersLeagues fl ON l.id = fl.leagueId
+    WHERE fl.filterId = ?;
+    """,
+      [id],
+    );
+
+    filter.leagues = leagueResults.map((l) => League.fromMap(l)).toList();
+
+    final folderResults = await db.rawQuery(
+      """
+    SELECT f.* FROM Folders f
+    INNER JOIN FiltersFolders ff ON f.id = ff.folderId
+    WHERE ff.filterId = ?;
+    """,
+      [id],
+    );
+
+    filter.folders = folderResults.map((f) => Folder.fromMap(f)).toList();
+
+    return filter;
   }
 }

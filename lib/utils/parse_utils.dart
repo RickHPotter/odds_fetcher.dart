@@ -3,6 +3,7 @@ double parseDouble(String value) {
   if (parsed != null) {
     return parsed;
   }
+
   return 0.0;
 }
 
@@ -11,6 +12,7 @@ int parseInteger(String value) {
   if (parsed != null) {
     return parsed;
   }
+
   return 0;
 }
 

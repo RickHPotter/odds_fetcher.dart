@@ -65,8 +65,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
   late bool isFinalX = filter.futureSameFinalDraw == 1;
   late bool isFinal2 = filter.futureSameFinalAway == 1;
 
-  late bool isSameLeague = filter.futureOnlySameLeague == 1;
-
   late Map<Odds, bool> selectedOddsMap = {
     Odds.earlyOdds1: isEarly1,
     Odds.earlyOddsX: isEarlyX,
@@ -154,6 +152,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
       filter = filter;
       placeholderFilter = filter.copyWith();
     });
+
+    loadFutureMatches();
   }
 
   void updateOddsFilter() {
@@ -199,9 +199,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   @override
   void initState() {
-    initializeDateFormatting("pt-BR");
+    super.initState();
 
-    retrieveFilter(0);
+    initializeDateFormatting("pt-BR");
 
     fetcher = RecordFetcher();
     fetcher.progressStream.listen((value) {
@@ -211,11 +211,12 @@ class _RecordListScreenState extends State<RecordListScreen> {
       setState(() => currentDate = value);
     });
 
+    records = Future.value([]);
+
     fetchFromMaxMatchDate();
-    loadFutureMatches();
     loadTeamsAndLeaguesAndFolders();
 
-    super.initState();
+    retrieveFilter(0);
   }
 
   @override
@@ -392,7 +393,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     Odds.finalOddsX,
                     Odds.finalOdds2,
                   ].map((oddsType) {
-                    final isSelected = selectedOddsMap[oddsType] ?? false;
+                    final bool isSelected = selectedOddsMap[oddsType] ?? false;
 
                     return SizedBox(
                       width: MediaQuery.of(context).size.width * 0.085,
@@ -442,16 +443,19 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           shadowColor: Colors.purple,
-                          backgroundColor: isSameLeague ? Colors.blueAccent : null,
+                          backgroundColor: filter.futureOnlySameLeague ? Colors.blueAccent : null,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.dehaze, color: isSameLeague ? Colors.white : null),
+                            Icon(Icons.dehaze, color: filter.futureOnlySameLeague ? Colors.white : null),
                             const SizedBox(width: 1),
                             Text(
                               "LIGA",
-                              style: TextStyle(fontWeight: FontWeight.bold, color: isSameLeague ? Colors.white : null),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: filter.futureOnlySameLeague ? Colors.white : null,
+                              ),
                             ),
                           ],
                         ),
@@ -468,8 +472,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         folders: folders,
                         onApplyCallback: () {
                           loadFutureMatches();
-                          if (isSameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
-                            setState(() => isSameLeague = false);
+                          if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                            setState(() => filter.futureOnlySameLeague = false);
                           }
                         },
                       ),
@@ -533,7 +537,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   controller: _scrollController,
                   itemCount: pivotRecords.length,
                   itemBuilder: (context, index) {
-                    final match = pivotRecords[index];
+                    final Record match = pivotRecords[index];
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -612,7 +616,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     child: FilterSelectButton(
                       filter: filter,
                       onApplyCallback: () {
-                        loadFutureMatches();
                         retrieveFilter(filter.id as int);
                       },
                     ),
@@ -838,14 +841,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
   }
 
   void filterMatchesBySameLeague() {
-    isSameLeague = !isSameLeague;
-
-    filter.futureOnlySameLeague = isSameLeague ? 1 : 0;
-
+    filter.futureOnlySameLeague = !filter.futureOnlySameLeague;
     filter.leagues.clear();
 
     setState(() {
-      isSameLeague = isSameLeague;
       filter = filter;
     });
 

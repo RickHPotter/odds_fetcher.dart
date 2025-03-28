@@ -186,8 +186,8 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                     getItemName: (league) => league.code,
                     onItemSelected: (league) {
                       setStates(() {
-                        if (widget.filter.futureOnlySameLeague == 1) {
-                          widget.filter.futureOnlySameLeague = 0;
+                        if (widget.filter.futureOnlySameLeague) {
+                          widget.filter.futureOnlySameLeague = false;
                         }
 
                         if (!widget.selectedLeagues.contains(league)) widget.selectedLeagues.add(league);

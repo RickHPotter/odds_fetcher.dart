@@ -60,14 +60,6 @@ class FilterSelectModal extends StatefulWidget {
 
 class _FilterSelectModalState extends State<FilterSelectModal> {
   @override
-  void dispose() {
-    super.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onApplyCallback();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return StatefulBuilder(
       builder: (context, setModalState) {

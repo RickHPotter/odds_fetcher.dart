@@ -28,6 +28,7 @@ class PastMachDataTable extends StatelessWidget {
           }
 
           final List<Record> records = snapshot.data!;
+
           return PlutoGrid(
             columns: getColumns(screenWidth),
             rows: getRows(records),

@@ -31,17 +31,17 @@ class DatabaseService {
   }
 
   static Future<Database> _initDb() async {
-    final dbPath =
+    final String dbPath =
         Platform.isWindows ? await getApplicationSupportDirectory().then((dir) => dir.path) : await getDatabasesPath();
-    final path = join(dbPath, dbName);
+    final String path = join(dbPath, dbName);
 
-    final dbDir = Directory(dbPath);
+    final Directory dbDir = Directory(dbPath);
     if (!dbDir.existsSync()) {
       debugPrint("Creating database directory: $dbPath");
       await dbDir.create(recursive: true);
     }
 
-    final dbExists = await databaseExists(path);
+    final bool dbExists = await databaseExists(path);
 
     if (!dbExists) {
       debugPrint("Database does not exist, copying and unzipping from assets...");
@@ -49,13 +49,13 @@ class DatabaseService {
         ByteData data = await rootBundle.load(assetDbZipPath);
         List<int> bytes = data.buffer.asUint8List();
 
-        final archive = ZipDecoder().decodeBytes(bytes);
+        final Archive archive = ZipDecoder().decodeBytes(bytes);
         bool dbCopied = false;
         for (var file in archive) {
           if (file.isFile) {
-            final filename = file.name;
+            final String filename = file.name;
             if (filename == dbName) {
-              final dbFile = File(path);
+              final File dbFile = File(path);
               await dbFile.writeAsBytes(file.content, flush: true);
               dbCopied = true;
               debugPrint("Database unzipped successfully to $path");
@@ -73,7 +73,7 @@ class DatabaseService {
       }
     }
 
-    final dbFile = File(path);
+    final File dbFile = File(path);
     if (!dbFile.existsSync() || dbFile.lengthSync() < 1024) {
       throw Exception("Unzipped database is too small or missing.");
     }
@@ -82,7 +82,7 @@ class DatabaseService {
   }
 
   static Stream<Record> fetchFutureRecords({Filter? filter}) async* {
-    final db = await DatabaseService.database;
+    final Database db = await DatabaseService.database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
     SELECT
@@ -98,7 +98,7 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    ${filter?.whereClauseFuture() ?? ""}
+    ${await filter?.whereClauseFuture() ?? ""}
     ORDER BY MatchDate, ID
   """);
 
@@ -113,7 +113,7 @@ class DatabaseService {
           SUM(draw) AS draws,
           SUM(awayWin) AS awayWins
         FROM Records r
-        ${filter.whereClause(futureRecord: futureRecord)}
+        ${await filter.whereClause(futureRecord: futureRecord)}
       """);
 
         final Map<String, dynamic> res = percentageResult[0];
@@ -145,13 +145,13 @@ class DatabaseService {
   }
 
   static Future<List<Record>> fetchRecords({Filter? filter, Record? futureRecord}) async {
-    final db = await database;
+    final Database db = await database;
     late String whereClause;
 
     if (filter == null) {
       whereClause = "WHERE 1 = 1";
     } else {
-      whereClause = filter.whereClause(futureRecord: futureRecord);
+      whereClause = await filter.whereClause(futureRecord: futureRecord);
     }
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
@@ -177,7 +177,7 @@ class DatabaseService {
   }
 
   static Future<DateTime> fetchFromMaxMatchDate() async {
-    final db = await database;
+    final Database db = await database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
     SELECT MAX(MatchDate) AS MatchDate
@@ -215,7 +215,7 @@ class DatabaseService {
   }
 
   static Future<void> insertFilter(Filter filter) async {
-    final db = await database;
+    final Database db = await database;
 
     int? filterId =
         filter.id ?? await db.insert("Filters", filter.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
@@ -228,6 +228,8 @@ class DatabaseService {
     await db.delete("FiltersLeagues", where: "filterId = ?", whereArgs: [filterId]);
     await db.delete("FiltersFolders", where: "filterId = ?", whereArgs: [filterId]);
 
+    final List<int> leagueIds = await fetchLeagueIds(filter.leagues);
+
     for (Team team in filter.teams) {
       await db.insert("FiltersTeams", {
         "filterId": filterId,
@@ -235,10 +237,10 @@ class DatabaseService {
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
 
-    for (League league in filter.leagues) {
+    for (int leagueId in leagueIds) {
       await db.insert("FiltersLeagues", {
         "filterId": filterId,
-        "leagueId": league.id,
+        "leagueId": leagueId,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
 
@@ -251,7 +253,7 @@ class DatabaseService {
   }
 
   static Future<void> updateFilter(Filter filter) async {
-    final db = await database;
+    final Database db = await database;
 
     await db.update("Filters", filter.toMap(), where: "id = ?", whereArgs: [filter.id]);
 
@@ -259,7 +261,7 @@ class DatabaseService {
   }
 
   static Future<int> getOrCreateLeague(String leagueCode, String? leagueName) async {
-    final db = await database;
+    final Database db = await database;
 
     String whereClause = "leagueCode = ?";
     List<String> whereArgs = [leagueCode];
@@ -284,7 +286,7 @@ class DatabaseService {
   }
 
   static Future<int> getOrCreateTeam(String teamName) async {
-    final db = await database;
+    final Database db = await database;
     final result = await db.query("Teams", where: "teamName = ?", whereArgs: [teamName]);
 
     if (result.isNotEmpty) {
@@ -299,7 +301,7 @@ class DatabaseService {
   }
 
   static Future<List<Team>> fetchTeams() async {
-    final db = await database;
+    final Database db = await database;
 
     final result = await db.query("Teams");
 
@@ -307,23 +309,36 @@ class DatabaseService {
   }
 
   static Future<List<League>> fetchLeagues() async {
-    final db = await database;
+    final Database db = await database;
 
-    final result = await db.rawQuery(
-      "SELECT GROUP_CONCAT(id, ',') ids, leagueCode, GROUP_CONCAT(leagueName, ',') AS leagueName FROM Leagues GROUP BY leagueCode ORDER BY leagueCode;",
-    );
+    final result = await db.rawQuery("""
+    SELECT
+      leagueCode,
+      MIN(id) AS id,
+      MIN(leagueName) AS leagueName
+    FROM Leagues
+    GROUP BY leagueCode
+    ORDER BY leagueCode;""");
 
     return result.map((row) => League.fromMap(row)).toList();
   }
 
+  static Future<List<int>> fetchLeagueIds(List<League> leagues) async {
+    final String leagueCodes = leagues.map((l) => "'${l.code}'").join(", ");
+    final result = await _db?.rawQuery("SELECT id FROM Leagues WHERE leagueCode IN ($leagueCodes);");
+    final List<int> leagueIds = result?.map((row) => row["id"] as int).toList() ?? [];
+
+    return leagueIds;
+  }
+
   static Future<List<Folder>> fetchFoldersWithLeagues() async {
-    final db = await database;
+    final Database db = await database;
 
     final result = await db.rawQuery("""
       SELECT
-      lf.id,
-      l.id as leagueId, l.leagueName, l.leagueCode,
-      f.id as folderId, f.folderName
+        lf.id,
+        l.id as leagueId, l.leagueName, l.leagueCode,
+        f.id as folderId, f.folderName
       FROM LeaguesFolders lf
       INNER JOIN Leagues l ON l.id = lf.leagueId
       INNER JOIN Folders f ON f.id = lf.folderId
@@ -332,7 +347,7 @@ class DatabaseService {
     final List<Folder> folders = [];
 
     for (var row in result) {
-      final league = League(
+      final League league = League(
         id: row["leagueId"] as int,
         code: row["leagueCode"] as String,
         name: row["leagueName"] as String,
@@ -356,7 +371,7 @@ class DatabaseService {
   }
 
   static Future<List<Filter>> fetchFilters() async {
-    final db = await database;
+    final Database db = await database;
 
     final result = await db.query("Filters");
 
@@ -364,7 +379,7 @@ class DatabaseService {
   }
 
   static Future<Filter> fetchFilter(int id) async {
-    final db = await database;
+    final Database db = await database;
 
     final filterResult =
         (id != 0)
@@ -376,7 +391,8 @@ class DatabaseService {
       return Filter.base();
     }
 
-    final filter = Filter.fromMap(filterResult.first);
+    final Filter filter = Filter.fromMap(filterResult.first);
+    final int filterId = filter.id!;
 
     final teamResults = await db.rawQuery(
       """
@@ -384,7 +400,7 @@ class DatabaseService {
     INNER JOIN FiltersTeams ft ON t.id = ft.teamId
     WHERE ft.filterId = ?;
     """,
-      [id],
+      [filterId],
     );
 
     filter.teams = teamResults.map((t) => Team.fromMap(t)).toList();
@@ -393,9 +409,8 @@ class DatabaseService {
       """
     SELECT l.* FROM Leagues l
     INNER JOIN FiltersLeagues fl ON l.id = fl.leagueId
-    WHERE fl.filterId = ?;
-    """,
-      [id],
+    WHERE fl.filterId = ?;""",
+      [filterId],
     );
 
     filter.leagues = leagueResults.map((l) => League.fromMap(l)).toList();
@@ -406,7 +421,7 @@ class DatabaseService {
     INNER JOIN FiltersFolders ff ON f.id = ff.folderId
     WHERE ff.filterId = ?;
     """,
-      [id],
+      [filterId],
     );
 
     filter.folders = folderResults.map((f) => Folder.fromMap(f)).toList();

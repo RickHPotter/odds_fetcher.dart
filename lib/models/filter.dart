@@ -2,6 +2,7 @@ import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/team.dart";
+import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/utils/date_utils.dart" show rawDateTime;
 
 enum MinMaxOdds {
@@ -49,7 +50,7 @@ class Filter {
   int? futureDismissNoEarlyOdds; // TODO: Missing
   int? futureDismissNoFinalOdds; // TODO: Missing
   int? futureDismissNoHistory; // TODO: Missing
-  int? futureOnlySameLeague;
+  bool futureOnlySameLeague;
   int? futureSameEarlyHome;
   int? futureSameEarlyDraw;
   int? futureSameEarlyAway;
@@ -60,11 +61,10 @@ class Filter {
   int? futureMinDrawPercentage; // TODO: Missing
   int? futureMinAwayWinPercentage; // TODO: Missing
 
-  bool filterPastRecordsByTeams = true;
-  bool filterFutureRecordsByTeams = true;
-
-  bool filterPastRecordsByLeagues = true;
-  bool filterFutureRecordsByLeagues = true;
+  bool filterPastRecordsByTeams;
+  bool filterFutureRecordsByTeams;
+  bool filterPastRecordsByLeagues;
+  bool filterFutureRecordsByLeagues;
 
   List<Team> teams;
   List<League> leagues;
@@ -96,7 +96,7 @@ class Filter {
     this.futureDismissNoEarlyOdds,
     this.futureDismissNoFinalOdds,
     this.futureDismissNoHistory,
-    this.futureOnlySameLeague,
+    this.futureOnlySameLeague = false,
     this.futureSameEarlyHome,
     this.futureSameEarlyDraw,
     this.futureSameEarlyAway,
@@ -106,6 +106,10 @@ class Filter {
     this.futureMinHomeWinPercentage,
     this.futureMinDrawPercentage,
     this.futureMinAwayWinPercentage,
+    this.filterPastRecordsByTeams = true,
+    this.filterFutureRecordsByTeams = true,
+    this.filterPastRecordsByLeagues = true,
+    this.filterFutureRecordsByLeagues = true,
     required this.teams,
     required this.leagues,
     required this.folders,
@@ -140,7 +144,7 @@ class Filter {
       futureDismissNoEarlyOdds: map["futureDismissNoEarlyOdds"],
       futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"],
       futureDismissNoHistory: map["futureDismissNoHistory"],
-      futureOnlySameLeague: map["futureOnlySameLeague"],
+      futureOnlySameLeague: map["futureOnlySameLeague"] == 1,
       futureSameEarlyHome: map["futureSameEarlyHome"],
       futureSameEarlyDraw: map["futureSameEarlyDraw"],
       futureSameEarlyAway: map["futureSameEarlyAway"],
@@ -150,6 +154,10 @@ class Filter {
       futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"],
       futureMinDrawPercentage: map["futureMinDrawPercentage"],
       futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
+      filterPastRecordsByTeams: map["filterPastRecordsByTeams"] == 1,
+      filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
+      filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
+      filterFutureRecordsByLeagues: map["filterFutureRecordsByLeagues"] == 1,
 
       teams: map["teams"] == null ? [] : map["teams"].map((t) => Team.fromMap(t)).toList(),
       leagues: map["leagues"] == null ? [] : map["leagues"].map((l) => League.fromMap(l)).toList(),
@@ -185,7 +193,7 @@ class Filter {
       "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds,
       "futureDismissNoFinalOdds": futureDismissNoFinalOdds,
       "futureDismissNoHistory": futureDismissNoHistory,
-      "futureOnlySameLeague": futureOnlySameLeague,
+      "futureOnlySameLeague": futureOnlySameLeague ? 1 : 0,
       "futureSameEarlyHome": futureSameEarlyHome,
       "futureSameEarlyDraw": futureSameEarlyDraw,
       "futureSameEarlyAway": futureSameEarlyAway,
@@ -195,6 +203,10 @@ class Filter {
       "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
       "futureMinDrawPercentage": futureMinDrawPercentage,
       "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
+      "filterPastRecordsByTeams": filterPastRecordsByTeams ? 1 : 0,
+      "filterFutureRecordsByTeams": filterFutureRecordsByTeams ? 1 : 0,
+      "filterPastRecordsByLeagues": filterPastRecordsByLeagues ? 1 : 0,
+      "filterFutureRecordsByLeagues": filterFutureRecordsByLeagues ? 1 : 0,
     };
   }
 
@@ -298,13 +310,14 @@ class Filter {
     }
   }
 
-  List<int> leaguesIds() {
-    final List<int> leagueIds =
-        leagues.map((l) => l.id != null ? [l.id!] : l.ids ?? []).expand((idList) => idList).toList();
-    final List<int> folderIds =
-        folders.expand((folder) => folder.leagues).where((l) => l.id != null).map((l) => l.id as int).toList();
+  Future<List<int>> leaguesIds() async {
+    if (leagues.isEmpty && folders.isEmpty) return [];
 
-    return leagueIds + folderIds;
+    final List<int> leagueIds = await DatabaseService.fetchLeagueIds(leagues);
+
+    final List<int> folderIds = folders.expand((folder) => folder.leagues).map((l) => l.id).toList();
+
+    return [...leagueIds, ...folderIds];
   }
 
   List<int> teamsIds() {
@@ -313,7 +326,7 @@ class Filter {
     return teamIds;
   }
 
-  String whereClause({Record? futureRecord}) {
+  Future<String> whereClause({Record? futureRecord}) async {
     fillInAllRangeOdds();
 
     late String whereClause = "WHERE finished = 1";
@@ -351,8 +364,9 @@ class Filter {
     }
 
     if (filterPastRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
-      whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
-    } else if (futureOnlySameLeague == 1 && futureRecord?.league.id != null) {
+      final List<int> leagueIdsList = await leaguesIds();
+      whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
+    } else if (futureOnlySameLeague && futureRecord?.league.id != null) {
       whereClause += " AND leagueId = ${futureRecord?.league.id}";
     }
 
@@ -379,12 +393,11 @@ class Filter {
     if (minFinalAway != null) {
       whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
     }
-    print(whereClause);
 
     return whereClause;
   }
 
-  String whereClauseFuture() {
+  Future<String> whereClauseFuture() async {
     fillInAllRangeOdds();
 
     late String whereClause = "WHERE finished = 0";
@@ -404,7 +417,8 @@ class Filter {
     }
 
     if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
-      whereClause += " AND leagueId IN (${leaguesIds().join(', ')}) ";
+      final List<int> leagueIdsList = await leaguesIds();
+      whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
     }
 
     if (minEarlyHome != null) {

@@ -11,13 +11,15 @@ String rawDateTime(DateTime date) {
 }
 
 DateTime parseRawDate(String dateStr) {
-  String formattedString = "${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}";
+  final String formattedString = "${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}";
+
   return DateTime.parse(formattedString);
 }
 
 DateTime parseRawDateTime(String dateStr) {
-  String formattedString =
+  final String formattedString =
       "${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}"
       " ${dateStr.substring(8, 10)}:${dateStr.substring(10, 12)}";
+
   return DateTime.parse(formattedString);
 }

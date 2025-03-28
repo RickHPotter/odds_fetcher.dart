@@ -32,9 +32,9 @@ class MatchCard extends StatelessWidget {
             scorePercentageChild = const Center(child: Text("Nenhum dado disponível"));
             goalsPercentageChild = const Center(child: Text("Nenhum dado disponível"));
           } else {
-            final records = snapshot.data!;
-            final scorePercentages = Record.calculateScoreMatchPercentages(pivotRecord, records);
-            final goalsPercentages = Record.calculateGoalsMatchPercentages(records);
+            final List<Record> records = snapshot.data!;
+            final Map<String, double> scorePercentages = Record.calculateScoreMatchPercentages(pivotRecord, records);
+            final Map<String, double> goalsPercentages = Record.calculateGoalsMatchPercentages(records);
 
             scorePercentageChild = Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -109,8 +109,8 @@ class MatchCard extends StatelessWidget {
   }
 
   Widget _buildScorePercentageRow(String label, double value, Color color) {
-    final percentage = "${value.toStringAsFixed(1)}%";
-    final padding = "0" * (6 - percentage.length);
+    final String percentage = "${value.toStringAsFixed(1)}%";
+    final String padding = "0" * (6 - percentage.length);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),

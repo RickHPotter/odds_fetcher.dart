@@ -5,8 +5,7 @@ import "package:http/http.dart" as http;
 import "package:odds_fetcher/models/league.dart" show League;
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/team.dart" show Team;
-import "package:odds_fetcher/services/database_service.dart"
-    show DatabaseService;
+import "package:odds_fetcher/services/database_service.dart" show DatabaseService;
 import "package:odds_fetcher/utils/parse_utils.dart";
 
 class ApiService {
@@ -14,41 +13,33 @@ class ApiService {
   static const String futureUrl = "https://px-1x2.7mdt.com/data/company/en/";
 
   Future<List<Record>> fetchData(String date) async {
-    const bettingHouseId = 17;
-    final resultMessage = "$date == ";
+    const int bettingHouseId = 17;
+    final String resultMessage = "$date == ";
 
-    final url = Uri.parse(
-      "$baseUrl$date/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}",
-    );
-    final response = await http.get(url);
+    final Uri url = Uri.parse("$baseUrl$date/$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}");
+    final http.Response response = await http.get(url);
 
     if (response.statusCode != 200) {
-      return Future.error(
-        "$resultMessage Failed to fetch data. Status: ${response.statusCode}",
-      );
+      return Future.error("$resultMessage Failed to fetch data. Status: ${response.statusCode}");
     }
 
     String bodyStr = await _sanitizeData(response.body);
 
-    // Try to decode the first JSON attempt
     List<dynamic> recordsArray;
     try {
       recordsArray = json.decode(bodyStr);
     } catch (e) {
-      // If failed, sanitize for UTF-8 BOM and try again
       bodyStr = _sanitizeUffef(bodyStr);
       try {
         recordsArray = json.decode(bodyStr);
       } catch (e) {
-        return Future.error(
-          "$resultMessage Failed to parse sanitized data. Error: $e",
-        );
+        return Future.error("$resultMessage Failed to parse sanitized data. Error: $e");
       }
     }
 
     final List<Record> records = [];
-    for (var recordData in recordsArray) {
-      final fields = recordData.split("|");
+    for (final String recordData in recordsArray) {
+      final List<String> fields = recordData.split("|");
       if (fields.length < 17) {
         return Future.error("$resultMessage Invalid data structure");
       }
@@ -66,23 +57,20 @@ class ApiService {
         int? awayFirstHalfScore;
 
         if (firstHalfScore.isNotEmpty && firstHalfScore.contains("-")) {
-          var scores = firstHalfScore.split("-");
+          final List<String> scores = firstHalfScore.split("-");
           if (scores.length == 2) {
             homeFirstHalfScore = int.tryParse(scores[0]);
             awayFirstHalfScore = int.tryParse(scores[1]);
           }
         }
-        final leagueCode = fields[3].split(",")[0];
-        final leagueName = fields[3].split(",")[1];
+        final String leagueCode = fields[3].split(",")[0];
+        final String leagueName = fields[3].split(",")[1];
 
-        final leagueId = await DatabaseService.getOrCreateLeague(
-          leagueCode,
-          leagueName,
-        );
-        final homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
-        final awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
+        final int leagueId = await DatabaseService.getOrCreateLeague(leagueCode, leagueName);
+        final int homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
+        final int awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
 
-        final record = Record(
+        final Record record = Record(
           bettingHouseId: bettingHouseId,
           matchDate: matchDate,
           league: League(id: leagueId, code: leagueCode, name: leagueName),
@@ -111,18 +99,16 @@ class ApiService {
   }
 
   Future<List<Record>> fetchFutureData() async {
-    const bettingHouseId = 17;
+    const int bettingHouseId = 17;
 
-    final url = Uri.parse(
+    final Uri url = Uri.parse(
       "${ApiService.futureUrl}$bettingHouseId.js?nocache=${DateTime.now().millisecondsSinceEpoch}",
     );
 
-    final response = await http.get(url);
+    final http.Response response = await http.get(url);
 
     if (response.statusCode != 200) {
-      return Future.error(
-        "Failed to fetch future data. Status: ${response.statusCode}",
-      );
+      return Future.error("Failed to fetch future data. Status: ${response.statusCode}");
     }
 
     String bodyStr = await _sanitizeData(response.body);
@@ -140,8 +126,8 @@ class ApiService {
     }
 
     final List<Record> records = [];
-    for (var recordData in recordsArray) {
-      final fields = recordData.split("|");
+    for (final String recordData in recordsArray) {
+      final List<String> fields = recordData.split("|");
       if (fields.length < 16) {
         return Future.error("Invalid future data structure");
       }
@@ -158,15 +144,12 @@ class ApiService {
       }
 
       try {
-        final leagueCode = fields[3];
-        final leagueId = await DatabaseService.getOrCreateLeague(
-          leagueCode,
-          null,
-        );
-        final homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
-        final awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
+        final String leagueCode = fields[3];
+        final int leagueId = await DatabaseService.getOrCreateLeague(leagueCode, null);
+        final int homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
+        final int awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
 
-        final record = Record(
+        final Record record = Record(
           bettingHouseId: bettingHouseId,
           matchDate: matchDate,
           league: League(id: leagueId, code: leagueCode, name: leagueCode),

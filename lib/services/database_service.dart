@@ -228,7 +228,10 @@ class DatabaseService {
     await db.delete("FiltersLeagues", where: "filterId = ?", whereArgs: [filterId]);
     await db.delete("FiltersFolders", where: "filterId = ?", whereArgs: [filterId]);
 
-    final List<int> leagueIds = await fetchLeagueIds(filter.leagues);
+    late List<int> leagueIds = filter.leagues.map((l) => l.ids).expand((l) => l).toList();
+    if (filter.leagues.isEmpty) {
+      leagueIds = await DatabaseService.fetchLeagueIds(filter.leagues);
+    }
 
     for (Team team in filter.teams) {
       await db.insert("FiltersTeams", {
@@ -315,6 +318,7 @@ class DatabaseService {
     SELECT
       leagueCode,
       MIN(id) AS id,
+      GROUP_CONCAT(id, ',') ids,
       MIN(leagueName) AS leagueName
     FROM Leagues
     GROUP BY leagueCode
@@ -335,18 +339,23 @@ class DatabaseService {
     final Database db = await database;
 
     final result = await db.rawQuery("""
-      SELECT
-        lf.id,
-        l.id as leagueId, l.leagueName, l.leagueCode,
-        f.id as folderId, f.folderName
-      FROM LeaguesFolders lf
-      INNER JOIN Leagues l ON l.id = lf.leagueId
-      INNER JOIN Folders f ON f.id = lf.folderId
-      ORDER BY lf.folderId;""");
+    SELECT
+      MIN(lf.id) AS id,
+      GROUP_CONCAT(l.id, ',') ids,
+      MIN(l.id) AS leagueId,
+      GROUP_CONCAT(l.leagueName, ',') AS leagueName,
+      l.leagueCode,
+      f.id as folderId,
+      f.folderName
+    FROM LeaguesFolders lf
+    INNER JOIN Leagues l ON l.id = lf.leagueId
+    INNER JOIN Folders f ON f.id = lf.folderId
+    GROUP BY l.leagueCode, f.id, f.folderName
+    ORDER BY lf.folderId;""");
 
     final List<Folder> folders = [];
 
-    for (var row in result) {
+    for (final row in result) {
       final League league = League(
         id: row["leagueId"] as int,
         code: row["leagueCode"] as String,
@@ -361,8 +370,7 @@ class DatabaseService {
       if (index != -1) {
         folders[index].leagues.add(league);
       } else {
-        final Folder folder = Folder(id: folderId, name: folderName);
-        folder.leagues.add(league);
+        final Folder folder = Folder(id: folderId, name: folderName, leagues: [league]);
         folders.add(folder);
       }
     }
@@ -407,9 +415,16 @@ class DatabaseService {
 
     final leagueResults = await db.rawQuery(
       """
-    SELECT l.* FROM Leagues l
+    SELECT
+      MIN(l.id) AS id,
+      leagueCode,
+      GROUP_CONCAT(l.id, ',') ids,
+      GROUP_CONCAT(l.leagueName, ',') AS leagueName
+    FROM Leagues l
     INNER JOIN FiltersLeagues fl ON l.id = fl.leagueId
-    WHERE fl.filterId = ?;""",
+    WHERE fl.filterId = ?
+    GROUP BY l.leagueCode
+    ORDER BY l.leagueCode;""",
       [filterId],
     );
 
@@ -417,14 +432,49 @@ class DatabaseService {
 
     final folderResults = await db.rawQuery(
       """
-    SELECT f.* FROM Folders f
+    SELECT
+      f.id AS id,
+      f.folderName,
+      MIN(l.id) AS leagueId,
+      GROUP_CONCAT(l.id, ',') AS leagueIds,
+      l.leagueCode AS leagueCode,
+      GROUP_CONCAT(l.leagueName, ',') AS leagueName
+    FROM Folders f
     INNER JOIN FiltersFolders ff ON f.id = ff.folderId
-    WHERE ff.filterId = ?;
+    INNER JOIN LeaguesFolders lf ON f.id = lf.folderId
+    INNER JOIN Leagues l         ON lf.leagueId = l.id
+    WHERE ff.filterId = ?
+    GROUP BY f.id, f.folderName, l.leagueCode;
     """,
       [filterId],
     );
 
-    filter.folders = folderResults.map((f) => Folder.fromMap(f)).toList();
+    final List<Folder> folders = [];
+
+    for (final row in folderResults) {
+      List<int> leagueIds = row["leagueIds"].toString().split(",").map((id) => int.parse(id)).toList();
+
+      final League league = League(
+        id: row["leagueId"] as int,
+        ids: leagueIds,
+        code: row["leagueCode"] as String,
+        name: row["leagueName"] as String,
+      );
+
+      final int folderId = row["id"] as int;
+      final String folderName = row["folderName"] as String;
+
+      final int index = folders.indexWhere((folder) => folder.id == folderId);
+
+      if (index != -1) {
+        folders[index].leagues.add(league);
+      } else {
+        final Folder folder = Folder(id: folderId, name: folderName, leagues: [league]);
+        folders.add(folder);
+      }
+    }
+
+    filter.folders = folders;
 
     return filter;
   }

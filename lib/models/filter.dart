@@ -313,7 +313,11 @@ class Filter {
   Future<List<int>> leaguesIds() async {
     if (leagues.isEmpty && folders.isEmpty) return [];
 
-    final List<int> leagueIds = await DatabaseService.fetchLeagueIds(leagues);
+    late List<int> leagueIds = leagues.map((l) => l.ids).expand((l) => l).toList();
+
+    if (leagues.isEmpty) {
+      leagueIds = await DatabaseService.fetchLeagueIds(leagues);
+    }
 
     final List<int> folderIds = folders.expand((folder) => folder.leagues).map((l) => l.id).toList();
 

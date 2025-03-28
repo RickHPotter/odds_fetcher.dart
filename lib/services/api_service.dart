@@ -23,7 +23,7 @@ class ApiService {
       return Future.error("$resultMessage Failed to fetch data. Status: ${response.statusCode}");
     }
 
-    String bodyStr = await _sanitizeData(response.body);
+    String bodyStr = await _sanitizeData(utf8.decode(response.bodyBytes));
 
     List<dynamic> recordsArray;
     try {
@@ -111,7 +111,7 @@ class ApiService {
       return Future.error("Failed to fetch future data. Status: ${response.statusCode}");
     }
 
-    String bodyStr = await _sanitizeData(response.body);
+    String bodyStr = await _sanitizeData(utf8.decode(response.bodyBytes));
 
     List<dynamic> recordsArray;
     try {

@@ -12,7 +12,7 @@ class LeagueFolder {
     return LeagueFolder(
       id: map["id"],
       league: League(id: map["leagueId"], name: map["leagueName"], code: map["leagueCode"]),
-      folder: Folder(id: map["folderId"], name: map["folderName"]),
+      folder: Folder(id: map["folderId"], name: map["folderName"], leagues: []),
     );
   }
 }

@@ -184,6 +184,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                     items: widget.leagues,
                     selectedItems: widget.selectedLeagues,
                     getItemName: (league) => league.code,
+                    getSubItemName: (league) => league.name,
                     onItemSelected: (league) {
                       setStates(() {
                         if (widget.filter.futureOnlySameLeague) {
@@ -205,6 +206,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                     items: widget.folders,
                     selectedItems: widget.selectedFolders,
                     getItemName: (folder) => folder.name,
+                    getSubItemName: (folder) => "${folder.leagues.length} ligas",
                     onItemSelected: (folder) {
                       setStates(() {
                         if (!widget.selectedFolders.contains(folder)) widget.selectedFolders.add(folder);
@@ -305,6 +307,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
     required List<T> items,
     required List<T> selectedItems,
     required String Function(T) getItemName,
+    required String Function(T) getSubItemName,
     required void Function(T) onItemSelected,
     required void Function(T) onItemRemoved,
     required bool shouldFocus,
@@ -381,7 +384,8 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                     children:
                         selectedItems.map((item) {
                           return Chip(
-                            label: Text(getItemName(item)),
+                            //label: Text(getItemName(item)),
+                            label: Tooltip(message: getSubItemName(item), child: Text(getItemName(item))),
                             deleteIconColor: Colors.red,
                             onDeleted: () => onItemRemoved(item),
                           );

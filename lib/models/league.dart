@@ -2,11 +2,13 @@ class League {
   final int id;
   final String code;
   final String name;
+  late List<int> ids;
 
-  League({required this.code, required this.id, required this.name});
+  League({required this.code, required this.id, required this.name, this.ids = const []});
 
   factory League.fromMap(Map<String, dynamic> map) {
-    return League(id: map["id"], code: map["leagueCode"], name: map["leagueName"]);
+    List<int> ids = map["ids"].toString().split(",").map((id) => int.parse(id)).toList();
+    return League(id: map["id"], code: map["leagueCode"], name: map["leagueName"], ids: ids);
   }
 
   Map<String, dynamic> toMap() {

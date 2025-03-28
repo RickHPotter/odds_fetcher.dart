@@ -109,8 +109,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
+                        const SizedBox(width: 24),
                         ...[
-                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS"},
+                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 1"},
+                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 2"},
+                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 3"},
                           {"icon": Icons.construction, "label": "SOBRE"},
                         ].asMap().entries.map((entry) {
                           int index = entry.key;
@@ -147,6 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
             child: IndexedStack(
               index: selectedIndex,
               children: [
+                const RecordListScreen(),
+                const RecordListScreen(),
                 const RecordListScreen(),
                 Padding(
                   padding: const EdgeInsets.all(16.0),

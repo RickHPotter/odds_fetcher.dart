@@ -214,14 +214,14 @@ class DatabaseService {
     }
   }
 
-  static Future<void> insertFilter(Filter filter) async {
+  static Future<bool> insertFilter(Filter filter) async {
     final Database db = await database;
 
     int? filterId =
         filter.id ?? await db.insert("Filters", filter.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
 
     if (filterId == 0) {
-      return;
+      return false;
     }
 
     await db.delete("FiltersTeams", where: "filterId = ?", whereArgs: [filterId]);
@@ -253,14 +253,26 @@ class DatabaseService {
         "folderId": folder.id,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
+
+    return true;
   }
 
-  static Future<void> updateFilter(Filter filter) async {
+  static Future<bool> updateFilter(Filter filter) async {
     final Database db = await database;
 
-    await db.update("Filters", filter.toMap(), where: "id = ?", whereArgs: [filter.id]);
+    try {
+      await db.update(
+        "Filters",
+        filter.toMap(),
+        where: "id = ?",
+        whereArgs: [filter.id],
+        conflictAlgorithm: ConflictAlgorithm.fail,
+      );
+    } catch (e) {
+      return false;
+    }
 
-    await insertFilter(filter);
+    return await insertFilter(filter);
   }
 
   static Future<int> getOrCreateLeague(String leagueCode, String? leagueName) async {

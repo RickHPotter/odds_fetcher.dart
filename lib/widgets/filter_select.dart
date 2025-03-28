@@ -72,8 +72,6 @@ class _FilterSelectModalState extends State<FilterSelectModal> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
             child: Autocomplete<Filter>(
               optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text.isEmpty) return [];
-
                 return widget.filters
                     .where((item) => getItemName(item).toLowerCase().contains(textEditingValue.text.toLowerCase()))
                     .toList();

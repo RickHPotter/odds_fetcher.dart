@@ -3,6 +3,8 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/services.dart" show FilteringTextInputFormatter;
+import "package:font_awesome_flutter/font_awesome_flutter.dart";
+import "package:google_fonts/google_fonts.dart";
 
 import "package:intl/intl.dart" show DateFormat;
 import "package:intl/date_symbol_data_local.dart" show initializeDateFormatting;
@@ -47,6 +49,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
   bool isFetching = false;
   bool isLoading = false;
   bool isCancelled = false;
+  bool isCreatingFilter = false;
+  bool isUpdatingFilter = false;
 
   int? selectedMatchId;
   int? pivotRecordIndex;
@@ -81,6 +85,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   StreamSubscription<Record>? _recordSubscription;
   final ScrollController _scrollController = ScrollController();
   late TextEditingController yearController = TextEditingController();
+  late TextEditingController filterNameController = TextEditingController();
 
   Future<void> fetchFromMaxMatchDate() async {
     final DateTime minDateToFetch = await DatabaseService.fetchFromMaxMatchDate();
@@ -409,7 +414,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.dehaze, color: isSelected ? Colors.white : null),
+                              Icon(Icons.percent, color: isSelected ? Colors.white : null),
                               const SizedBox(width: 1),
                               Text(
                                 oddsType.shortName,
@@ -613,34 +618,104 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   width: MediaQuery.of(context).size.width * 0.2,
                   child: Tooltip(
                     message: filter.filterName,
-                    child: FilterSelectButton(
-                      filter: filter,
-                      onApplyCallback: () {
-                        retrieveFilter(filter.id as int);
+                    child:
+                        isCreatingFilter || isUpdatingFilter
+                            ? SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.05,
+                              child: TextField(
+                                controller: filterNameController,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  hintText: "Informe um Nome...",
+                                ),
+                                onChanged: (value) => filter.filterName = value,
+                              ),
+                            )
+                            : FilterSelectButton(
+                              filter: filter,
+                              onApplyCallback: () {
+                                retrieveFilter(filter.id as int);
+                              },
+                            ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isCreatingFilter = true;
+                          filter.id = null;
+                          filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
+                          filterNameController.text = filter.filterName;
+                        });
                       },
+                      child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
                     ),
-                  ),
-                ),
-                ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      filter = placeholderFilter.copyWith();
-                      loadFutureMatches();
-                    });
-                  },
-                  child: Icon(Icons.restart_alt),
-                ),
-                ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                  ),
-                  onPressed: () {
-                    saveFilter();
-                  },
-                  child: Icon(Icons.save),
+                    ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
+                      ),
+                      onPressed: () {
+                        if (isCreatingFilter || isUpdatingFilter) return;
+
+                        setState(() {
+                          isUpdatingFilter = true;
+                          filterNameController.text = filter.filterName;
+                        });
+                      },
+                      child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
+                    ),
+                    ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      ),
+                      onPressed: () async {
+                        final bool success = await saveFilter();
+
+                        if (!context.mounted) return;
+                        if (success) {
+                          showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
+                        } else {
+                          showOverlayMessage(context, "Filtro precisa de um nome diferente!", type: MessageType.error);
+                        }
+                      },
+                      child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
+                    ),
+                    ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (isCreatingFilter || isUpdatingFilter) {
+                            isCreatingFilter = false;
+                            isUpdatingFilter = false;
+                            filter.filterName = placeholderFilter.filterName;
+
+                            showOverlayMessage(
+                              context,
+                              "Criação/Edição de filtro cancelada com sucesso!",
+                              type: MessageType.info,
+                            );
+                          } else {
+                            filter = placeholderFilter.copyWith();
+                            showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                            loadFutureMatches();
+                          }
+                        });
+                      },
+                      child:
+                          isCreatingFilter || isUpdatingFilter
+                              ? Icon(FontAwesomeIcons.ban, color: Colors.red)
+                              : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
+                    ),
+                  ],
                 ),
                 isLoading
                     ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
@@ -689,7 +764,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   ),
                   child: Text(
                     showFilters ? "OCULTAR FILTROS" : "MOSTRAR FILTROS",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
                 Align(
@@ -697,7 +772,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   child:
                       isFetching
                           ? SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.32,
+                            width: MediaQuery.of(context).size.width * 0.31,
                             child: Padding(
                               padding: const EdgeInsets.only(right: 12.0),
                               child: Column(
@@ -716,7 +791,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                         style: OutlinedButton.styleFrom(
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                                         ),
-                                        child: const Icon(Icons.cancel, size: 16, color: Colors.red),
+                                        child: const Icon(FontAwesomeIcons.ban, size: 16, color: Colors.red),
                                       ),
                                       Text(
                                         currentDate,
@@ -744,13 +819,13 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                   style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                                   ),
-                                  child: const Text(
-                                    "BUSCAR JOGOS PASSADOS",
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  child: Text(
+                                    "ATUALIZAR PASSADO",
+                                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
                                   ),
                                 ),
                               ),
-                              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+                              SizedBox(width: MediaQuery.of(context).size.width * 0.01),
                               SizedBox(
                                 width: MediaQuery.of(context).size.width * 0.15,
                                 child: ElevatedButton(
@@ -758,9 +833,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                   style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                                   ),
-                                  child: const Text(
-                                    "BUSCAR JOGOS FUTUROS",
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  child: Text(
+                                    "ATUALIZAR FUTURO",
+                                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
                                   ),
                                 ),
                               ),
@@ -778,7 +853,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   // FILTERS
   void filterHistoryMatches({int? time, int? specificYear}) {
     if (time == null && specificYear == null) {
-      showOverlayMessage(context, "Filtro de Tempo Passado preenchido incompletamente!", type: MessageType.info);
+      showOverlayMessage(context, "Filtro de Tempo Passado preenchido incompletamente!", type: MessageType.warning);
       return;
     }
 
@@ -786,7 +861,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       filter.pastYears = time;
       yearController.clear();
     } else if (specificYear != null) {
-      filter.pastYears = 0;
+      filter.pastYears = null;
       filter.specificYears = specificYear;
     }
 
@@ -851,13 +926,23 @@ class _RecordListScreenState extends State<RecordListScreen> {
     loadPastMatches(selectedMatchId, pivotRecordIndex);
   }
 
-  void saveFilter() async {
+  Future<bool> saveFilter() async {
+    late bool success;
+
     if (filter.id == null) {
-      await DatabaseService.insertFilter(filter);
+      success = await DatabaseService.insertFilter(filter);
     } else {
-      await DatabaseService.updateFilter(filter);
+      success = await DatabaseService.updateFilter(filter);
     }
 
-    setState(() => placeholderFilter = filter.copyWith());
+    if (!success) return false;
+
+    setState(() {
+      placeholderFilter = filter.copyWith();
+      isCreatingFilter = false;
+      isUpdatingFilter = false;
+    });
+
+    return true;
   }
 }

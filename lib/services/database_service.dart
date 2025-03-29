@@ -52,7 +52,7 @@ class DatabaseService {
 
         final Archive archive = ZipDecoder().decodeBytes(bytes);
         bool dbCopied = false;
-        for (var file in archive) {
+        for (final file in archive) {
           if (file.isFile) {
             final String filename = file.name;
             if (filename == dbName) {
@@ -82,7 +82,7 @@ class DatabaseService {
     return await openDatabase(path, version: 1);
   }
 
-  static Stream<Record> fetchFutureRecords({Filter? filter}) async* {
+  static Stream<Record> fetchFutureRecords(Filter filter) async* {
     final Database db = await DatabaseService.database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
@@ -99,12 +99,15 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    ${await filter?.whereClauseFuture() ?? ""}
+    ${await filter.whereClauseFuture()}
     ORDER BY MatchDate, ID
-  """);
+    """);
 
-    if (filter != null && filter.futureMinHomeWinPercentage == 1) {
-      for (var row in result) {
+    final bool anyFutureMinPercentage =
+        filter.futureMinHomeWinPercentage + filter.futureMinDrawPercentage + filter.futureMinAwayWinPercentage > 0;
+
+    if (anyFutureMinPercentage) {
+      for (final row in result) {
         Record futureRecord = Record.fromMap(row);
 
         final percentageResult = await db.rawQuery("""
@@ -129,7 +132,9 @@ class DatabaseService {
           double drawPercentage = (draws / recordsCount) * 100;
           double awayWinPercentage = (awayWins / recordsCount) * 100;
 
-          if (homeWinPercentage >= 52 || drawPercentage >= 52 || awayWinPercentage >= 52) {
+          if (homeWinPercentage >= filter.futureMinHomeWinPercentage ||
+              drawPercentage >= filter.futureMinDrawPercentage ||
+              awayWinPercentage >= filter.futureMinAwayWinPercentage) {
             futureRecord.pastRecordsCount = recordsCount;
             futureRecord.homeWinPercentage = homeWinPercentage;
             futureRecord.drawPercentage = drawPercentage;
@@ -139,7 +144,7 @@ class DatabaseService {
         }
       }
     } else {
-      for (var row in result) {
+      for (final row in result) {
         yield Record.fromMap(row);
       }
     }

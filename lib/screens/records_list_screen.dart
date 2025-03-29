@@ -1,4 +1,5 @@
 import "dart:async";
+import "dart:io" show Platform;
 
 import "package:flutter/material.dart";
 import "package:flutter/gestures.dart" show PointerScrollEvent;
@@ -17,14 +18,15 @@ import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league_folder.dart";
 import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/services/database_service.dart";
-import "package:odds_fetcher/widgets/filter_select.dart";
 
+import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
 import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
-import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
+import "package:odds_fetcher/widgets/criteria_filter.dart" show CriteriaFilterButton;
+import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/past_matches_datatable.dart" show PastMachDataTable;
-import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
+import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
 
 import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
 
@@ -56,26 +58,19 @@ class _RecordListScreenState extends State<RecordListScreen> {
   int? pivotRecordIndex;
 
   bool showFilters = true;
-  bool hideFiltersOnFutureRecordSelect = true;
+  bool hideFiltersOnFutureRecordSelect = Platform.isLinux ? false : true;
 
   // <-- FILTERS
   late Filter filter = Filter.base();
   late Filter placeholderFilter = filter.copyWith();
 
-  late bool isEarly1 = filter.futureSameEarlyHome == 1;
-  late bool isEarlyX = filter.futureSameEarlyDraw == 1;
-  late bool isEarly2 = filter.futureSameEarlyAway == 1;
-  late bool isFinal1 = filter.futureSameFinalHome == 1;
-  late bool isFinalX = filter.futureSameFinalDraw == 1;
-  late bool isFinal2 = filter.futureSameFinalAway == 1;
-
   late Map<Odds, bool> selectedOddsMap = {
-    Odds.earlyOdds1: isEarly1,
-    Odds.earlyOddsX: isEarlyX,
-    Odds.earlyOdds2: isEarly2,
-    Odds.finalOdds1: isFinal1,
-    Odds.finalOddsX: isFinalX,
-    Odds.finalOdds2: isFinal2,
+    Odds.earlyOdds1: filter.futureSameEarlyHome,
+    Odds.earlyOddsX: filter.futureSameEarlyDraw,
+    Odds.earlyOdds2: filter.futureSameEarlyAway,
+    Odds.finalOdds1: filter.futureSameFinalHome,
+    Odds.finalOddsX: filter.futureSameFinalDraw,
+    Odds.finalOdds2: filter.futureSameFinalAway,
   };
   // FILTERS -->
 
@@ -108,7 +103,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       records = Future.value([]);
     });
 
-    _recordSubscription = DatabaseService.fetchFutureRecords(filter: filter).listen(
+    _recordSubscription = DatabaseService.fetchFutureRecords(filter).listen(
       (record) {
         setState(() {
           pivotRecords.add(record);
@@ -158,48 +153,27 @@ class _RecordListScreenState extends State<RecordListScreen> {
       placeholderFilter = filter.copyWith();
     });
 
+    updateOddsFilter();
     loadFutureMatches();
   }
 
   void updateOddsFilter() {
     selectedOddsMap = {
-      Odds.earlyOdds1: isEarly1,
-      Odds.earlyOddsX: isEarlyX,
-      Odds.earlyOdds2: isEarly2,
-      Odds.finalOdds1: isFinal1,
-      Odds.finalOddsX: isFinalX,
-      Odds.finalOdds2: isFinal2,
+      Odds.earlyOdds1: filter.futureSameEarlyHome,
+      Odds.earlyOddsX: filter.futureSameEarlyDraw,
+      Odds.earlyOdds2: filter.futureSameEarlyAway,
+      Odds.finalOdds1: filter.futureSameFinalHome,
+      Odds.finalOddsX: filter.futureSameFinalDraw,
+      Odds.finalOdds2: filter.futureSameFinalAway,
     };
-
-    filter.futureSameEarlyHome = isEarly1 ? 1 : 0;
-    filter.futureSameEarlyDraw = isEarlyX ? 1 : 0;
-    filter.futureSameEarlyAway = isEarly2 ? 1 : 0;
-    filter.futureSameFinalHome = isFinal1 ? 1 : 0;
-    filter.futureSameFinalDraw = isFinalX ? 1 : 0;
-    filter.futureSameFinalAway = isFinal2 ? 1 : 0;
   }
 
   void updateFutureSameOddsTypes() {
     if (filter.anySpecificOddsPresent()) {
-      isEarly1 = filter.minEarlyHome != null ? false : isEarly1;
-      isEarlyX = filter.minEarlyDraw != null ? false : isEarlyX;
-      isEarly2 = filter.minEarlyAway != null ? false : isEarly2;
-      isFinal1 = filter.minFinalHome != null ? false : isFinal1;
-      isFinalX = filter.minFinalDraw != null ? false : isFinalX;
-      isFinal2 = filter.minFinalAway != null ? false : isFinal2;
-
       updateOddsFilter();
     }
 
-    setState(() {
-      filter = filter;
-      isEarly1 = isEarly1;
-      isEarlyX = isEarlyX;
-      isEarly2 = isEarly2;
-      isFinal1 = isFinal1;
-      isFinalX = isFinalX;
-      isFinal2 = isFinal2;
-    });
+    setState(() => filter = filter);
   }
 
   @override
@@ -280,7 +254,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
-                  for (var time in pastYearsList)
+                  for (final int time in pastYearsList)
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.085,
                       child: Padding(
@@ -344,7 +318,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.update)),
-                  for (var minutes in futureMatchesMinutesList)
+                  for (final int minutes in futureMatchesMinutesList)
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.085,
                       child: Padding(
@@ -488,36 +462,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     width: MediaQuery.of(context).size.width * 0.085,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            filter.futureMinHomeWinPercentage = filter.futureMinHomeWinPercentage == 1 ? 0 : 1;
-                            loadFutureMatches();
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          shadowColor: Colors.purple,
-                          backgroundColor: filter.futureMinHomeWinPercentage == 1 ? Colors.blueAccent : null,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.filter_list,
-                              color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null,
-                            ),
-                            const SizedBox(width: 1),
-                            Text(
-                              "52%",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: filter.futureMinHomeWinPercentage == 1 ? Colors.white : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: CriteriaFilterButton(filter: filter, onApplyCallback: () => loadFutureMatches()),
                     ),
                   ),
                 ],
@@ -908,28 +853,30 @@ class _RecordListScreenState extends State<RecordListScreen> {
     setState(() {
       switch (oddType) {
         case Odds.earlyOdds1:
-          isEarly1 = !isEarly1;
+          filter.futureSameEarlyHome = !filter.futureSameEarlyHome;
           break;
         case Odds.earlyOddsX:
-          isEarlyX = !isEarlyX;
+          filter.futureSameEarlyDraw = !filter.futureSameEarlyDraw;
           break;
         case Odds.earlyOdds2:
-          isEarly2 = !isEarly2;
+          filter.futureSameEarlyAway = !filter.futureSameEarlyAway;
           break;
         case Odds.finalOdds1:
-          isFinal1 = !isFinal1;
+          filter.futureSameFinalHome = !filter.futureSameFinalHome;
           break;
         case Odds.finalOddsX:
-          isFinalX = !isFinalX;
+          filter.futureSameFinalDraw = !filter.futureSameFinalDraw;
           break;
         case Odds.finalOdds2:
-          isFinal2 = !isFinal2;
+          filter.futureSameFinalAway = !filter.futureSameFinalAway;
           break;
       }
 
       updateOddsFilter();
 
-      if (filter.futureMinHomeWinPercentage == 1) {
+      setState(() => filter = filter);
+
+      if (filter.anyFutureMinPercent()) {
         loadFutureMatches();
       } else {
         loadPastMatches(selectedMatchId, pivotRecordIndex);

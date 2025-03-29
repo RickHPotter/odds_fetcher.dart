@@ -142,7 +142,7 @@ class Record {
     int draws = 0;
     int awayWins = 0;
 
-    for (var record in records) {
+    for (final Record record in records) {
       int home = record.homeSecondHalfScore ?? 0;
       int away = record.awaySecondHalfScore ?? 0;
 
@@ -171,7 +171,7 @@ class Record {
     int underFull = 0;
     int overFull = 0;
 
-    for (var record in records) {
+    for (final Record record in records) {
       int half = (record.homeFirstHalfScore ?? 0) + (record.awayFirstHalfScore ?? 0);
       int full = (record.homeSecondHalfScore ?? 0) + (record.awaySecondHalfScore ?? 0);
 

@@ -51,15 +51,16 @@ class Filter {
   bool futureDismissNoFinalOdds;
   int? futureDismissNoHistory; // TODO: Missing
   bool futureOnlySameLeague;
-  int? futureSameEarlyHome;
-  int? futureSameEarlyDraw;
-  int? futureSameEarlyAway;
-  int? futureSameFinalHome;
-  int? futureSameFinalDraw;
-  int? futureSameFinalAway;
-  int? futureMinHomeWinPercentage; // TODO: Missing
-  int? futureMinDrawPercentage; // TODO: Missing
-  int? futureMinAwayWinPercentage; // TODO: Missing
+  bool futureSameEarlyHome;
+  bool futureSameEarlyDraw;
+  bool futureSameEarlyAway;
+  bool futureSameFinalHome;
+  bool futureSameFinalDraw;
+  bool futureSameFinalAway;
+
+  int futureMinHomeWinPercentage;
+  int futureMinDrawPercentage;
+  int futureMinAwayWinPercentage;
 
   bool filterPastRecordsByTeams;
   bool filterFutureRecordsByTeams;
@@ -97,15 +98,15 @@ class Filter {
     this.futureDismissNoFinalOdds = false,
     this.futureDismissNoHistory,
     this.futureOnlySameLeague = false,
-    this.futureSameEarlyHome,
-    this.futureSameEarlyDraw,
-    this.futureSameEarlyAway,
-    this.futureSameFinalHome,
-    this.futureSameFinalDraw,
-    this.futureSameFinalAway,
-    this.futureMinHomeWinPercentage,
-    this.futureMinDrawPercentage,
-    this.futureMinAwayWinPercentage,
+    this.futureSameEarlyHome = false,
+    this.futureSameEarlyDraw = false,
+    this.futureSameEarlyAway = false,
+    this.futureSameFinalHome = false,
+    this.futureSameFinalDraw = false,
+    this.futureSameFinalAway = false,
+    this.futureMinHomeWinPercentage = 0,
+    this.futureMinDrawPercentage = 0,
+    this.futureMinAwayWinPercentage = 0,
     this.filterPastRecordsByTeams = true,
     this.filterFutureRecordsByTeams = true,
     this.filterPastRecordsByLeagues = true,
@@ -145,15 +146,15 @@ class Filter {
       futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"] == 1,
       futureDismissNoHistory: map["futureDismissNoHistory"],
       futureOnlySameLeague: map["futureOnlySameLeague"] == 1,
-      futureSameEarlyHome: map["futureSameEarlyHome"],
-      futureSameEarlyDraw: map["futureSameEarlyDraw"],
-      futureSameEarlyAway: map["futureSameEarlyAway"],
-      futureSameFinalHome: map["futureSameFinalHome"],
-      futureSameFinalDraw: map["futureSameFinalDraw"],
-      futureSameFinalAway: map["futureSameFinalAway"],
-      futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"],
-      futureMinDrawPercentage: map["futureMinDrawPercentage"],
-      futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
+      futureSameEarlyHome: map["futureSameEarlyHome"] == 1,
+      futureSameEarlyDraw: map["futureSameEarlyDraw"] == 1,
+      futureSameEarlyAway: map["futureSameEarlyAway"] == 1,
+      futureSameFinalHome: map["futureSameFinalHome"] == 1,
+      futureSameFinalDraw: map["futureSameFinalDraw"] == 1,
+      futureSameFinalAway: map["futureSameFinalAway"] == 1,
+      futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"] ?? 0,
+      futureMinDrawPercentage: map["futureMinDrawPercentage"] ?? 0,
+      futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"] ?? 0,
       filterPastRecordsByTeams: map["filterPastRecordsByTeams"] == 1,
       filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
       filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
@@ -194,12 +195,12 @@ class Filter {
       "futureDismissNoFinalOdds": futureDismissNoFinalOdds ? 1 : 0,
       "futureDismissNoHistory": futureDismissNoHistory,
       "futureOnlySameLeague": futureOnlySameLeague ? 1 : 0,
-      "futureSameEarlyHome": futureSameEarlyHome,
-      "futureSameEarlyDraw": futureSameEarlyDraw,
-      "futureSameEarlyAway": futureSameEarlyAway,
-      "futureSameFinalHome": futureSameFinalHome,
-      "futureSameFinalDraw": futureSameFinalDraw,
-      "futureSameFinalAway": futureSameFinalAway,
+      "futureSameEarlyHome": futureSameEarlyHome ? 1 : 0,
+      "futureSameEarlyDraw": futureSameEarlyDraw ? 1 : 0,
+      "futureSameEarlyAway": futureSameEarlyAway ? 1 : 0,
+      "futureSameFinalHome": futureSameFinalHome ? 1 : 0,
+      "futureSameFinalDraw": futureSameFinalDraw ? 1 : 0,
+      "futureSameFinalAway": futureSameFinalAway ? 1 : 0,
       "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
       "futureMinDrawPercentage": futureMinDrawPercentage,
       "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
@@ -243,6 +244,12 @@ class Filter {
         maxFinalDraw != null ||
         minFinalAway != null ||
         maxFinalAway != null;
+  }
+
+  bool anyFutureMinPercent() {
+    return (futureMinHomeWinPercentage > 0 && futureMinHomeWinPercentage < 100) ||
+        (futureMinDrawPercentage > 0 && futureMinDrawPercentage < 100) ||
+        (futureMinAwayWinPercentage > 0 && futureMinAwayWinPercentage < 100);
   }
 
   void removeAllSpecificOdds() {
@@ -338,27 +345,27 @@ class Filter {
     whereClause += " AND MatchDate >= ${rawDateTime(minDate())}";
     whereClause += " AND MatchDate <= ${rawDateTime(maxDate())}";
 
-    if (futureSameEarlyHome == 1 && futureRecord?.earlyOdds1 != null) {
+    if (futureSameEarlyHome && futureRecord?.earlyOdds1 != null) {
       whereClause += " AND earlyOdds1 = ${futureRecord?.earlyOdds1}";
     }
 
-    if (futureSameEarlyDraw == 1 && futureRecord?.earlyOddsX != null) {
+    if (futureSameEarlyDraw && futureRecord?.earlyOddsX != null) {
       whereClause += " AND earlyOddsX = ${futureRecord?.earlyOddsX}";
     }
 
-    if (futureSameEarlyAway == 1 && futureRecord?.earlyOdds2 != null) {
+    if (futureSameEarlyAway && futureRecord?.earlyOdds2 != null) {
       whereClause += " AND earlyOdds2 = ${futureRecord?.earlyOdds2}";
     }
 
-    if (futureSameFinalHome == 1 && futureRecord?.finalOdds1 != null) {
+    if (futureSameFinalHome && futureRecord?.finalOdds1 != null) {
       whereClause += " AND finalOdds1 = ${futureRecord?.finalOdds1}";
     }
 
-    if (futureSameFinalDraw == 1 && futureRecord?.finalOddsX != null) {
+    if (futureSameFinalDraw && futureRecord?.finalOddsX != null) {
       whereClause += " AND finalOddsX = ${futureRecord?.finalOddsX}";
     }
 
-    if (futureSameFinalAway == 1 && futureRecord?.finalOdds2 != null) {
+    if (futureSameFinalAway && futureRecord?.finalOdds2 != null) {
       whereClause += " AND finalOdds2 = ${futureRecord?.finalOdds2}";
     }
 
@@ -468,9 +475,12 @@ class Filter {
       leagues: [],
       folders: [],
       futureNextMinutes: 60,
-      futureMinHomeWinPercentage: 1,
-      futureSameEarlyHome: 1,
-      futureSameEarlyAway: 1,
+      futureMinHomeWinPercentage: 52,
+      futureMinDrawPercentage: 52,
+      futureMinAwayWinPercentage: 52,
+      futureSameEarlyHome: true,
+      futureSameEarlyDraw: true,
+      futureSameEarlyAway: true,
     );
   }
 

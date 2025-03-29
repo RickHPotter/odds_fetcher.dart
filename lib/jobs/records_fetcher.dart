@@ -59,7 +59,7 @@ class RecordFetcher {
         List<List<Record>> results = await Future.wait(fetchTasks);
         fetchTasks.clear();
 
-        for (var records in results) {
+        for (final List<Record> records in results) {
           recordBuffer.addAll(records);
           if (recordBuffer.length >= batchInsertThreshold) {
             await DatabaseService.insertRecordsBatch(recordBuffer);
@@ -84,7 +84,7 @@ class RecordFetcher {
       List<List<Record>> results = await Future.wait(fetchTasks);
       fetchTasks.clear();
 
-      for (var records in results) {
+      for (final List<Record> records in results) {
         recordBuffer.addAll(records);
         if (recordBuffer.length >= batchInsertThreshold) {
           await DatabaseService.insertRecordsBatch(recordBuffer);

@@ -244,7 +244,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                                   deleteIconColor: Colors.red,
                                   onDeleted: () {
                                     setStates(() {
-                                      for (var folder in widget.selectedFolders) {
+                                      for (final Folder folder in widget.selectedFolders) {
                                         folder.leagues.removeWhere((folderLeague) => league.code == folderLeague.code);
                                       }
                                       populateSelectedLeaguesFolders();

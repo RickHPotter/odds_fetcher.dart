@@ -641,79 +641,98 @@ class _RecordListScreenState extends State<RecordListScreen> {
                 ),
                 Row(
                   children: [
-                    ElevatedButton(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                        backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
+                    Tooltip(
+                      message: "Novo Filtro",
+                      child: ElevatedButton(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                          backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isCreatingFilter = true;
+                            filter.id = null;
+                            filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
+                            filterNameController.text = filter.filterName;
+                          });
+                        },
+                        child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          isCreatingFilter = true;
-                          filter.id = null;
-                          filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
-                          filterNameController.text = filter.filterName;
-                        });
-                      },
-                      child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
                     ),
-                    ElevatedButton(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                        backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
-                      ),
-                      onPressed: () {
-                        if (isCreatingFilter || isUpdatingFilter) return;
+                    Tooltip(
+                      message: "Editar Filtro",
+                      child: ElevatedButton(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                          backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
+                        ),
+                        onPressed: () {
+                          if (isCreatingFilter || isUpdatingFilter) return;
 
-                        setState(() {
-                          isUpdatingFilter = true;
-                          filterNameController.text = filter.filterName;
-                        });
-                      },
-                      child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
+                          setState(() {
+                            isUpdatingFilter = true;
+                            filterNameController.text = filter.filterName;
+                          });
+                        },
+                        child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
+                      ),
                     ),
-                    ElevatedButton(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                      ),
-                      onPressed: () async {
-                        final bool success = await saveFilter();
+                    Tooltip(
+                      message: "Salvar Filtro",
+                      child: ElevatedButton(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        ),
+                        onPressed: () async {
+                          final bool success = await saveFilter();
 
-                        if (!context.mounted) return;
-                        if (success) {
-                          showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
-                        } else {
-                          showOverlayMessage(context, "Filtro precisa de um nome diferente!", type: MessageType.error);
-                        }
-                      },
-                      child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
-                    ),
-                    ElevatedButton(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          if (isCreatingFilter || isUpdatingFilter) {
-                            isCreatingFilter = false;
-                            isUpdatingFilter = false;
-                            filter.filterName = placeholderFilter.filterName;
-
+                          if (!context.mounted) return;
+                          if (success) {
+                            showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
+                          } else {
                             showOverlayMessage(
                               context,
-                              "Criação/Edição de filtro cancelada com sucesso!",
-                              type: MessageType.info,
+                              "Filtro precisa de um nome diferente!",
+                              type: MessageType.error,
                             );
-                          } else {
-                            filter = placeholderFilter.copyWith();
-                            showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
-                            loadFutureMatches();
                           }
-                        });
-                      },
-                      child:
+                        },
+                        child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
+                      ),
+                    ),
+                    Tooltip(
+                      message:
                           isCreatingFilter || isUpdatingFilter
-                              ? Icon(FontAwesomeIcons.ban, color: Colors.red)
-                              : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
+                              ? "Cancelar Criação/Edição de Filtro"
+                              : "Resetar Filtro",
+                      child: ElevatedButton(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (isCreatingFilter || isUpdatingFilter) {
+                              isCreatingFilter = false;
+                              isUpdatingFilter = false;
+                              filter.filterName = placeholderFilter.filterName;
+
+                              showOverlayMessage(
+                                context,
+                                "Criação/Edição de filtro cancelada com sucesso!",
+                                type: MessageType.info,
+                              );
+                            } else {
+                              filter = placeholderFilter.copyWith();
+                              showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                              loadFutureMatches();
+                            }
+                          });
+                        },
+                        child:
+                            isCreatingFilter || isUpdatingFilter
+                                ? Icon(FontAwesomeIcons.ban, color: Colors.red)
+                                : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
+                      ),
                     ),
                   ],
                 ),
@@ -781,17 +800,20 @@ class _RecordListScreenState extends State<RecordListScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            isCancelled = true;
-                                            isFetching = false;
-                                          });
-                                        },
-                                        style: OutlinedButton.styleFrom(
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                      Tooltip(
+                                        message: "Cancelar",
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              isCancelled = true;
+                                              isFetching = false;
+                                            });
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                          ),
+                                          child: const Icon(FontAwesomeIcons.ban, size: 16, color: Colors.red),
                                         ),
-                                        child: const Icon(FontAwesomeIcons.ban, size: 16, color: Colors.red),
                                       ),
                                       Text(
                                         currentDate,

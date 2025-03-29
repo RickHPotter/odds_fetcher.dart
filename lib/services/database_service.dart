@@ -25,7 +25,8 @@ class DatabaseService {
     if (_db != null) return _db!;
 
     _db = await _initDb();
-    _db?.execute("PRAGMA foreign_keys = ON;");
+    _db?.execute("PRAGMA foreign_keys=ON;");
+    _db?.execute("PRAGMA journal_mode=WAL;");
 
     return _db!;
   }

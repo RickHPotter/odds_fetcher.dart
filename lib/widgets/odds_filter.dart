@@ -17,67 +17,48 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
   Widget build(BuildContext context) {
     final Filter filter = widget.filter;
     final List<Color> colors = [];
+    final bool anyApply =
+        filter.anySpecificOddsPresent() || filter.futureDismissNoEarlyOdds || filter.futureDismissNoFinalOdds;
 
     if (filter.anySpecificOddsPresent()) colors.add(Colors.blueAccent);
     if (filter.futureDismissNoEarlyOdds) colors.add(Colors.purple);
     if (filter.futureDismissNoFinalOdds) colors.add(Colors.pink);
 
-    final List<double> stops = [];
-    switch (colors.length) {
-      case 0:
-        colors.add(Colors.grey);
-        stops.add(0.0);
-      case 1:
-        stops.add(0.5);
-      case 2:
-        stops.addAll([0.33, 0.66]);
-      case 3:
-        stops.addAll([0.25, 0.5, 0.75]);
-    }
+    final List<double> stops = List.generate(colors.length, (index) => index / (colors.length - 1));
 
-    return Ink(
+    if (colors.isEmpty) colors.add(Colors.grey.shade100);
+
+    return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: colors, stops: stops),
-        borderRadius: BorderRadius.circular(8), // Match button shape
+        gradient: LinearGradient(colors: colors, stops: colors.length == 1 ? [0.0] : stops),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 2, offset: Offset(0, 2))],
       ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          shadowColor: Colors.purple,
-          backgroundColor: Colors.transparent,
-        ),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return OddsFilterModal(filter: filter, onApplyCallback: widget.onApplyCallback);
-            },
-          );
-        },
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.trending_up,
-              color:
-                  filter.anySpecificOddsPresent() || filter.futureDismissNoEarlyOdds || filter.futureDismissNoFinalOdds
-                      ? Colors.white
-                      : null,
-            ),
-            const SizedBox(width: 1),
-            Text(
-              "ODDS",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color:
-                    filter.anySpecificOddsPresent() ||
-                            filter.futureDismissNoEarlyOdds ||
-                            filter.futureDismissNoFinalOdds
-                        ? Colors.white
-                        : null,
+      height: MediaQuery.of(context).size.height * 0.04,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return OddsFilterModal(filter: filter, onApplyCallback: widget.onApplyCallback);
+              },
+            );
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.trending_up, color: anyApply ? Colors.white : Colors.indigo),
+              const SizedBox(width: 4),
+              Text(
+                "ODDS",
+                style: TextStyle(fontWeight: FontWeight.bold, color: anyApply ? Colors.white : Colors.indigo),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

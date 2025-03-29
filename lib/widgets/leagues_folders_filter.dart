@@ -149,15 +149,15 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                         flex: 1,
                         child: Row(
                           children: [
-                            Checkbox(
+                            Switch(
                               value: widget.filter.filterFutureRecordsByLeagues,
                               onChanged: (value) {
                                 setStates(() {
-                                  widget.filter.filterFutureRecordsByLeagues = value as bool;
+                                  widget.filter.filterFutureRecordsByLeagues = value;
                                 });
                               },
                             ),
-                            const Text("Filtrar jogos futuros"),
+                            const Text("FILTRAR JOGOS FUTUROS"),
                           ],
                         ),
                       ),
@@ -165,15 +165,15 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                         flex: 1,
                         child: Row(
                           children: [
-                            Checkbox(
+                            Switch(
                               value: widget.filter.filterPastRecordsByLeagues,
                               onChanged: (value) {
                                 setStates(() {
-                                  widget.filter.filterPastRecordsByLeagues = value as bool;
+                                  widget.filter.filterPastRecordsByLeagues = value;
                                 });
                               },
                             ),
-                            const Text("Filtrar jogos anteriores"),
+                            const Text("FILTRAR JOGOS ANTERIORES"),
                           ],
                         ),
                       ),

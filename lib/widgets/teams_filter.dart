@@ -115,11 +115,11 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                         flex: 1,
                         child: Row(
                           children: [
-                            Checkbox(
+                            Switch(
                               value: widget.filter.filterFutureRecordsByTeams,
-                              onChanged: (value) {
-                                setStates(() {
-                                  widget.filter.filterFutureRecordsByTeams = value as bool;
+                              onChanged: (bool value) {
+                                setState(() {
+                                  widget.filter.filterFutureRecordsByTeams = value;
                                 });
                               },
                             ),
@@ -131,11 +131,11 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                         flex: 1,
                         child: Row(
                           children: [
-                            Checkbox(
+                            Switch(
                               value: widget.filter.filterPastRecordsByTeams,
                               onChanged: (value) {
                                 setStates(() {
-                                  widget.filter.filterPastRecordsByTeams = value as bool;
+                                  widget.filter.filterPastRecordsByTeams = value;
                                 });
                               },
                             ),

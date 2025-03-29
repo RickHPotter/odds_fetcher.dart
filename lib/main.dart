@@ -45,7 +45,16 @@ class MyApp extends StatelessWidget {
   ThemeData _buildTheme(brightness) {
     ThemeData baseTheme = ThemeData(brightness: brightness);
 
-    return baseTheme.copyWith(textTheme: GoogleFonts.asapCondensedTextTheme(baseTheme.textTheme));
+    return baseTheme.copyWith(
+      textTheme: GoogleFonts.asapCondensedTextTheme(baseTheme.textTheme),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey.shade100,
+          foregroundColor: Colors.indigo,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
   }
 
   @override

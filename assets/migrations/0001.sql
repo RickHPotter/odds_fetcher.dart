@@ -1,4 +1,5 @@
-PRAGMA foreign_keys = ON;
+PRAGMA foreign_keys=ON;
+PRAGMA journal_mode=WAL;
 
 CREATE TABLE BettingHouses (
   id               INTEGER PRIMARY KEY,

@@ -572,6 +572,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               child: TextField(
                                 controller: filterNameController,
                                 decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8), // Adjust padding
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                                   hintText: "Informe um Nome...",
                                 ),
@@ -670,8 +671,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
                               );
                             } else {
                               filter = placeholderFilter.copyWith();
-                              showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                              updateOddsFilter();
                               loadFutureMatches();
+                              showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
                             }
                           });
                         },

@@ -22,25 +22,35 @@ String humaniseTime(int minutes, {bool short = false}) {
 
   final String minuteStr;
   final String hourStr;
+  final String hoursStr;
   final String dayStr;
+  final String daysStr;
 
   if (short) {
     minuteStr = "Min.";
-    hourStr = "Horas";
-    dayStr = "Dias";
+    hourStr = "Hora";
+    hoursStr = "Horas";
+    dayStr = "Dia";
+    daysStr = "Dias";
   } else {
     minuteStr = "minutos";
-    hourStr = "hora(s)";
-    dayStr = "dia(s)";
+    hourStr = "hora";
+    hoursStr = "horas";
+    dayStr = "dia";
+    daysStr = "dias";
   }
 
   switch (minutes) {
     case < hour:
       return "$minutes $minuteStr";
-    case < day:
+    case hour:
       return "${minutes ~/ 60} $hourStr";
-    default:
+    case < day:
+      return "${minutes ~/ 60} $hoursStr";
+    case day:
       return "${minutes ~/ (60 * 24)} $dayStr";
+    default:
+      return "${minutes ~/ (60 * 24)} $daysStr";
   }
 }
 

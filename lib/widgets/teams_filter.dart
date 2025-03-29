@@ -26,7 +26,7 @@ class _TeamsFilterButtonState extends State<TeamsFilterButton> {
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         shadowColor: Colors.purple,
-        backgroundColor: selectedTeams.isNotEmpty ? Colors.blueAccent : null,
+        backgroundColor: selectedTeams.isNotEmpty ? Colors.indigoAccent : null,
       ),
       onPressed: () {
         showDialog(

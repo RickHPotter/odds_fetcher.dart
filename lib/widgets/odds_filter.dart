@@ -20,7 +20,7 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
     final bool anyApply =
         filter.anySpecificOddsPresent() || filter.futureDismissNoEarlyOdds || filter.futureDismissNoFinalOdds;
 
-    if (filter.anySpecificOddsPresent()) colors.add(Colors.blueAccent);
+    if (filter.anySpecificOddsPresent()) colors.add(Colors.indigoAccent);
     if (filter.futureDismissNoEarlyOdds) colors.add(Colors.purple);
     if (filter.futureDismissNoFinalOdds) colors.add(Colors.pink);
 

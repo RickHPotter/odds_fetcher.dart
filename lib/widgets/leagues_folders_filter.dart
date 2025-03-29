@@ -36,7 +36,7 @@ class _LeaguesFoldersFilterButtonState extends State<LeaguesFoldersFilterButton>
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         shadowColor: Colors.purple,
-        backgroundColor: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.blueAccent : null,
+        backgroundColor: selectedLeagues.isNotEmpty || selectedFolders.isNotEmpty ? Colors.indigoAccent : null,
       ),
       onPressed: () {
         showDialog(

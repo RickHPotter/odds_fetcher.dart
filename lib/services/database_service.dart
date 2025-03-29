@@ -414,7 +414,7 @@ class DatabaseService {
 
     if (filterResult.isEmpty) {
       debugPrint("fallback to base filter");
-      return Filter.base();
+      return Filter(filterName: "FILTRO PADRÃO");
     }
 
     final Filter filter = Filter.fromMap(filterResult.first);

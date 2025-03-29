@@ -29,7 +29,7 @@ class _CriteriaFilterButtonState extends State<CriteriaFilterButton> {
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         shadowColor: Colors.purple,
-        backgroundColor: filter.anyFutureMinPercent() ? Colors.blueAccent : null,
+        backgroundColor: filter.anyFutureMinPercent() ? Colors.indigoAccent : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

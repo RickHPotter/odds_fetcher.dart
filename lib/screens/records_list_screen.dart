@@ -61,7 +61,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   bool hideFiltersOnFutureRecordSelect = Platform.isLinux ? false : true;
 
   // <-- FILTERS
-  late Filter filter = Filter.base();
+  late Filter filter = Filter(filterName: "FILTRO PADRÃO");
   late Filter placeholderFilter = filter.copyWith();
 
   late Map<Odds, bool> selectedOddsMap = {
@@ -242,6 +242,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double buttonSize = MediaQuery.of(context).size.width * 0.087;
+    final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -256,7 +259,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
                   for (final int time in pastYearsList)
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.085,
+                      width: buttonSize,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
@@ -264,10 +267,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
-                            backgroundColor: time == filter.pastYears ? Colors.blueAccent : null,
+                            backgroundColor: time == filter.pastYears ? Colors.indigoAccent : null,
                           ),
                           child: Text(
-                            time <= 1 ? "$time ANO" : "$time ANOS",
+                            time <= 1 ? "$time Ano" : "$time Anos",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: time == filter.pastYears ? Colors.white : null,
@@ -277,7 +280,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       ),
                     ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
+                    width: buttonSize,
                     height: MediaQuery.of(context).size.height * 0.042,
                     child: TextFormField(
                       controller: yearController,
@@ -294,19 +297,6 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
                     ),
                   ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.042,
-                    child: Switch(
-                      value: hideFiltersOnFutureRecordSelect,
-                      activeColor: Colors.blueAccent,
-                      onChanged: (bool value) {
-                        setState(() {
-                          hideFiltersOnFutureRecordSelect = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const Text("OCULTAR FILTROS"),
                 ],
               ),
             ),
@@ -320,7 +310,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.update)),
                   for (final int minutes in futureMatchesMinutesList)
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.085,
+                      width: buttonSize,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
@@ -328,7 +318,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
-                            backgroundColor: minutes == filter.futureNextMinutes ? Colors.blueAccent : null,
+                            backgroundColor: minutes == filter.futureNextMinutes ? Colors.indigoAccent : null,
                           ),
                           child: Text(
                             humaniseTime(minutes, short: true),
@@ -341,18 +331,18 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       ),
                     ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: OddsFilterButton(
-                        filter: filter,
-                        onApplyCallback: () {
-                          updateFutureSameOddsTypes();
-                          loadFutureMatches();
-                        },
-                      ),
+                    height: MediaQuery.of(context).size.height * 0.042,
+                    child: Switch(
+                      value: hideFiltersOnFutureRecordSelect,
+                      activeColor: Colors.indigoAccent,
+                      onChanged: (bool value) {
+                        setState(() {
+                          hideFiltersOnFutureRecordSelect = value;
+                        });
+                      },
                     ),
                   ),
+                  const Text("OCULTAR FILTROS AO PESQUISAR"),
                 ],
               ),
             ),
@@ -375,7 +365,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     final bool isSelected = selectedOddsMap[oddsType] ?? false;
 
                     return SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.085,
+                      width: smallButtonSize,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: ElevatedButton(
@@ -383,25 +373,31 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
-                            backgroundColor: isSelected ? Colors.blueAccent : null,
+                            backgroundColor: isSelected ? Colors.indigoAccent : null,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.percent, color: isSelected ? Colors.white : null),
-                              const SizedBox(width: 1),
-                              Text(
-                                oddsType.shortName,
-                                style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : null),
-                              ),
-                            ],
+                          child: Text(
+                            oddsType.shortName,
+                            style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : null),
                           ),
                         ),
                       ),
                     );
                   }),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
+                    width: buttonSize,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: OddsFilterButton(
+                        filter: filter,
+                        onApplyCallback: () {
+                          updateFutureSameOddsTypes();
+                          loadFutureMatches();
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonSize,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: TeamsFilterButton(
@@ -414,7 +410,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
+                    width: buttonSize,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
@@ -422,7 +418,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           shadowColor: Colors.purple,
-                          backgroundColor: filter.futureOnlySameLeague ? Colors.blueAccent : null,
+                          backgroundColor: filter.futureOnlySameLeague ? Colors.indigoAccent : null,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -442,7 +438,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
+                    width: buttonSize,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: LeaguesFoldersFilterButton(
@@ -459,7 +455,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.085,
+                    width: buttonSize,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: CriteriaFilterButton(filter: filter, onApplyCallback: () => loadFutureMatches()),
@@ -517,21 +513,27 @@ class _RecordListScreenState extends State<RecordListScreen> {
                           children: [
                             Text(
                               match.homeTeam.name,
-                              style: TextStyle(color: Colors.black),
+                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.start,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(DateFormat.MMMMd("pt-BR").format(match.matchDate), style: TextStyle(fontSize: 12)),
+                                Text(
+                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                  style: TextStyle(fontSize: 12, color: Colors.black87),
+                                ),
                                 SizedBox(width: 10),
-                                Text(DateFormat.Hm("pt-BR").format(match.matchDate), style: TextStyle(fontSize: 12)),
+                                Text(
+                                  DateFormat.Hm("pt-BR").format(match.matchDate),
+                                  style: TextStyle(fontSize: 12, color: Colors.black87),
+                                ),
                               ],
                             ),
                             Text(
                               match.awayTeam.name,
-                              style: TextStyle(color: Colors.black),
+                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.end,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -832,11 +834,9 @@ class _RecordListScreenState extends State<RecordListScreen> {
       filter.specificYears = specificYear;
     }
 
-    loadPastMatches(selectedMatchId, pivotRecordIndex);
+    setState(() => filter = filter);
 
-    setState(() {
-      filter = filter;
-    });
+    loadFutureMatches();
   }
 
   void filterUpcomingMatches(int duration) {

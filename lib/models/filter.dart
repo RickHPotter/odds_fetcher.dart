@@ -46,7 +46,7 @@ class Filter {
   int? minGoalsFullTime; // TODO: Missing
   int? maxGoalsFullTime; // TODO: Missing
 
-  int? futureNextMinutes;
+  int futureNextMinutes;
   bool futureDismissNoEarlyOdds;
   bool futureDismissNoFinalOdds;
   int? futureDismissNoHistory; // TODO: Missing
@@ -74,7 +74,7 @@ class Filter {
   Filter({
     this.id,
     required this.filterName,
-    this.pastYears,
+    this.pastYears = 1,
     this.specificYears,
     this.minEarlyHome,
     this.maxEarlyHome,
@@ -94,28 +94,40 @@ class Filter {
     this.maxGoalsSecondHalf,
     this.minGoalsFullTime,
     this.maxGoalsFullTime,
+    this.futureNextMinutes = 60,
     this.futureDismissNoEarlyOdds = true,
     this.futureDismissNoFinalOdds = false,
     this.futureDismissNoHistory,
     this.futureOnlySameLeague = false,
-    this.futureSameEarlyHome = false,
-    this.futureSameEarlyDraw = false,
-    this.futureSameEarlyAway = false,
+    this.futureSameEarlyHome = true,
+    this.futureSameEarlyDraw = true,
+    this.futureSameEarlyAway = true,
     this.futureSameFinalHome = false,
     this.futureSameFinalDraw = false,
     this.futureSameFinalAway = false,
-    this.futureMinHomeWinPercentage = 0,
-    this.futureMinDrawPercentage = 0,
-    this.futureMinAwayWinPercentage = 0,
+    this.futureMinHomeWinPercentage = 52,
+    this.futureMinDrawPercentage = 52,
+    this.futureMinAwayWinPercentage = 52,
     this.filterPastRecordsByTeams = true,
     this.filterFutureRecordsByTeams = true,
     this.filterPastRecordsByLeagues = true,
     this.filterFutureRecordsByLeagues = true,
-    required this.teams,
-    required this.leagues,
-    required this.folders,
-    this.futureNextMinutes,
+
+    this.teams = const [],
+    this.leagues = const [],
+    this.folders = const [],
   }) : assert(pastYears != null || specificYears != null);
+
+  Filter copyWith() {
+    Filter filter = Filter.fromMap(toMap());
+
+    //filter.bettingHouses = bettingHouses;
+    filter.teams = teams;
+    filter.leagues = leagues;
+    filter.folders = folders;
+
+    return filter;
+  }
 
   factory Filter.fromMap(Map<String, dynamic> map) {
     return Filter(
@@ -381,6 +393,14 @@ class Filter {
       whereClause += " AND leagueId = ${futureRecord?.league.id}";
     }
 
+    if (futureDismissNoEarlyOdds) {
+      whereClause += " AND earlyOdds1 IS NOT NULL AND earlyOddsX IS NOT NULL AND earlyOdds2 IS NOT NULL";
+    }
+
+    if (futureDismissNoFinalOdds) {
+      whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
+    }
+
     if (minEarlyHome != null) {
       whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
     }
@@ -413,11 +433,7 @@ class Filter {
 
     late String whereClause = "WHERE finished = 0";
 
-    if (futureNextMinutes == null) {
-      return whereClause;
-    }
-
-    final DateTime futureMaxDate = DateTime.now().add(Duration(minutes: futureNextMinutes as int));
+    final DateTime futureMaxDate = DateTime.now().add(Duration(minutes: futureNextMinutes));
 
     whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
     whereClause += " AND MatchDate <= ${rawDateTime(futureMaxDate)}";
@@ -465,33 +481,5 @@ class Filter {
     }
 
     return whereClause;
-  }
-
-  static Filter base() {
-    return Filter(
-      filterName: "FILTRO PADRÃO",
-      pastYears: 1,
-      teams: [],
-      leagues: [],
-      folders: [],
-      futureNextMinutes: 60,
-      futureMinHomeWinPercentage: 52,
-      futureMinDrawPercentage: 52,
-      futureMinAwayWinPercentage: 52,
-      futureSameEarlyHome: true,
-      futureSameEarlyDraw: true,
-      futureSameEarlyAway: true,
-    );
-  }
-
-  Filter copyWith() {
-    Filter filter = Filter.fromMap(toMap());
-
-    //filter.bettingHouses = bettingHouses;
-    filter.teams = teams;
-    filter.leagues = leagues;
-    filter.folders = folders;
-
-    return filter;
   }
 }

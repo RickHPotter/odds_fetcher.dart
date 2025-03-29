@@ -25,9 +25,9 @@ String humaniseTime(int minutes, {bool short = false}) {
   final String dayStr;
 
   if (short) {
-    minuteStr = "M";
-    hourStr = "H";
-    dayStr = "D";
+    minuteStr = "Min.";
+    hourStr = "Horas";
+    dayStr = "Dias";
   } else {
     minuteStr = "minutos";
     hourStr = "hora(s)";

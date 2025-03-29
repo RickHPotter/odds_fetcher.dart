@@ -16,31 +16,69 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
   @override
   Widget build(BuildContext context) {
     final Filter filter = widget.filter;
+    final List<Color> colors = [];
 
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        shadowColor: Colors.purple,
-        backgroundColor: filter.anySpecificOddsPresent() ? Colors.blueAccent : null,
+    if (filter.anySpecificOddsPresent()) colors.add(Colors.blueAccent);
+    if (filter.futureDismissNoEarlyOdds) colors.add(Colors.purple);
+    if (filter.futureDismissNoFinalOdds) colors.add(Colors.pink);
+
+    final List<double> stops = [];
+    switch (colors.length) {
+      case 0:
+        colors.add(Colors.grey);
+        stops.add(0.0);
+      case 1:
+        stops.add(0.5);
+      case 2:
+        stops.addAll([0.33, 0.66]);
+      case 3:
+        stops.addAll([0.25, 0.5, 0.75]);
+    }
+
+    return Ink(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colors, stops: stops),
+        borderRadius: BorderRadius.circular(8), // Match button shape
       ),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return OddsFilterModal(filter: filter, onApplyCallback: widget.onApplyCallback);
-          },
-        );
-      },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.trending_up, color: filter.anySpecificOddsPresent() ? Colors.white : null),
-          const SizedBox(width: 1),
-          Text(
-            "ODDS",
-            style: TextStyle(fontWeight: FontWeight.bold, color: filter.anySpecificOddsPresent() ? Colors.white : null),
-          ),
-        ],
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shadowColor: Colors.purple,
+          backgroundColor: Colors.transparent,
+        ),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return OddsFilterModal(filter: filter, onApplyCallback: widget.onApplyCallback);
+            },
+          );
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.trending_up,
+              color:
+                  filter.anySpecificOddsPresent() || filter.futureDismissNoEarlyOdds || filter.futureDismissNoFinalOdds
+                      ? Colors.white
+                      : null,
+            ),
+            const SizedBox(width: 1),
+            Text(
+              "ODDS",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color:
+                    filter.anySpecificOddsPresent() ||
+                            filter.futureDismissNoEarlyOdds ||
+                            filter.futureDismissNoFinalOdds
+                        ? Colors.white
+                        : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -120,7 +158,7 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
     ];
     final List<TextEditingController> controllers = controllersList.expand((e) => e).toList();
 
-    for (var controller in controllers) {
+    for (final TextEditingController controller in controllers) {
       controller.dispose();
     }
 
@@ -184,7 +222,7 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.4,
+            width: MediaQuery.of(context).size.width * 0.5,
             height: MediaQuery.of(context).size.height * 0.70,
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -192,6 +230,43 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Switch(
+                              value: filter.futureDismissNoEarlyOdds,
+                              activeColor: Colors.purple,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  filter.futureDismissNoEarlyOdds = value;
+                                });
+                              },
+                            ),
+                            const Text("DESCONSIDERAR JOGOS SEM EARLY ODDS"),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Switch(
+                              value: filter.futureDismissNoFinalOdds,
+                              activeColor: Colors.pink,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  filter.futureDismissNoFinalOdds = value;
+                                });
+                              },
+                            ),
+                            const Text("DESCONSIDERAR JOGOS SEM FINAL ODDS"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
                   buildOddsColumn(
                     "Early Home",
                     earlyHome,

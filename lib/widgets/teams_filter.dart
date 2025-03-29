@@ -123,7 +123,7 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                                 });
                               },
                             ),
-                            const Text("Filtrar jogos futuros"),
+                            const Text("FILTRAR JOGOS FUTUROS"),
                           ],
                         ),
                       ),
@@ -139,7 +139,7 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                                 });
                               },
                             ),
-                            const Text("Filtrar jogos anteriores"),
+                            const Text("FILTRAR JOGOS ANTERIORES"),
                           ],
                         ),
                       ),

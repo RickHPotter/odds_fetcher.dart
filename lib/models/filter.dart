@@ -47,8 +47,8 @@ class Filter {
   int? maxGoalsFullTime; // TODO: Missing
 
   int? futureNextMinutes;
-  int? futureDismissNoEarlyOdds; // TODO: Missing
-  int? futureDismissNoFinalOdds; // TODO: Missing
+  bool futureDismissNoEarlyOdds;
+  bool futureDismissNoFinalOdds;
   int? futureDismissNoHistory; // TODO: Missing
   bool futureOnlySameLeague;
   int? futureSameEarlyHome;
@@ -93,8 +93,8 @@ class Filter {
     this.maxGoalsSecondHalf,
     this.minGoalsFullTime,
     this.maxGoalsFullTime,
-    this.futureDismissNoEarlyOdds,
-    this.futureDismissNoFinalOdds,
+    this.futureDismissNoEarlyOdds = true,
+    this.futureDismissNoFinalOdds = false,
     this.futureDismissNoHistory,
     this.futureOnlySameLeague = false,
     this.futureSameEarlyHome,
@@ -141,8 +141,8 @@ class Filter {
       minGoalsFullTime: map["minGoalsFullTime"],
       maxGoalsFullTime: map["maxGoalsFullTime"],
       futureNextMinutes: map["futureNextMinutes"],
-      futureDismissNoEarlyOdds: map["futureDismissNoEarlyOdds"],
-      futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"],
+      futureDismissNoEarlyOdds: map["futureDismissNoEarlyOdds"] == 1,
+      futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"] == 1,
       futureDismissNoHistory: map["futureDismissNoHistory"],
       futureOnlySameLeague: map["futureOnlySameLeague"] == 1,
       futureSameEarlyHome: map["futureSameEarlyHome"],
@@ -190,8 +190,8 @@ class Filter {
       "minGoalsFullTime": minGoalsFullTime,
       "maxGoalsFullTime": maxGoalsFullTime,
       "futureNextMinutes": futureNextMinutes,
-      "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds,
-      "futureDismissNoFinalOdds": futureDismissNoFinalOdds,
+      "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds ? 1 : 0,
+      "futureDismissNoFinalOdds": futureDismissNoFinalOdds ? 1 : 0,
       "futureDismissNoHistory": futureDismissNoHistory,
       "futureOnlySameLeague": futureOnlySameLeague ? 1 : 0,
       "futureSameEarlyHome": futureSameEarlyHome,
@@ -423,6 +423,14 @@ class Filter {
     if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       final List<int> leagueIdsList = await leaguesIds();
       whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
+    }
+
+    if (futureDismissNoEarlyOdds) {
+      whereClause += " AND earlyOdds1 IS NOT NULL AND earlyOddsX IS NOT NULL AND earlyOdds2 IS NOT NULL";
+    }
+
+    if (futureDismissNoFinalOdds) {
+      whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
     }
 
     if (minEarlyHome != null) {

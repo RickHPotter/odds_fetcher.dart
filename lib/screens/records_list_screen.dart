@@ -410,7 +410,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     ),
                   ),
                   SizedBox(
-                    width: buttonSize,
+                    width: buttonSize * 1.5,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
@@ -426,7 +426,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
                             Icon(Icons.dehaze, color: filter.futureOnlySameLeague ? Colors.white : null),
                             const SizedBox(width: 1),
                             Text(
-                              "LIGA",
+                              "MESMA LIGA",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: filter.futureOnlySameLeague ? Colors.white : null,
@@ -446,10 +446,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
                         leagues: leagues,
                         folders: folders,
                         onApplyCallback: () {
-                          loadFutureMatches();
                           if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
                             setState(() => filter.futureOnlySameLeague = false);
                           }
+                          loadFutureMatches();
                         },
                       ),
                     ),
@@ -459,6 +459,43 @@ class _RecordListScreenState extends State<RecordListScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: CriteriaFilterButton(filter: filter, onApplyCallback: () => loadFutureMatches()),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonSize,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          filter.futureMinHomeWinPercentage = 52;
+                          filter.futureMinDrawPercentage = 52;
+                          filter.futureMinAwayWinPercentage = 52;
+
+                          setState(() => filter = filter);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shadowColor: Colors.purple,
+                          backgroundColor: filter.allFutureMinPercentSpecificValue(52) ? Colors.indigoAccent : null,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.filter_list,
+                              color: filter.allFutureMinPercentSpecificValue(52) ? Colors.white : null,
+                            ),
+                            const SizedBox(width: 1),
+                            Text(
+                              "52 %",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: filter.allFutureMinPercentSpecificValue(52) ? Colors.white : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -888,7 +925,10 @@ class _RecordListScreenState extends State<RecordListScreen> {
 
   void filterMatchesBySameLeague() {
     filter.futureOnlySameLeague = !filter.futureOnlySameLeague;
-    filter.leagues.clear();
+    if (filter.futureOnlySameLeague) {
+      filter.leagues.clear();
+      filter.folders.clear();
+    }
 
     setState(() {
       filter = filter;

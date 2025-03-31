@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart" show FilteringTextInputFormatter;
+import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:odds_fetcher/models/filter.dart";
 
 class CriteriaFilterButton extends StatefulWidget {
@@ -34,8 +35,12 @@ class _CriteriaFilterButtonState extends State<CriteriaFilterButton> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.filter_list, color: filter.anyFutureMinPercent() ? Colors.white : null),
-          const SizedBox(width: 1),
+          Icon(
+            FontAwesomeIcons.arrowUpRightFromSquare,
+            color: filter.anyFutureMinPercent() ? Colors.white : null,
+            size: 16,
+          ),
+          const SizedBox(width: 5),
           Text(
             "ACEITE",
             style: TextStyle(fontWeight: FontWeight.bold, color: filter.anyFutureMinPercent() ? Colors.white : null),

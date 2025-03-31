@@ -121,10 +121,10 @@ class Filter {
   Filter copyWith() {
     Filter filter = Filter.fromMap(toMap());
 
-    //filter.bettingHouses = bettingHouses;
-    filter.teams = teams;
-    filter.leagues = leagues;
-    filter.folders = folders;
+    // filter.bettingHouses = List<BettingHouse>.from(bettingHouses.map((bh) => bh));
+    filter.teams = List.from(teams.map((team) => team.copyWith()));
+    filter.leagues = List.from(leagues.map((league) => league.copyWith()));
+    filter.folders = List.from(folders.map((folder) => folder.copyWith()));
 
     return filter;
   }
@@ -262,6 +262,12 @@ class Filter {
     return (futureMinHomeWinPercentage > 0 && futureMinHomeWinPercentage < 100) ||
         (futureMinDrawPercentage > 0 && futureMinDrawPercentage < 100) ||
         (futureMinAwayWinPercentage > 0 && futureMinAwayWinPercentage < 100);
+  }
+
+  bool allFutureMinPercentSpecificValue(int percentage) {
+    return futureMinHomeWinPercentage == percentage &&
+        futureMinDrawPercentage == percentage &&
+        futureMinAwayWinPercentage == percentage;
   }
 
   void removeAllSpecificOdds() {

@@ -11,4 +11,8 @@ class Team {
   Map<String, dynamic> toMap() {
     return {"id": id, "teamName": name};
   }
+
+  Team copyWith() {
+    return Team.fromMap(toMap());
+  }
 }

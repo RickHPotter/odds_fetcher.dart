@@ -24,4 +24,8 @@ class Folder {
   Map<String, dynamic> toMap() {
     return {"id": id, "folderName": name};
   }
+
+  Folder copyWith() {
+    return Folder.fromMap(toMap());
+  }
 }

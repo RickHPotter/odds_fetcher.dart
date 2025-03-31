@@ -14,4 +14,8 @@ class League {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{"id": id, "leagueCode": code, "leagueName": name};
   }
+
+  League copyWith() {
+    return League.fromMap(toMap());
+  }
 }

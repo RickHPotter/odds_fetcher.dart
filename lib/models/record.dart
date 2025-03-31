@@ -181,7 +181,7 @@ class Record {
         overHalf++;
       }
 
-      if (full < 2) {
+      if (full < 3) {
         underFull++;
       } else {
         overFull++;

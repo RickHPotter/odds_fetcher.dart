@@ -79,7 +79,38 @@ class DatabaseService {
       throw Exception("Unzipped database is too small or missing.");
     }
 
-    return await openDatabase(path, version: 1);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: (db, version) async {
+        debugPrint("Creating new database with version $version.");
+        db.execute("PRAGMA foreign_keys=ON;");
+        db.execute("PRAGMA journal_mode=WAL;");
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        debugPrint("Upgrading database from version $oldVersion to $newVersion");
+        await _runMigrations(db, oldVersion, newVersion);
+      },
+    );
+  }
+
+  static Future<void> _runMigrations(Database db, int oldVersion, int newVersion) async {
+    for (int i = oldVersion + 1; i <= newVersion; i++) {
+      String paddedVersion = i.toString().padLeft(4, "0");
+      String migrationFile = "assets/migrations/$paddedVersion.sql";
+      try {
+        String sql = await rootBundle.loadString(migrationFile);
+        List<String> queries = sql.split(";");
+        for (String query in queries) {
+          if (query.trim().isNotEmpty) {
+            await db.execute(query);
+          }
+        }
+        debugPrint("Migration $migrationFile applied successfully.");
+      } catch (e) {
+        debugPrint("Error applying migration $migrationFile: $e");
+      }
+    }
   }
 
   static Stream<Record> fetchFutureRecords(Filter filter) async* {

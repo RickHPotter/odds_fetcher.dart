@@ -22,6 +22,7 @@ dependencies:
   archive: ^4.0.4
   google_fonts: ^6.2.1
   font_awesome_flutter: ^10.8.0
+  async: ^2.12.0
 
 dev_dependencies:
   flutter_test:
@@ -37,5 +38,4 @@ flutter:
     - assets/db.zip
     - assets/migrations/0001.sql
     - assets/migrations/0002.sql
-    - assets/migrations/0003.sql
     - assets/images/logo.jpg

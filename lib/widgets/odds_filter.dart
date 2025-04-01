@@ -211,6 +211,45 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // FILTER APPLYING
+                  if (filter.id != null)
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.filterFutureRecordsBySpecificOdds,
+                                onChanged: (value) {
+                                  setStates(() {
+                                    widget.filter.filterFutureRecordsBySpecificOdds = value;
+                                  });
+                                },
+                              ),
+                              const Text("FILTRAR JOGOS FUTUROS"),
+                            ],
+                          ),
+                        ),
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.filterPastRecordsBySpecificOdds,
+                                onChanged: (value) {
+                                  setStates(() {
+                                    widget.filter.filterPastRecordsBySpecificOdds = value;
+                                  });
+                                },
+                              ),
+                              const Text("FILTRAR JOGOS ANTERIORES"),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  // DISMISS MATCHES
                   Row(
                     children: [
                       Flexible(

@@ -5,6 +5,7 @@ import "package:flutter/material.dart";
 import "package:flutter/services.dart" show Clipboard, ClipboardData;
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:google_fonts/google_fonts.dart" show GoogleFonts;
+import "package:odds_fetcher/screens/history_records_list_screen.dart";
 import "package:odds_fetcher/screens/records_list_screen.dart";
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/services/api_service.dart" show ApiService;
@@ -12,8 +13,8 @@ import "package:odds_fetcher/services/database_service.dart" show DatabaseServic
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
 
 void logError(Object error, StackTrace? stack) {
-  final logFile = File("${Directory.current.path}/error_log.txt");
-  final errorMessage = "${DateTime.now()} - ERROR: $error\n$stack\n\n";
+  final File logFile = File("${Directory.current.path}/error_log.txt");
+  final String errorMessage = "${DateTime.now()} - ERROR: $error\n$stack\n\n";
   logFile.writeAsStringSync(errorMessage, mode: FileMode.append);
 }
 
@@ -114,12 +115,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.5,
+                    width: MediaQuery.of(context).size.width * 0.6,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         const SizedBox(width: 24),
                         ...[
+                          {"icon": FontAwesomeIcons.clockRotateLeft, "label": "HISTÓRICO"},
                           {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 1"},
                           {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 2"},
                           {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 3"},
@@ -137,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   item["icon"] as IconData,
                                   color: selectedIndex == index ? Colors.blue : Colors.grey,
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 8),
                                 Text(
                                   item["label"] as String,
                                   style: TextStyle(color: selectedIndex == index ? Colors.blue : Colors.grey),
@@ -159,6 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: IndexedStack(
               index: selectedIndex,
               children: [
+                const HistoryRecordsScreen(),
                 const RecordListScreen(),
                 const RecordListScreen(),
                 const RecordListScreen(),

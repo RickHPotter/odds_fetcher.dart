@@ -66,6 +66,8 @@ class Filter {
   bool filterFutureRecordsByTeams;
   bool filterPastRecordsByLeagues;
   bool filterFutureRecordsByLeagues;
+  bool filterPastRecordsBySpecificOdds;
+  bool filterFutureRecordsBySpecificOdds;
 
   List<Team> teams;
   List<League> leagues;
@@ -112,6 +114,8 @@ class Filter {
     this.filterFutureRecordsByTeams = true,
     this.filterPastRecordsByLeagues = true,
     this.filterFutureRecordsByLeagues = true,
+    this.filterPastRecordsBySpecificOdds = true,
+    this.filterFutureRecordsBySpecificOdds = false,
 
     this.teams = const [],
     this.leagues = const [],
@@ -171,6 +175,8 @@ class Filter {
       filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
       filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
       filterFutureRecordsByLeagues: map["filterFutureRecordsByLeagues"] == 1,
+      filterPastRecordsBySpecificOdds: map["filterPastRecordsBySpecificOdds"] == 1,
+      filterFutureRecordsBySpecificOdds: map["filterFutureRecordsBySpecificOdds"] == 1,
 
       teams: map["teams"] == null ? [] : map["teams"].map((t) => Team.fromMap(t)).toList(),
       leagues: map["leagues"] == null ? [] : map["leagues"].map((l) => League.fromMap(l)).toList(),
@@ -220,6 +226,8 @@ class Filter {
       "filterFutureRecordsByTeams": filterFutureRecordsByTeams ? 1 : 0,
       "filterPastRecordsByLeagues": filterPastRecordsByLeagues ? 1 : 0,
       "filterFutureRecordsByLeagues": filterFutureRecordsByLeagues ? 1 : 0,
+      "filterPastRecordsBySpecificOdds": filterPastRecordsBySpecificOdds ? 1 : 0,
+      "filterFutureRecordsBySpecificOdds": filterFutureRecordsBySpecificOdds ? 1 : 0,
     };
   }
 
@@ -407,28 +415,30 @@ class Filter {
       whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
     }
 
-    if (minEarlyHome != null) {
-      whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
-    }
+    if (filterPastRecordsBySpecificOdds) {
+      if (minEarlyHome != null) {
+        whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
+      }
 
-    if (minEarlyDraw != null) {
-      whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
-    }
+      if (minEarlyDraw != null) {
+        whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
+      }
 
-    if (minEarlyAway != null) {
-      whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
-    }
+      if (minEarlyAway != null) {
+        whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
+      }
 
-    if (minFinalHome != null) {
-      whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
-    }
+      if (minFinalHome != null) {
+        whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
+      }
 
-    if (minFinalDraw != null) {
-      whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
-    }
+      if (minFinalDraw != null) {
+        whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
+      }
 
-    if (minFinalAway != null) {
-      whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
+      if (minFinalAway != null) {
+        whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
+      }
     }
 
     return whereClause;
@@ -462,29 +472,33 @@ class Filter {
       whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
     }
 
-    if (minEarlyHome != null) {
-      whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
+    if (filterFutureRecordsBySpecificOdds) {
+      if (minEarlyHome != null) {
+        whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
+      }
+
+      if (minEarlyDraw != null) {
+        whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
+      }
+
+      if (minEarlyAway != null) {
+        whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
+      }
+
+      if (minFinalHome != null) {
+        whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
+      }
+
+      if (minFinalDraw != null) {
+        whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
+      }
+
+      if (minFinalAway != null) {
+        whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
+      }
     }
 
-    if (minEarlyDraw != null) {
-      whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
-    }
-
-    if (minEarlyAway != null) {
-      whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
-    }
-
-    if (minFinalHome != null) {
-      whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
-    }
-
-    if (minFinalDraw != null) {
-      whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
-    }
-
-    if (minFinalAway != null) {
-      whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
-    }
+    print(whereClause);
 
     return whereClause;
   }

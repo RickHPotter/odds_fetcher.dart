@@ -1,11 +1,10 @@
 import "dart:async";
 
+import "package:async/async.dart" show CancelableOperation;
 import "package:flutter/material.dart";
 import "package:flutter/services.dart" show FilteringTextInputFormatter;
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
-import "package:google_fonts/google_fonts.dart";
 
-import "package:intl/intl.dart" show DateFormat;
 import "package:intl/date_symbol_data_local.dart" show initializeDateFormatting;
 
 import "package:odds_fetcher/models/record.dart";
@@ -22,9 +21,6 @@ import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFo
 import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
 import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/past_matches_datatable.dart" show PastMachDataTable;
-import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
-
-import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber;
 
 class HistoryRecordsScreen extends StatefulWidget {
   const HistoryRecordsScreen({super.key});
@@ -34,23 +30,17 @@ class HistoryRecordsScreen extends StatefulWidget {
 }
 
 class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
-  late Future<List<Record>>? records;
+  CancelableOperation<List<Record>>? _operation;
+
+  late List<Record> records;
   late List<Team> teams = [];
   late List<League> leagues = [];
   late List<Folder> folders = [];
   late List<LeagueFolder> leaguesFolders = [];
 
   bool isLoading = false;
-  bool isCreatingFilter = false;
-  bool isUpdatingFilter = false;
 
-  bool showFilters = true;
-  bool hideFiltersOnFutureRecordSelect = true;
-
-  // <-- FILTERS
   late Filter filter = Filter(filterName: "FILTRO PADRÃO");
-  late Filter placeholderFilter = filter.copyWith();
-  // FILTERS -->
 
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
@@ -60,8 +50,39 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
   void loadMatches() {
     setState(() {
       isLoading = true;
-      records = Future.value([]);
+      records = [];
     });
+
+    _operation = CancelableOperation.fromFuture(
+      DatabaseService.fetchRecords(filter: filter),
+      onCancel: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+    );
+
+    _operation!.value
+        .then((fetchedRecords) {
+          if (!_operation!.isCanceled) {
+            setState(() {
+              isLoading = false;
+              records = fetchedRecords;
+            });
+          }
+        })
+        .catchError((error) {
+          if (!_operation!.isCanceled) {
+            setState(() {
+              isLoading = false;
+            });
+            debugPrint("Error fetching records: $error");
+          }
+        });
+  }
+
+  void cancelLoading() {
+    _operation?.cancel();
   }
 
   void loadTeamsAndLeaguesAndFolders() async {
@@ -76,26 +97,15 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
     });
   }
 
-  void retrieveFilter(int id) async {
-    filter = await DatabaseService.fetchFilter(id);
-
-    setState(() {
-      filter = filter;
-      placeholderFilter = filter.copyWith();
-    });
-  }
-
   @override
   void initState() {
     super.initState();
 
     initializeDateFormatting("pt-BR");
 
-    records = Future.value([]);
+    records = [];
 
     loadTeamsAndLeaguesAndFolders();
-
-    retrieveFilter(0);
   }
 
   @override
@@ -106,307 +116,165 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          if (showFilters)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
-                  for (final int time in pastYearsList)
-                    SizedBox(
-                      width: buttonSize,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: (4.0)),
-                        child: ElevatedButton(
-                          onPressed: () => filterHistoryMatches(time: time),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            shadowColor: Colors.purple,
-                            backgroundColor: time == filter.pastYears ? Colors.indigoAccent : null,
-                          ),
-                          child: Text(
-                            time <= 1 ? "$time Ano" : "$time Anos",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: time == filter.pastYears ? Colors.white : null,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  SizedBox(
-                    width: buttonSize,
-                    height: MediaQuery.of(context).size.height * 0.042,
-                    child: TextFormField(
-                      controller: yearController,
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value == null ? "ANO INVÁLIDO" : null,
-                      decoration: InputDecoration(
-                        labelText: "ANO",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.all(12),
-                      ),
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                      onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (showFilters)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.tune)),
-                  SizedBox(
-                    width: buttonSize,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: OddsFilterButton(
-                        filter: filter,
-                        onApplyCallback: () {
-                          loadMatches();
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: buttonSize,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: TeamsFilterButton(
-                        filter: filter,
-                        teams: teams,
-                        onApplyCallback: () {
-                          loadMatches();
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: buttonSize,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: LeaguesFoldersFilterButton(
-                        filter: filter,
-                        leagues: leagues,
-                        folders: folders,
-                        onApplyCallback: () {
-                          if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
-                            setState(() => filter.futureOnlySameLeague = false);
-                          }
-                          loadMatches();
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.042,
-                    child: Switch(
-                      value: hideFiltersOnFutureRecordSelect,
-                      activeColor: Colors.indigoAccent,
-                      onChanged: (bool value) {
-                        setState(() {
-                          hideFiltersOnFutureRecordSelect = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const Text("OCULTAR FILTROS AO PESQUISAR"),
-                ],
-              ),
-            ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.015),
-          if (records.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 15.0),
-              child: MatchCard(records: records, pivotRecord: null),
-            ),
-          PastMachDataTable(records: records),
-          const Divider(),
-          // Footer and Controls
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
+                Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
+                for (final int time in pastYearsList)
+                  SizedBox(
+                    width: buttonSize,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: (4.0)),
+                      child: ElevatedButton(
+                        onPressed: () => filterHistoryMatches(time: time),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shadowColor: Colors.purple,
+                          backgroundColor: time == filter.pastYears ? Colors.indigoAccent : null,
+                        ),
+                        child: Text(
+                          time <= 1 ? "$time Ano" : "$time Anos",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: time == filter.pastYears ? Colors.white : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  child: Tooltip(
-                    message: filter.filterName,
-                    child:
-                        isCreatingFilter || isUpdatingFilter
-                            ? SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.05,
-                              child: TextField(
-                                controller: filterNameController,
-                                decoration: InputDecoration(
-                                  contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8), // Adjust padding
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  hintText: "Informe um Nome...",
-                                ),
-                                onChanged: (value) => filter.filterName = value,
-                              ),
-                            )
-                            : FilterSelectButton(
-                              filter: filter,
-                              onApplyCallback: () {
-                                retrieveFilter(filter.id as int);
-                              },
-                            ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Tooltip(
-                      message: "Novo Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                          backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            isCreatingFilter = true;
-                            filter.id = null;
-                            filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
-                            filterNameController.text = filter.filterName;
-                          });
-                        },
-                        child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
-                      ),
+                  width: buttonSize,
+                  height: MediaQuery.of(context).size.height * 0.042,
+                  child: TextFormField(
+                    controller: yearController,
+                    keyboardType: TextInputType.number,
+                    validator: (value) => value == null ? "ANO INVÁLIDO" : null,
+                    decoration: InputDecoration(
+                      labelText: "ANO",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.all(12),
                     ),
-                    Tooltip(
-                      message: "Editar Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                          backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
-                        ),
-                        onPressed: () {
-                          if (isCreatingFilter || isUpdatingFilter) return;
-
-                          setState(() {
-                            isUpdatingFilter = true;
-                            filterNameController.text = filter.filterName;
-                          });
-                        },
-                        child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
-                      ),
-                    ),
-                    Tooltip(
-                      message: "Salvar Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                        ),
-                        onPressed: () async {
-                          final bool success = await saveFilter();
-
-                          if (!context.mounted) return;
-                          if (success) {
-                            showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
-                          } else {
-                            showOverlayMessage(
-                              context,
-                              "Filtro precisa de um nome diferente!",
-                              type: MessageType.error,
-                            );
-                          }
-                        },
-                        child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
-                      ),
-                    ),
-                    Tooltip(
-                      message:
-                          isCreatingFilter || isUpdatingFilter
-                              ? "Cancelar Criação/Edição de Filtro"
-                              : "Resetar Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            if (isCreatingFilter || isUpdatingFilter) {
-                              isCreatingFilter = false;
-                              isUpdatingFilter = false;
-                              filter.filterName = placeholderFilter.filterName;
-
-                              showOverlayMessage(
-                                context,
-                                "Criação/Edição de filtro cancelada com sucesso!",
-                                type: MessageType.info,
-                              );
-                            } else {
-                              filter = placeholderFilter.copyWith();
-                              loadMatches();
-                              showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
-                            }
-                          });
-                        },
-                        child:
-                            isCreatingFilter || isUpdatingFilter
-                                ? Icon(FontAwesomeIcons.ban, color: Colors.red)
-                                : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
-                      ),
-                    ),
-                  ],
-                ),
-                isLoading
-                    ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
-                    : SizedBox(width: 20, height: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FutureBuilder<List<Record>>(
-                      future: records,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Text(
-                            "Carregando jogos passados...",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return const Text(
-                            "Erro ao carregar jogos passados.",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-                          );
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Text(
-                            "0 JOGOS PASSADOS.",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                          );
-                        }
-                        return Text(
-                          "${humaniseNumber(snapshot.data!.length)} JOGOS PASSADOS.",
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                // Fetch Controls
-                ElevatedButton(
-                  onPressed: () => setState(() => showFilters = !showFilters),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                  ),
-                  child: Text(
-                    showFilters ? "OCULTAR FILTROS" : "MOSTRAR FILTROS",
-                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                    onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
                   ),
                 ),
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.tune)),
+                SizedBox(
+                  width: buttonSize,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: OddsFilterButton(
+                      filter: filter,
+                      onApplyCallback: () {
+                        loadMatches();
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: buttonSize,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: TeamsFilterButton(
+                      filter: filter,
+                      teams: teams,
+                      onApplyCallback: () {
+                        loadMatches();
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: buttonSize,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: LeaguesFoldersFilterButton(
+                      filter: filter,
+                      leagues: leagues,
+                      folders: folders,
+                      onApplyCallback: () {
+                        if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                          setState(() => filter.futureOnlySameLeague = false);
+                        }
+                        loadMatches();
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: buttonSize,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          filter = Filter(filterName: "FILTRO PADRÃO");
+                          loadMatches();
+                          showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                        });
+                      },
+                      child: Row(
+                        children: const [
+                          Icon(FontAwesomeIcons.rotateLeft, color: Colors.purpleAccent),
+                          SizedBox(width: 3),
+                          Text("Resetar", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: buttonSize,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: ElevatedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          cancelLoading();
+                          showOverlayMessage(context, "Busca cancelada com sucesso!", type: MessageType.info);
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.ban, color: Colors.red),
+                          SizedBox(width: 3),
+                          Text("Abortar", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                isLoading
+                    ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
+                    : SizedBox(width: 20, height: 20),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+          if (records.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 15.0),
+              child: MatchCard(records: Future.value(records), pivotRecord: records.first),
+            ),
+          PastMachDataTable(records: Future.value(records)),
         ],
       ),
     );
@@ -430,25 +298,5 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
     setState(() => filter = filter);
 
     loadMatches();
-  }
-
-  Future<bool> saveFilter() async {
-    late bool success;
-
-    if (filter.id == null) {
-      success = await DatabaseService.insertFilter(filter);
-    } else {
-      success = await DatabaseService.updateFilter(filter);
-    }
-
-    if (!success) return false;
-
-    setState(() {
-      placeholderFilter = filter.copyWith();
-      isCreatingFilter = false;
-      isUpdatingFilter = false;
-    });
-
-    return true;
   }
 }

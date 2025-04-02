@@ -134,49 +134,48 @@ class DatabaseService {
     ORDER BY MatchDate, ID
     """);
 
-    final bool anyFutureMinPercentage =
-        filter.futureMinHomeWinPercentage + filter.futureMinDrawPercentage + filter.futureMinAwayWinPercentage > 0;
+    for (final row in result) {
+      Record futureRecord = Record.fromMap(row);
 
-    if (anyFutureMinPercentage) {
-      for (final row in result) {
-        Record futureRecord = Record.fromMap(row);
-
-        final percentageResult = await db.rawQuery("""
+      final percentageResult = await db.rawQuery("""
         SELECT
           COUNT(*) AS recordsCount,
           SUM(homeWin) AS homeWins,
           SUM(draw) AS draws,
-          SUM(awayWin) AS awayWins
+          SUM(awayWin) AS awayWins,
+          SUM(CASE WHEN homeFirstHalfScore + awayFirstHalfScore >= ${filter.milestoneGoalsFirstHalf} THEN 1 ELSE 0 END) AS overFirst,
+          SUM(CASE WHEN homeSecondHalfScore + awaySecondHalfScore >= ${filter.milestoneGoalsSecondHalf} THEN 1 ELSE 0 END) AS overSecond,
+          SUM(CASE WHEN homeFirstHalfScore + homeSecondHalfScore + awayFirstHalfScore + awaySecondHalfScore >= ${filter.milestoneGoalsFullTime} THEN 1 ELSE 0 END) AS overFull
         FROM Records r
         ${await filter.whereClause(futureRecord: futureRecord)}
       """);
 
-        final Map<String, dynamic> res = percentageResult[0];
-        final int recordsCount = res["recordsCount"] as int;
+      final Map<String, dynamic> res = percentageResult[0];
+      final int recordsCount = res["recordsCount"] as int;
 
-        if (recordsCount > 0) {
-          final int homeWins = res["homeWins"] as int;
-          final int draws = res["draws"] as int;
-          final int awayWins = res["awayWins"] as int;
+      if (recordsCount > 0) {
+        final int homeWins = res["homeWins"] as int;
+        final int draws = res["draws"] as int;
+        final int awayWins = res["awayWins"] as int;
 
-          double homeWinPercentage = (homeWins / recordsCount) * 100;
-          double drawPercentage = (draws / recordsCount) * 100;
-          double awayWinPercentage = (awayWins / recordsCount) * 100;
+        double homeWinPercentage = (homeWins / recordsCount) * 100;
+        double drawPercentage = (draws / recordsCount) * 100;
+        double awayWinPercentage = (awayWins / recordsCount) * 100;
 
-          if (homeWinPercentage >= filter.futureMinHomeWinPercentage ||
-              drawPercentage >= filter.futureMinDrawPercentage ||
-              awayWinPercentage >= filter.futureMinAwayWinPercentage) {
-            futureRecord.pastRecordsCount = recordsCount;
-            futureRecord.homeWinPercentage = homeWinPercentage;
-            futureRecord.drawPercentage = drawPercentage;
-            futureRecord.awayWinPercentage = awayWinPercentage;
-            yield futureRecord;
-          }
+        futureRecord.pastRecordsCount = recordsCount;
+        futureRecord.homeWinPercentage = homeWinPercentage;
+        futureRecord.drawPercentage = drawPercentage;
+        futureRecord.awayWinPercentage = awayWinPercentage;
+
+        futureRecord.overFirst = res["overFirst"] as int;
+        futureRecord.overSecond = res["overSecond"] as int;
+        futureRecord.overFull = res["overFull"] as int;
+
+        if (homeWinPercentage >= filter.futureMinHomeWinPercentage ||
+            drawPercentage >= filter.futureMinDrawPercentage ||
+            awayWinPercentage >= filter.futureMinAwayWinPercentage) {
+          yield futureRecord;
         }
-      }
-    } else {
-      for (final row in result) {
-        yield Record.fromMap(row);
       }
     }
   }

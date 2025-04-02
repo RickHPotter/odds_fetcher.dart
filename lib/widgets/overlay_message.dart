@@ -37,7 +37,7 @@ void showOverlayMessage(
   Color color = getColorFromType(type);
   Icon icon = getIconFromType(type);
 
-  final overlayEntry = OverlayEntry(
+  final OverlayEntry overlayEntry = OverlayEntry(
     builder:
         (BuildContext context) => Positioned(
           top: MediaQuery.of(context).size.height * 0.002,

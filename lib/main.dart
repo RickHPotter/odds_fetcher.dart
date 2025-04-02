@@ -121,11 +121,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         const SizedBox(width: 24),
                         ...[
+                          {"icon": FontAwesomeIcons.chartPie, "label": "ANALISE JOGOS FUTUROS"},
+                          {"icon": FontAwesomeIcons.dartLang, "label": "ANALISE JOGOS PASSADOS"},
                           {"icon": FontAwesomeIcons.clockRotateLeft, "label": "HISTÓRICO"},
-                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 1"},
-                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 2"},
-                          {"icon": Icons.home, "label": "LISTAGEM DE REGISTROS 3"},
-                          {"icon": Icons.construction, "label": "SOBRE"},
+                          {"icon": FontAwesomeIcons.handPointUp, "label": "SOBRE"},
                         ].asMap().entries.map((entry) {
                           int index = entry.key;
                           final item = entry.value;
@@ -161,10 +160,9 @@ class _MyHomePageState extends State<MyHomePage> {
             child: IndexedStack(
               index: selectedIndex,
               children: [
+                const RecordListScreen(),
+                const RecordListScreen(),
                 const HistoryRecordsScreen(),
-                const RecordListScreen(),
-                const RecordListScreen(),
-                const RecordListScreen(),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Card(

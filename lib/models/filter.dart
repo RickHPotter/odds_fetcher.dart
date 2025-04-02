@@ -39,17 +39,13 @@ class Filter {
   double? minFinalAway;
   double? maxFinalAway;
 
-  int? minGoalsFirstHalf; // TODO: Missing
-  int? maxGoalsFirstHalf; // TODO: Missing
-  int? minGoalsSecondHalf; // TODO: Missing
-  int? maxGoalsSecondHalf; // TODO: Missing
-  int? minGoalsFullTime; // TODO: Missing
-  int? maxGoalsFullTime; // TODO: Missing
+  int? milestoneGoalsFirstHalf;
+  int? milestoneGoalsSecondHalf;
+  int? milestoneGoalsFullTime;
 
   int futureNextMinutes;
   bool futureDismissNoEarlyOdds;
   bool futureDismissNoFinalOdds;
-  int? futureDismissNoHistory; // TODO: Missing
   bool futureOnlySameLeague;
   bool futureSameEarlyHome;
   bool futureSameEarlyDraw;
@@ -90,16 +86,12 @@ class Filter {
     this.maxFinalDraw,
     this.minFinalAway,
     this.maxFinalAway,
-    this.minGoalsFirstHalf,
-    this.maxGoalsFirstHalf,
-    this.minGoalsSecondHalf,
-    this.maxGoalsSecondHalf,
-    this.minGoalsFullTime,
-    this.maxGoalsFullTime,
+    this.milestoneGoalsFirstHalf = 1,
+    this.milestoneGoalsSecondHalf = 1,
+    this.milestoneGoalsFullTime = 3,
     this.futureNextMinutes = 60,
     this.futureDismissNoEarlyOdds = true,
     this.futureDismissNoFinalOdds = false,
-    this.futureDismissNoHistory,
     this.futureOnlySameLeague = false,
     this.futureSameEarlyHome = true,
     this.futureSameEarlyDraw = true,
@@ -151,16 +143,12 @@ class Filter {
       maxFinalDraw: map["maxFinalDraw"],
       minFinalAway: map["minFinalAway"],
       maxFinalAway: map["maxFinalAway"],
-      minGoalsFirstHalf: map["minGoalsFirstHalf"],
-      maxGoalsFirstHalf: map["maxGoalsFirstHalf"],
-      minGoalsSecondHalf: map["minGoalsSecondHalf"],
-      maxGoalsSecondHalf: map["maxGoalsSecondHalf"],
-      minGoalsFullTime: map["minGoalsFullTime"],
-      maxGoalsFullTime: map["maxGoalsFullTime"],
+      milestoneGoalsFirstHalf: map["milestoneGoalsFirstHalf"],
+      milestoneGoalsSecondHalf: map["milestoneGoalsSecondHalf"],
+      milestoneGoalsFullTime: map["milestoneGoalsFullTime"],
       futureNextMinutes: map["futureNextMinutes"],
       futureDismissNoEarlyOdds: map["futureDismissNoEarlyOdds"] == 1,
       futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"] == 1,
-      futureDismissNoHistory: map["futureDismissNoHistory"],
       futureOnlySameLeague: map["futureOnlySameLeague"] == 1,
       futureSameEarlyHome: map["futureSameEarlyHome"] == 1,
       futureSameEarlyDraw: map["futureSameEarlyDraw"] == 1,
@@ -202,16 +190,12 @@ class Filter {
       "maxFinalDraw": maxFinalDraw,
       "minFinalAway": minFinalAway,
       "maxFinalAway": maxFinalAway,
-      "minGoalsFirstHalf": minGoalsFirstHalf,
-      "maxGoalsFirstHalf": maxGoalsFirstHalf,
-      "minGoalsSecondHalf": minGoalsSecondHalf,
-      "maxGoalsSecondHalf": maxGoalsSecondHalf,
-      "minGoalsFullTime": minGoalsFullTime,
-      "maxGoalsFullTime": maxGoalsFullTime,
+      "milestoneGoalsFirstHalf": milestoneGoalsFirstHalf,
+      "milestoneGoalsSecondHalf": milestoneGoalsSecondHalf,
+      "milestoneGoalsFullTime": milestoneGoalsFullTime,
       "futureNextMinutes": futureNextMinutes,
       "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds ? 1 : 0,
       "futureDismissNoFinalOdds": futureDismissNoFinalOdds ? 1 : 0,
-      "futureDismissNoHistory": futureDismissNoHistory,
       "futureOnlySameLeague": futureOnlySameLeague ? 1 : 0,
       "futureSameEarlyHome": futureSameEarlyHome ? 1 : 0,
       "futureSameEarlyDraw": futureSameEarlyDraw ? 1 : 0,
@@ -497,8 +481,6 @@ class Filter {
         whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
       }
     }
-
-    print(whereClause);
 
     return whereClause;
   }

@@ -34,7 +34,7 @@ class MatchCard extends StatelessWidget {
           } else {
             final List<Record> records = snapshot.data!;
             final Map<String, double> scorePercentages = Record.calculateScoreMatchPercentages(pivotRecord, records);
-            final Map<String, double> goalsPercentages = Record.calculateGoalsMatchPercentages(records);
+            final Map<String, double> goalsPercentages = Record.calculateGoalsMatchPercentages(pivotRecord, records);
 
             scorePercentageChild = Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -58,8 +58,8 @@ class MatchCard extends StatelessWidget {
               children: [
                 _buildGoalsPercentageBar(
                   "1T",
-                  goalsPercentages["underHalf"] as double,
-                  goalsPercentages["overHalf"] as double,
+                  goalsPercentages["underFirst"] as double,
+                  goalsPercentages["overFirst"] as double,
                 ),
                 _buildGoalsPercentageBar(
                   "2T",
@@ -94,9 +94,9 @@ class MatchCard extends StatelessWidget {
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: container(child: MatchDetails(match: pivotRecord))),
-              SizedBox(width: screenWidth * 0.01),
-              Expanded(child: container(child: MatchOdds(match: pivotRecord))),
+              if (pivotRecord.pastRecordsCount > 0) Expanded(child: container(child: MatchDetails(match: pivotRecord))),
+              if (pivotRecord.pastRecordsCount > 0) SizedBox(width: screenWidth * 0.01),
+              if (pivotRecord.pastRecordsCount > 0) Expanded(child: container(child: MatchOdds(match: pivotRecord))),
               SizedBox(width: screenWidth * 0.01),
               Expanded(child: container(child: scorePercentageChild)),
               SizedBox(width: screenWidth * 0.01),

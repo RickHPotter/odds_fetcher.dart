@@ -73,6 +73,12 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
   late TextEditingController futureMinAwayController = TextEditingController(
     text: (widget.filter.futureMinAwayWinPercentage).toString(),
   );
+  late TextEditingController futureOverFirstController = TextEditingController(
+    text: (widget.filter.milestoneGoalsFirstHalf).toString(),
+  );
+  late TextEditingController futureOverFullController = TextEditingController(
+    text: (widget.filter.milestoneGoalsFullTime).toString(),
+  );
 
   @override
   void initState() {
@@ -136,24 +142,13 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
           widget.onApplyCallback();
         }
 
-        hintText = "CRITERIOS:\n";
-        if (filter.futureMinHomeWinPercentage <= 100) {
-          hintText += "- HOME precisa de uma porcentagem de ${filter.futureMinHomeWinPercentage}%\n";
-        } else if (filter.futureMinHomeWinPercentage > 100) {
-          hintText += "- HOME não precisa de uma porcentagem\n";
-        }
-
-        if (filter.futureMinDrawPercentage <= 100) {
-          hintText += "- DRAW precisa de uma porcentagem de ${filter.futureMinDrawPercentage}%\n";
-        } else {
-          hintText += "- DRAW não precisa de uma porcentagem\n";
-        }
-
-        if (filter.futureMinAwayWinPercentage <= 100) {
-          hintText += "- AWAY precisa de uma porcentagem de ${filter.futureMinAwayWinPercentage}%\n";
-        } else {
-          hintText += "- AWAY não precisa de uma porcentagem\n";
-        }
+        hintText = """CRITERIOS:
+          - HOME precisa de uma porcentagem de ${filter.futureMinHomeWinPercentage}%
+          - DRAW precisa de uma porcentagem de ${filter.futureMinDrawPercentage}%
+          - AWAY precisa de uma porcentagem de ${filter.futureMinAwayWinPercentage}%
+          - OVER 1T > ${filter.milestoneGoalsFirstHalf} GOLS
+          - OVER 2T > ${filter.milestoneGoalsSecondHalf} GOLS
+          - OVER FT > ${filter.milestoneGoalsFullTime} GOLS\n""";
 
         return Dialog(
           elevation: 4,
@@ -169,144 +164,173 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
-                    //margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.purple.shade50, // Light background for contrast
+                      color: Colors.purple.shade50,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.purple.shade200),
                     ),
                     child: Text(
-                      hintText.trim(), // Remove extra spaces/newlines
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.purple.shade900, // Darker for readability
-                      ),
+                      hintText.trim(),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.purple.shade900),
                     ),
                   ),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Switch(
-                        value: filter.futureMinHomeWinPercentage <= 100,
-                        padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                        onChanged: (bool value) {
-                          if (value) {
-                            futureMinHomeController.text = "0";
-                          } else {
-                            futureMinHomeController.text = "101";
-                          }
-
-                          setState(
-                            () => filter.futureMinHomeWinPercentage = int.tryParse(futureMinHomeController.text) ?? 0,
-                          );
-                        },
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 4.0),
+                          child: TextFormField(
+                            focusNode: _focusNode,
+                            controller: futureMinHomeController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: "Porcentagem Mínima HOME",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            ),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                            onChanged: (String value) {
+                              setState(() => filter.futureMinHomeWinPercentage = int.tryParse(value) ?? 0);
+                            },
+                          ),
+                        ),
                       ),
                       Expanded(
-                        child: TextFormField(
-                          focusNode: _focusNode,
-                          readOnly: filter.futureMinHomeWinPercentage > 100,
-                          controller: futureMinHomeController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: "Porcentagem Mínima HOME",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: TextFormField(
+                            controller: futureMinDrawController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: "Porcentagem Mínima DRAW",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Colors.blue, width: 2),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                            onChanged: (String value) {
+                              setState(() => filter.futureMinDrawPercentage = int.tryParse(value) ?? 0);
+                            },
                           ),
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                          onChanged: (String value) {
-                            setState(() => filter.futureMinHomeWinPercentage = int.tryParse(value) ?? 0);
-                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: TextFormField(
+                            controller: futureMinAwayController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: "Porcentagem Mínima AWAY",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            ),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                            onChanged: (String value) {
+                              setState(() => filter.futureMinAwayWinPercentage = int.tryParse(value) ?? 0);
+                            },
+                          ),
                         ),
                       ),
                     ],
                   ),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Switch(
-                        value: filter.futureMinDrawPercentage <= 100,
-                        padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                        onChanged: (bool value) {
-                          if (value) {
-                            futureMinDrawController.text = "0";
-                          } else {
-                            futureMinDrawController.text = "101";
-                          }
-
-                          setState(
-                            () => filter.futureMinDrawPercentage = int.tryParse(futureMinDrawController.text) ?? 0,
-                          );
-                        },
-                      ),
                       Expanded(
-                        child: TextFormField(
-                          readOnly: filter.futureMinDrawPercentage > 100,
-                          controller: futureMinDrawController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: "Porcentagem Mínima DRAW",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 4.0),
+                          child: TextFormField(
+                            controller: futureOverFirstController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: "Porcentagem Mínima OVER HT",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Colors.blue, width: 2),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                            onChanged: (String value) {
+                              setState(() => filter.milestoneGoalsFirstHalf = int.tryParse(value) ?? 0);
+                            },
                           ),
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                          onChanged: (String value) {
-                            setState(() => filter.futureMinDrawPercentage = int.tryParse(value) ?? 0);
-                          },
                         ),
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Switch(
-                        value: filter.futureMinAwayWinPercentage <= 100,
-                        padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                        onChanged: (bool value) {
-                          if (value) {
-                            futureMinAwayController.text = "0";
-                          } else {
-                            futureMinAwayController.text = "101";
-                          }
-
-                          setState(
-                            () => filter.futureMinAwayWinPercentage = int.tryParse(futureMinAwayController.text) ?? 0,
-                          );
-                        },
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: TextFormField(
+                            controller: futureOverFullController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: "Porcentagem Mínima OVER FT",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            ),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                            onChanged: (String value) {
+                              setState(() => filter.milestoneGoalsFullTime = int.tryParse(value) ?? 0);
+                            },
+                          ),
+                        ),
                       ),
                       Expanded(
-                        child: TextFormField(
-                          readOnly: filter.futureMinAwayWinPercentage > 100,
-                          controller: futureMinAwayController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: "Porcentagem Mínima AWAY",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: TextFormField(
+                            controller: futureMinAwayController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: "Porcentagem Mínima AWAY",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Colors.blue, width: 2),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+                            onChanged: (String value) {
+                              setState(() => filter.futureMinAwayWinPercentage = int.tryParse(value) ?? 0);
+                            },
                           ),
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                          onChanged: (String value) {
-                            setState(() => filter.futureMinAwayWinPercentage = int.tryParse(value) ?? 0);
-                          },
                         ),
                       ),
                     ],

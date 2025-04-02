@@ -22,12 +22,15 @@ class Record {
   final int? homeWin;
   final int? draw;
   final int? awayWin;
+  late int overFirst;
+  late int overSecond;
+  late int overFull;
   final bool? finished;
 
-  late int? pastRecordsCount = 0;
-  late double? homeWinPercentage = 0.00;
-  late double? drawPercentage = 0.00;
-  late double? awayWinPercentage = 0.00;
+  late int pastRecordsCount = 0;
+  late double homeWinPercentage = 0.00;
+  late double drawPercentage = 0.00;
+  late double awayWinPercentage = 0.00;
 
   Record({
     this.id,
@@ -69,13 +72,9 @@ class Record {
   }
 
   bool anyPercentageHigherThan(double percentage) {
-    if (homeWinPercentage == null || drawPercentage == null || awayWinPercentage == null) {
-      return false;
-    }
-
-    return homeWinPercentage as double > percentage ||
-        drawPercentage as double > percentage ||
-        awayWinPercentage as double > percentage;
+    return homeWinPercentage  > percentage ||
+        drawPercentage  > percentage ||
+        awayWinPercentage  > percentage;
   }
 
   factory Record.fromMap(Map<String, dynamic> map) {
@@ -127,72 +126,47 @@ class Record {
   }
 
   static Map<String, double> calculateScoreMatchPercentages(Record futureRecord, List<Record> records) {
-    if (futureRecord.pastRecordsCount! > 0) {
+    if (futureRecord.pastRecordsCount > 0) {
       return {
-        "homeWins": futureRecord.homeWinPercentage as double,
-        "draws": futureRecord.drawPercentage as double,
-        "awayWins": futureRecord.awayWinPercentage as double,
+        "homeWins": futureRecord.homeWinPercentage,
+        "draws": futureRecord.drawPercentage ,
+        "awayWins": futureRecord.awayWinPercentage ,
       };
     }
 
-    if (records.isEmpty) return {"homeWins": 0, "draws": 0, "awayWins": 0};
-
-    int totalMatches = records.length;
-    int homeWins = 0;
-    int draws = 0;
-    int awayWins = 0;
-
-    for (final Record record in records) {
-      int home = record.homeSecondHalfScore ?? 0;
-      int away = record.awaySecondHalfScore ?? 0;
-
-      if (home == away) {
-        draws++;
-      } else if (home > away) {
-        homeWins++;
-      } else {
-        awayWins++;
-      }
-    }
-
-    return {
-      "homeWins": ((homeWins / totalMatches) * 100).roundToDouble(),
-      "draws": ((draws / totalMatches) * 100).roundToDouble(),
-      "awayWins": ((awayWins / totalMatches) * 100).roundToDouble(),
-    };
+    return {"homeWins": 0.0, "draws": 0.0, "awayWins": 0.0};
   }
 
-  static Map<String, double> calculateGoalsMatchPercentages(List<Record> records) {
-    if (records.isEmpty) return {"homeWins": 0, "draws": 0, "awayWins": 0};
+  static Map<String, double> calculateGoalsMatchPercentages(Record futureRecord, List<Record> records) {
+    if (futureRecord.pastRecordsCount > 0) {
+      double overFirst = futureRecord.overFirst / futureRecord.pastRecordsCount * 100;
+      double underFirst = 100 - overFirst;
 
-    int totalMatches = records.length;
-    int underHalf = 0;
-    int overHalf = 0;
-    int underFull = 0;
-    int overFull = 0;
+      double overSecond = futureRecord.overSecond / futureRecord.pastRecordsCount * 100;
+      double underSecond = 100 - overSecond;
 
-    for (final Record record in records) {
-      int half = (record.homeFirstHalfScore ?? 0) + (record.awayFirstHalfScore ?? 0);
-      int full = (record.homeSecondHalfScore ?? 0) + (record.awaySecondHalfScore ?? 0);
+      double overFull = futureRecord.overFull / futureRecord.pastRecordsCount * 100;
+      double underFull = 100 - overFull;
 
-      if (half < 1) {
-        underHalf++;
-      } else {
-        overHalf++;
-      }
+      return {
+        "overFirst": overFirst,
+        "underFirst": underFirst,
 
-      if (full < 3) {
-        underFull++;
-      } else {
-        overFull++;
-      }
+        "overSecond": overSecond,
+        "underSecond": underSecond,
+
+        "overFull": overFull,
+        "underFull": underFull,
+      };
     }
 
     return {
-      "underHalf": ((underHalf / totalMatches) * 100).roundToDouble(),
-      "overHalf": ((overHalf / totalMatches) * 100).roundToDouble(),
-      "underFull": ((underFull / totalMatches) * 100).roundToDouble(),
-      "overFull": ((overFull / totalMatches) * 100).roundToDouble(),
+      "underFirst": 0.0,
+      "overFirst": 0.0,
+      "underSecond": 0.0,
+      "overSecond": 0.0,
+      "underFull": 0.0,
+      "overFull":0.0
     };
   }
 }

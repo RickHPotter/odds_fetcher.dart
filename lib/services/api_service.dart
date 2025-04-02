@@ -70,6 +70,21 @@ class ApiService {
         final int homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
         final int awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
 
+        int homeSecondHalfScore = parseInteger(fields[8]);
+        int awaySecondHalfScore = parseInteger(fields[9]);
+
+        int home = 0;
+        int draw = 0;
+        int away = 0;
+
+        if (homeSecondHalfScore == awaySecondHalfScore) {
+          draw = 1;
+        } else if (homeSecondHalfScore > awaySecondHalfScore) {
+          home = 1;
+        } else {
+          away = 1;
+        }
+
         final Record record = Record(
           bettingHouseId: bettingHouseId,
           matchDate: matchDate,
@@ -84,8 +99,11 @@ class ApiService {
           finalOdds2: double.tryParse(fields[16]),
           homeFirstHalfScore: homeFirstHalfScore,
           awayFirstHalfScore: awayFirstHalfScore,
-          homeSecondHalfScore: parseInteger(fields[8]),
-          awaySecondHalfScore: parseInteger(fields[9]),
+          homeSecondHalfScore: homeSecondHalfScore,
+          awaySecondHalfScore: awaySecondHalfScore,
+          homeWin: home,
+          draw: draw,
+          awayWin: away,
         );
 
         records.add(record);

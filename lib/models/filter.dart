@@ -497,4 +497,61 @@ class Filter {
 
     return whereClause;
   }
+
+  Future<String> whereClausePivot() async {
+    fillInAllRangeOdds();
+
+    late String whereClause = "WHERE 1 = 1";
+
+    final DateTime pivotMinDate = DateTime.now().subtract(Duration(minutes: futureNextMinutes));
+
+    whereClause += " AND MatchDate >= ${rawDateTime(pivotMinDate)}";
+    whereClause += " AND MatchDate <= ${rawDateTime(DateTime.now())}";
+
+    if (filterFutureRecordsByTeams && teams.isNotEmpty) {
+      final String teamsIdsString = teamsIds().join(", ");
+      whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
+    }
+
+    if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
+      final List<int> leagueIdsList = await leaguesIds();
+      whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
+    }
+
+    if (futureDismissNoEarlyOdds) {
+      whereClause += " AND earlyOdds1 IS NOT NULL AND earlyOddsX IS NOT NULL AND earlyOdds2 IS NOT NULL";
+    }
+
+    if (futureDismissNoFinalOdds) {
+      whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
+    }
+
+    if (filterFutureRecordsBySpecificOdds) {
+      if (minEarlyHome != null) {
+        whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
+      }
+
+      if (minEarlyDraw != null) {
+        whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
+      }
+
+      if (minEarlyAway != null) {
+        whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
+      }
+
+      if (minFinalHome != null) {
+        whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
+      }
+
+      if (minFinalDraw != null) {
+        whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
+      }
+
+      if (minFinalAway != null) {
+        whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
+      }
+    }
+
+    return whereClause;
+  }
 }

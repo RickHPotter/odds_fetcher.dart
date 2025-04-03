@@ -30,14 +30,14 @@ import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton
 
 import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
 
-class RecordListScreen extends StatefulWidget {
-  const RecordListScreen({super.key});
+class HistoryAnalysisRecordsScreen extends StatefulWidget {
+  const HistoryAnalysisRecordsScreen({super.key});
 
   @override
-  State<RecordListScreen> createState() => _RecordListScreenState();
+  State<HistoryAnalysisRecordsScreen> createState() => _HistoryAnalysisRecordsScreenState();
 }
 
-class _RecordListScreenState extends State<RecordListScreen> {
+class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScreen> {
   late Future<List<Record>>? records;
   late List<Record> pivotRecords = [];
   late List<Team> teams = [];
@@ -74,7 +74,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
   };
   // FILTERS -->
 
-  final List<int> futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3];
+  final List<int> pastMatchesMinutesList = [60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3, 60 * 24 * 4, 60 * 24 * 5, 60 * 24 * 8, 60 * 24 * 10, 60 * 24 * 7];
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
   StreamSubscription<Record>? _recordSubscription;
@@ -103,7 +103,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
       records = Future.value([]);
     });
 
-    _recordSubscription = DatabaseService.fetchFutureRecords(filter).listen(
+    _recordSubscription = DatabaseService.fetchPivotRecords(filter).listen(
       (record) {
         setState(() {
           pivotRecords.add(record);
@@ -307,8 +307,8 @@ class _RecordListScreenState extends State<RecordListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.update)),
-                  for (final int minutes in futureMatchesMinutesList)
+                  Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
+                  for (final int minutes in pastMatchesMinutesList)
                     SizedBox(
                       width: buttonSize,
                       child: Padding(

@@ -137,7 +137,45 @@ class DatabaseService {
     for (final row in result) {
       Record futureRecord = Record.fromMap(row);
 
-      final percentageResult = await db.rawQuery("""
+      Record? updatedFutureRecord = await fetchPivotRecord(futureRecord, filter);
+
+      if (updatedFutureRecord != null) yield updatedFutureRecord;
+    }
+  }
+
+  static Stream<Record> fetchPivotRecords(Filter filter) async* {
+    final Database db = await DatabaseService.database;
+
+    final List<Map<String, dynamic>> result = await db.rawQuery("""
+    SELECT
+      r.*,
+      l.id AS leagueId,
+      l.leagueCode,
+      l.leagueName,
+      ht.teamName AS homeTeamName,
+      ht.id AS homeTeamId,
+      at.id AS awayTeamId,
+      at.teamName AS awayTeamName
+    FROM Records r
+    JOIN Leagues l ON r.leagueId = l.id
+    JOIN Teams ht ON r.homeTeamId = ht.id
+    JOIN Teams at ON r.awayTeamId = at.id
+    ${await filter.whereClausePivot()}
+    ORDER BY MatchDate DESC, ID
+    """);
+
+    for (final row in result) {
+      Record pivotRecord = Record.fromMap(row);
+      Record? updatedPivotRecord = await fetchPivotRecord(pivotRecord, filter);
+
+      if (updatedPivotRecord != null) yield updatedPivotRecord;
+    }
+  }
+
+  static Future<Record?> fetchPivotRecord(Record pivotRecord, Filter filter) async {
+    final Database db = await DatabaseService.database;
+
+    final percentageResult = await db.rawQuery("""
         SELECT
           COUNT(*) AS recordsCount,
           SUM(homeWin) AS homeWins,
@@ -147,40 +185,43 @@ class DatabaseService {
           SUM(CASE WHEN homeSecondHalfScore + awaySecondHalfScore >= ${filter.milestoneGoalsSecondHalf} THEN 1 ELSE 0 END) AS overSecond,
           SUM(CASE WHEN homeFirstHalfScore + homeSecondHalfScore + awayFirstHalfScore + awaySecondHalfScore >= ${filter.milestoneGoalsFullTime} THEN 1 ELSE 0 END) AS overFull
         FROM Records r
-        ${await filter.whereClause(futureRecord: futureRecord)}
+        ${await filter.whereClause(futureRecord: pivotRecord)}
       """);
 
-      final Map<String, dynamic> res = percentageResult[0];
-      final int recordsCount = res["recordsCount"] as int;
+    final Map<String, dynamic> res = percentageResult[0];
+    final int recordsCount = res["recordsCount"] as int;
 
-      if (recordsCount > 0) {
-        double homeWinPercentage = (res["homeWins"] / recordsCount) * 100;
-        double drawPercentage = (res["draws"] / recordsCount) * 100;
-        double awayWinPercentage = (res["awayWins"] / recordsCount) * 100;
+    if (recordsCount <= 0) return null;
 
-        futureRecord.pastRecordsCount = recordsCount;
-        futureRecord.homeWinPercentage = homeWinPercentage;
-        futureRecord.drawPercentage = drawPercentage;
-        futureRecord.awayWinPercentage = awayWinPercentage;
+    double homeWinPercentage = (res["homeWins"] / recordsCount) * 100;
+    double drawPercentage = (res["draws"] / recordsCount) * 100;
+    double awayWinPercentage = (res["awayWins"] / recordsCount) * 100;
 
-        double overFirstPercentage = (res["overFirst"] / recordsCount) * 100;
-        double overSecondPercentage = (res["overSecond"] / recordsCount) * 100;
-        double overFullPercentage = (res["overFull"] / recordsCount) * 100;
+    pivotRecord.pastRecordsCount = recordsCount;
+    pivotRecord.homeWinPercentage = homeWinPercentage;
+    pivotRecord.drawPercentage = drawPercentage;
+    pivotRecord.awayWinPercentage = awayWinPercentage;
 
-        futureRecord.overFirstPercentage = overFirstPercentage;
-        futureRecord.overSecondPercentage = overSecondPercentage;
-        futureRecord.overFullPercentage = overFullPercentage;
+    double overFirstPercentage = (res["overFirst"] / recordsCount) * 100;
+    double overSecondPercentage = (res["overSecond"] / recordsCount) * 100;
+    double overFullPercentage = (res["overFull"] / recordsCount) * 100;
 
-        if ((homeWinPercentage >= filter.futureMinHomeWinPercentage ||
-                drawPercentage >= filter.futureMinDrawPercentage ||
-                awayWinPercentage >= filter.futureMinAwayWinPercentage) &&
-            (overFirstPercentage >= filter.futureMinOverFirstPercentage ||
-                overSecondPercentage >= filter.futureMinOverSecondPercentage ||
-                overFullPercentage >= filter.futureMinOverFullPercentage)) {
-          yield futureRecord;
-        }
-      }
-    }
+    pivotRecord.overFirstPercentage = overFirstPercentage;
+    pivotRecord.overSecondPercentage = overSecondPercentage;
+    pivotRecord.overFullPercentage = overFullPercentage;
+
+    bool resultApplies =
+        homeWinPercentage >= filter.futureMinHomeWinPercentage ||
+        drawPercentage >= filter.futureMinDrawPercentage ||
+        awayWinPercentage >= filter.futureMinAwayWinPercentage;
+    bool scoreApplies =
+        overFirstPercentage >= filter.futureMinOverFirstPercentage ||
+        overSecondPercentage >= filter.futureMinOverSecondPercentage ||
+        overFullPercentage >= filter.futureMinOverFullPercentage;
+
+    if (resultApplies && scoreApplies) return pivotRecord;
+
+    return null;
   }
 
   static Future<List<Record>> fetchRecords({Filter? filter, Record? futureRecord}) async {

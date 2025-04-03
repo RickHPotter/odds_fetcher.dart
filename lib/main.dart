@@ -1,16 +1,19 @@
 import "dart:async";
-
 import "dart:io";
+
 import "package:flutter/material.dart";
 import "package:flutter/services.dart" show Clipboard, ClipboardData;
-import "package:font_awesome_flutter/font_awesome_flutter.dart";
+
+import "package:sqflite_common_ffi/sqflite_ffi.dart";
+import "package:font_awesome_flutter/font_awesome_flutter.dart" show FontAwesomeIcons;
 import "package:google_fonts/google_fonts.dart" show GoogleFonts;
-import "package:odds_fetcher/screens/history_records_list_screen.dart";
-import "package:odds_fetcher/screens/records_list_screen.dart";
-import "package:odds_fetcher/models/record.dart";
+
+import "package:odds_fetcher/models/record.dart" show Record;
+import "package:odds_fetcher/screens/history_analysis_records_screen.dart" show HistoryAnalysisRecordsScreen;
+import "package:odds_fetcher/screens/future_analysis_records_screen.dart" show FutureAnalysisRecordsScreen;
+import "package:odds_fetcher/screens/history_records_screen.dart" show HistoryRecordsScreen;
 import "package:odds_fetcher/services/api_service.dart" show ApiService;
 import "package:odds_fetcher/services/database_service.dart" show DatabaseService;
-import "package:sqflite_common_ffi/sqflite_ffi.dart";
 
 void logError(Object error, StackTrace? stack) {
   final File logFile = File("${Directory.current.path}/error_log.txt");
@@ -121,8 +124,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         const SizedBox(width: 24),
                         ...[
-                          {"icon": FontAwesomeIcons.chartPie, "label": "ANALISE JOGOS FUTUROS"},
-                          {"icon": FontAwesomeIcons.dartLang, "label": "ANALISE JOGOS PASSADOS"},
+                          {"icon": FontAwesomeIcons.moon, "label": "JOGOS PASSADOS"},
+                          {"icon": FontAwesomeIcons.sun, "label": "JOGOS FUTUROS"},
                           {"icon": FontAwesomeIcons.clockRotateLeft, "label": "HISTÓRICO"},
                           {"icon": FontAwesomeIcons.handPointUp, "label": "SOBRE"},
                         ].asMap().entries.map((entry) {
@@ -160,8 +163,8 @@ class _MyHomePageState extends State<MyHomePage> {
             child: IndexedStack(
               index: selectedIndex,
               children: [
-                const RecordListScreen(),
-                const RecordListScreen(),
+                const HistoryAnalysisRecordsScreen(),
+                const FutureAnalysisRecordsScreen(),
                 const HistoryRecordsScreen(),
                 Padding(
                   padding: const EdgeInsets.all(16.0),

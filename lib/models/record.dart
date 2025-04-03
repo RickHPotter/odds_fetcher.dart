@@ -1,5 +1,7 @@
+import "package:odds_fetcher/models/filter.dart" show Filter;
 import "package:odds_fetcher/models/league.dart" show League;
 import "package:odds_fetcher/models/team.dart" show Team;
+import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/utils/date_utils.dart" show parseRawDateTime, rawDateTime;
 
 class Record {
@@ -121,6 +123,13 @@ class Record {
       "finalOdds2": finalOdds2,
       "finished": finished == true ? 1 : 0,
     };
+  }
+
+  static Future<void> updatePivotRecord(Record pivotRecord, Filter filter) async {
+    if (pivotRecord.pastRecordsCount <= 0) {
+      Record? updatedPivotRecord = await DatabaseService.fetchPivotRecord(pivotRecord, filter);
+      if (updatedPivotRecord != null) pivotRecord = updatedPivotRecord;
+    }
   }
 
   static Map<String, double> calculateScoreMatchPercentages(Record futureRecord, List<Record> records) {

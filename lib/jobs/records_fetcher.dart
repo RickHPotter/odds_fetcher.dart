@@ -100,9 +100,14 @@ class RecordFetcher {
   }
 
   Future<void> fetchAndInsertFutureRecords({required bool Function() isCancelledCallback}) async {
+    List<Record> liveRecords = [];
+    List<Record> futureRecords = [];
     List<Record> records = [];
 
-    records = await ApiService().fetchFutureData();
+    liveRecords = await ApiService().fetchLiveData();
+    futureRecords = await ApiService().fetchFutureData();
+    records = liveRecords + futureRecords;
+
     _currentDateController.add("Data Futura");
     _progressController.add(50);
 

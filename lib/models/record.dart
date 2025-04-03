@@ -22,15 +22,15 @@ class Record {
   final int? homeWin;
   final int? draw;
   final int? awayWin;
-  late int overFirst;
-  late int overSecond;
-  late int overFull;
   final bool? finished;
 
   late int pastRecordsCount = 0;
   late double homeWinPercentage = 0.00;
   late double drawPercentage = 0.00;
   late double awayWinPercentage = 0.00;
+  late double overFirstPercentage = 0.00;
+  late double overSecondPercentage = 0.00;
+  late double overFullPercentage = 0.00;
 
   Record({
     this.id,
@@ -72,9 +72,7 @@ class Record {
   }
 
   bool anyPercentageHigherThan(double percentage) {
-    return homeWinPercentage  > percentage ||
-        drawPercentage  > percentage ||
-        awayWinPercentage  > percentage;
+    return homeWinPercentage > percentage || drawPercentage > percentage || awayWinPercentage > percentage;
   }
 
   factory Record.fromMap(Map<String, dynamic> map) {
@@ -129,44 +127,103 @@ class Record {
     if (futureRecord.pastRecordsCount > 0) {
       return {
         "homeWins": futureRecord.homeWinPercentage,
-        "draws": futureRecord.drawPercentage ,
-        "awayWins": futureRecord.awayWinPercentage ,
+        "draws": futureRecord.drawPercentage,
+        "awayWins": futureRecord.awayWinPercentage,
       };
     }
 
-    return {"homeWins": 0.0, "draws": 0.0, "awayWins": 0.0};
+    if (records.isEmpty) {
+      return {"homeWins": 0.0, "draws": 0.0, "awayWins": 0.0};
+    }
+
+    // TODO: delegate this sql
+    final int recordsCount = records.length;
+    int homeWins = 0;
+    int draws = 0;
+    int awayWins = 0;
+
+    for (Record record in records) {
+      if (record.homeWin == 1) {
+        homeWins++;
+      } else if (record.draw == 1) {
+        draws++;
+      } else if (record.awayWin == 1) {
+        awayWins++;
+      }
+    }
+
+    double homeWinPercentage = homeWins / recordsCount * 100;
+    double drawPercentage = draws / recordsCount * 100;
+    double awayWinPercentage = awayWins / recordsCount * 100;
+
+    return {"homeWins": homeWinPercentage, "draws": drawPercentage, "awayWins": awayWinPercentage};
   }
 
   static Map<String, double> calculateGoalsMatchPercentages(Record futureRecord, List<Record> records) {
     if (futureRecord.pastRecordsCount > 0) {
-      double overFirst = futureRecord.overFirst / futureRecord.pastRecordsCount * 100;
-      double underFirst = 100 - overFirst;
-
-      double overSecond = futureRecord.overSecond / futureRecord.pastRecordsCount * 100;
-      double underSecond = 100 - overSecond;
-
-      double overFull = futureRecord.overFull / futureRecord.pastRecordsCount * 100;
-      double underFull = 100 - overFull;
+      double underFirstPercentage = 100 - futureRecord.overFirstPercentage;
+      double underSecondPercentage = 100 - futureRecord.overSecondPercentage;
+      double underFullPercentage = 100 - futureRecord.overFullPercentage;
 
       return {
-        "overFirst": overFirst,
-        "underFirst": underFirst,
+        "overFirst": futureRecord.overFirstPercentage,
+        "underFirst": underFirstPercentage,
 
-        "overSecond": overSecond,
-        "underSecond": underSecond,
+        "overSecond": futureRecord.overSecondPercentage,
+        "underSecond": underSecondPercentage,
 
-        "overFull": overFull,
-        "underFull": underFull,
+        "overFull": futureRecord.overFullPercentage,
+        "underFull": underFullPercentage,
       };
     }
 
+    if (records.isEmpty) {
+      return {
+        "underFirst": 0.0,
+        "overFirst": 0.0,
+        "underSecond": 0.0,
+        "overSecond": 0.0,
+        "underFull": 0.0,
+        "overFull": 0.0,
+      };
+    }
+
+    // TODO: delegate this sql
+    final int recordsCount = records.length;
+    int overFirst = 0;
+    int overSecond = 0;
+    int overFull = 0;
+
+    for (Record record in records) {
+      int firstHalfScore = (record.homeFirstHalfScore ?? 0) + (record.awayFirstHalfScore ?? 0);
+      int secondHalfScore = (record.homeSecondHalfScore ?? 0) + (record.awaySecondHalfScore ?? 0);
+
+      if (firstHalfScore > 1) {
+        overFirst++;
+      } else if (secondHalfScore - firstHalfScore > 1) {
+        overSecond++;
+      } else if (secondHalfScore > 3) {
+        overFull++;
+      }
+    }
+
+    double overFirstPercentage = (overFirst / recordsCount) * 100;
+    double overSecondPercentage = (overSecond / recordsCount) * 100;
+    double overFullPercentage = (overFull / recordsCount) * 100;
+
+    double underFirstPercentage = 100 - overFirstPercentage;
+    double underSecondPercentage = 100 - overSecondPercentage;
+    double underFullPercentage = 100 - overFullPercentage;
+
     return {
-      "underFirst": 0.0,
-      "overFirst": 0.0,
-      "underSecond": 0.0,
-      "overSecond": 0.0,
-      "underFull": 0.0,
-      "overFull":0.0
+      "overFirst": overFirstPercentage,
+      "underFirst": underFirstPercentage,
+
+      "overSecond": overSecondPercentage,
+      "underSecond": underSecondPercentage,
+
+      "overFull": overFullPercentage,
+      "underFull": underFullPercentage,
     };
   }
 }

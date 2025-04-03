@@ -63,6 +63,11 @@ class MatchCard extends StatelessWidget {
                 ),
                 _buildGoalsPercentageBar(
                   "2T",
+                  goalsPercentages["underSecond"] as double,
+                  goalsPercentages["overSecond"] as double,
+                ),
+                _buildGoalsPercentageBar(
+                  "FT",
                   goalsPercentages["underFull"] as double,
                   goalsPercentages["overFull"] as double,
                 ),
@@ -142,13 +147,16 @@ class MatchCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("UNDER: ${under.toStringAsFixed(1)}%", style: TextStyle(color: Colors.orange.shade800)),
+            Text(
+              "UNDER: ${under.toStringAsFixed(2).padLeft(5, "0")}%",
+              style: TextStyle(color: Colors.orange.shade800),
+            ),
             Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text("OVER: ${over.toStringAsFixed(1)}%", style: TextStyle(color: Colors.blue.shade800)),
+            Text("OVER: ${over.toStringAsFixed(2).padLeft(5, "0")}%", style: TextStyle(color: Colors.blue.shade800)),
           ],
         ),
         Container(
-          height: 20,
+          height: 10,
           decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
           child: Row(
             children: [

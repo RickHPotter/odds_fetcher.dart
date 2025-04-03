@@ -58,6 +58,10 @@ class Filter {
   int futureMinDrawPercentage;
   int futureMinAwayWinPercentage;
 
+  int futureMinOverFirstPercentage;
+  int futureMinOverSecondPercentage;
+  int futureMinOverFullPercentage;
+
   bool filterPastRecordsByTeams;
   bool filterFutureRecordsByTeams;
   bool filterPastRecordsByLeagues;
@@ -102,6 +106,9 @@ class Filter {
     this.futureMinHomeWinPercentage = 52,
     this.futureMinDrawPercentage = 52,
     this.futureMinAwayWinPercentage = 52,
+    this.futureMinOverFirstPercentage = 0,
+    this.futureMinOverSecondPercentage = 0,
+    this.futureMinOverFullPercentage = 0,
     this.filterPastRecordsByTeams = true,
     this.filterFutureRecordsByTeams = true,
     this.filterPastRecordsByLeagues = true,
@@ -159,6 +166,9 @@ class Filter {
       futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"] ?? 0,
       futureMinDrawPercentage: map["futureMinDrawPercentage"] ?? 0,
       futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"] ?? 0,
+      futureMinOverFirstPercentage: map["futureMinOverFirstPercentage"] ?? 0,
+      futureMinOverSecondPercentage: map["futureMinOverSecondPercentage"] ?? 0,
+      futureMinOverFullPercentage: map["futureMinOverFullPercentage"] ?? 0,
       filterPastRecordsByTeams: map["filterPastRecordsByTeams"] == 1,
       filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
       filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
@@ -206,6 +216,9 @@ class Filter {
       "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
       "futureMinDrawPercentage": futureMinDrawPercentage,
       "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
+      "futureMinOverFirstPercentage": futureMinOverFirstPercentage,
+      "futureMinOverSecondPercentage": futureMinOverSecondPercentage,
+      "futureMinOverFullPercentage": futureMinOverFullPercentage,
       "filterPastRecordsByTeams": filterPastRecordsByTeams ? 1 : 0,
       "filterFutureRecordsByTeams": filterFutureRecordsByTeams ? 1 : 0,
       "filterPastRecordsByLeagues": filterPastRecordsByLeagues ? 1 : 0,

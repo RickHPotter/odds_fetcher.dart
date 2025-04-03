@@ -13,6 +13,10 @@ ALTER TABLE Filters ADD COLUMN milestoneGoalsFirstHalf;
 ALTER TABLE Filters ADD COLUMN milestoneGoalsSecondHalf;
 ALTER TABLE Filters ADD COLUMN milestoneGoalsFullTime;
 
+ALTER TABLE Filters ADD COLUMN futureMinOverFirstPercentage;
+ALTER TABLE Filters ADD COLUMN futureMinOverSecondPercentage;
+ALTER TABLE Filters ADD COLUMN futureMinOverFullPercentage;
+
 UPDATE Records
 SET
   homeWin = CASE WHEN homeSecondHalfScore > awaySecondHalfScore THEN 1

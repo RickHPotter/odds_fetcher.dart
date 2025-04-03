@@ -23,7 +23,7 @@ import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, sho
 import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
 import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
-import "package:odds_fetcher/widgets/criteria_filter.dart" show CriteriaFilterButton;
+import "package:odds_fetcher/widgets/criteria_filter.dart" show CriteriaFilterButton, CriteriaFilterModal;
 import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/past_matches_datatable.dart" show PastMachDataTable;
 import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
@@ -467,11 +467,24 @@ class _RecordListScreenState extends State<RecordListScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          filter.futureMinHomeWinPercentage = 52;
-                          filter.futureMinDrawPercentage = 52;
-                          filter.futureMinAwayWinPercentage = 52;
+                          if (filter.futureMinHomeWinPercentage == 52 &&
+                              filter.futureMinDrawPercentage == 52 &&
+                              filter.futureMinAwayWinPercentage == 52) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return CriteriaFilterModal(filter: filter, onApplyCallback: () => loadFutureMatches());
+                              },
+                            );
+                          } else {
+                            filter.futureMinHomeWinPercentage = 52;
+                            filter.futureMinDrawPercentage = 52;
+                            filter.futureMinAwayWinPercentage = 52;
 
-                          setState(() => filter = filter);
+                            setState(() => filter = filter);
+
+                            loadFutureMatches();
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -504,7 +517,7 @@ class _RecordListScreenState extends State<RecordListScreen> {
           SizedBox(height: MediaQuery.of(context).size.height * 0.015),
           // Future Matches Carousel
           SizedBox(
-            height: 66,
+            height: 66.6,
             child: Listener(
               onPointerSignal: (event) {
                 if (event is PointerScrollEvent) {
@@ -519,63 +532,85 @@ class _RecordListScreenState extends State<RecordListScreen> {
                   scrollDirection: Axis.horizontal,
                   controller: _scrollController,
                   itemCount: pivotRecords.length,
-                  itemBuilder: (context, index) {
+                  itemBuilder: (BuildContext context, int index) {
                     final Record match = pivotRecords[index];
 
+                    final List<Color> colors = [];
+
+                    if (match.anyPercentageHigherThan(80)) {
+                      colors.add(Colors.red[300] as Color);
+                    } else if (match.anyPercentageHigherThan(65)) {
+                      colors.add(Colors.orange[300] as Color);
+                    } else if (match.anyPercentageHigherThan(52)) {
+                      colors.add(Colors.amber[300] as Color);
+                    }
+
+                    if (selectedMatchId == match.id) {
+                      colors.add(Colors.grey[300] as Color);
+                      if (colors.length == 2) {
+                        colors.add(colors.first);
+                      }
+                    }
+
+                    if (colors.isEmpty) {
+                      colors.add(Colors.grey[100] as Color);
+                    }
+
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (hideFiltersOnFutureRecordSelect) showFilters = false;
-                          loadPastMatches(match.id as int, index);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor:
-                              selectedMatchId == match.id
-                                  ? Colors.grey[300]
-                                  : match.anyPercentageHigherThan(80)
-                                  ? Colors.red[300]
-                                  : match.anyPercentageHigherThan(65)
-                                  ? Colors.orange[300]
-                                  : match.anyPercentageHigherThan(52)
-                                  ? Colors.amber[300]
-                                  : Colors.grey[100],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(3),
-                            side: const BorderSide(color: Colors.black),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              match.homeTeam.name,
-                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.start,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
-                                  style: TextStyle(fontSize: 12, color: Colors.black87),
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  DateFormat.Hm("pt-BR").format(match.matchDate),
-                                  style: TextStyle(fontSize: 12, color: Colors.black87),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              match.awayTeam.name,
-                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.end,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: colors, stops: colors.length == 1 ? [0.0] : [0.2, 0.4, 0.8]),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black.withValues(alpha: 0.4), width: 0.7),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 2, offset: Offset(0, 2)),
                           ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: () {
+                              if (hideFiltersOnFutureRecordSelect) showFilters = false;
+                              loadPastMatches(match.id as int, index);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    match.homeTeam.name,
+                                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.start,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                        style: TextStyle(fontSize: 12, color: Colors.black87),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        DateFormat.Hm("pt-BR").format(match.matchDate),
+                                        style: TextStyle(fontSize: 12, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    match.awayTeam.name,
+                                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.end,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     );

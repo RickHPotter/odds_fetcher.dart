@@ -154,26 +154,29 @@ class DatabaseService {
       final int recordsCount = res["recordsCount"] as int;
 
       if (recordsCount > 0) {
-        final int homeWins = res["homeWins"] as int;
-        final int draws = res["draws"] as int;
-        final int awayWins = res["awayWins"] as int;
-
-        double homeWinPercentage = (homeWins / recordsCount) * 100;
-        double drawPercentage = (draws / recordsCount) * 100;
-        double awayWinPercentage = (awayWins / recordsCount) * 100;
+        double homeWinPercentage = (res["homeWins"] / recordsCount) * 100;
+        double drawPercentage = (res["draws"] / recordsCount) * 100;
+        double awayWinPercentage = (res["awayWins"] / recordsCount) * 100;
 
         futureRecord.pastRecordsCount = recordsCount;
         futureRecord.homeWinPercentage = homeWinPercentage;
         futureRecord.drawPercentage = drawPercentage;
         futureRecord.awayWinPercentage = awayWinPercentage;
 
-        futureRecord.overFirst = res["overFirst"] as int;
-        futureRecord.overSecond = res["overSecond"] as int;
-        futureRecord.overFull = res["overFull"] as int;
+        double overFirstPercentage = (res["overFirst"] / recordsCount) * 100;
+        double overSecondPercentage = (res["overSecond"] / recordsCount) * 100;
+        double overFullPercentage = (res["overFull"] / recordsCount) * 100;
 
-        if (homeWinPercentage >= filter.futureMinHomeWinPercentage ||
-            drawPercentage >= filter.futureMinDrawPercentage ||
-            awayWinPercentage >= filter.futureMinAwayWinPercentage) {
+        futureRecord.overFirstPercentage = overFirstPercentage;
+        futureRecord.overSecondPercentage = overSecondPercentage;
+        futureRecord.overFullPercentage = overFullPercentage;
+
+        if ((homeWinPercentage >= filter.futureMinHomeWinPercentage ||
+                drawPercentage >= filter.futureMinDrawPercentage ||
+                awayWinPercentage >= filter.futureMinAwayWinPercentage) &&
+            (overFirstPercentage >= filter.futureMinOverFirstPercentage ||
+                overSecondPercentage >= filter.futureMinOverSecondPercentage ||
+                overFullPercentage >= filter.futureMinOverFullPercentage)) {
           yield futureRecord;
         }
       }

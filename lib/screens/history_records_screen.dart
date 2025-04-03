@@ -40,7 +40,7 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
 
   bool isLoading = false;
 
-  late Filter filter = Filter(filterName: "FILTRO PADRÃO");
+  Filter filter = Filter(filterName: "FILTRO PADRÃO", showPivotOptions: false);
 
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
@@ -223,7 +223,7 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          filter = Filter(filterName: "FILTRO PADRÃO");
+                          filter = Filter(filterName: "FILTRO PADRÃO", showPivotOptions: false);
                           loadMatches();
                           showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
                         });

@@ -1,23 +1,16 @@
-import "dart:async";
-import "dart:io" show Platform;
-
 import "package:flutter/material.dart";
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/services.dart" show FilteringTextInputFormatter;
+import "package:intl/intl.dart" show DateFormat;
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:google_fonts/google_fonts.dart";
-
-import "package:intl/intl.dart" show DateFormat;
-import "package:intl/date_symbol_data_local.dart" show initializeDateFormatting;
+import "package:odds_fetcher/models/filter.dart" show Filter;
 
 import "package:odds_fetcher/models/record.dart";
-import "package:odds_fetcher/models/filter.dart";
-import "package:odds_fetcher/models/team.dart";
-import "package:odds_fetcher/models/league.dart";
-import "package:odds_fetcher/models/folder.dart";
-import "package:odds_fetcher/models/league_folder.dart";
-import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/services/database_service.dart";
+import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
+
+import "package:odds_fetcher/screens/base_analysis_records_screen.dart";
 
 import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
 import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
@@ -28,222 +21,43 @@ import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/past_matches_datatable.dart" show PastMachDataTable;
 import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
 
-import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
-
-class HistoryAnalysisRecordsScreen extends StatefulWidget {
+class HistoryAnalysisRecordsScreen extends BaseAnalysisScreen {
   const HistoryAnalysisRecordsScreen({super.key});
 
   @override
   State<HistoryAnalysisRecordsScreen> createState() => _HistoryAnalysisRecordsScreenState();
 }
 
-class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScreen> {
-  late Future<List<Record>>? records;
-  late List<Record> pivotRecords = [];
-  late List<Team> teams = [];
-  late List<League> leagues = [];
-  late List<Folder> folders = [];
-  late List<LeagueFolder> leaguesFolders = [];
+class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<HistoryAnalysisRecordsScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _yearController = TextEditingController();
+  final TextEditingController _filterNameController = TextEditingController();
 
-  late RecordFetcher fetcher;
-  String currentDate = DateTime.now().toString();
-  int progress = 0;
-  bool isFetching = false;
-  bool isLoading = false;
-  bool isCancelled = false;
-  bool isCreatingFilter = false;
-  bool isUpdatingFilter = false;
-
-  int? selectedMatchId;
-  int? pivotRecordIndex;
-
-  bool showFilters = true;
-  bool hideFiltersOnFutureRecordSelect = Platform.isLinux ? false : true;
-
-  // <-- FILTERS
-  late Filter filter = Filter(filterName: "FILTRO PADRÃO");
-  late Filter placeholderFilter = filter.copyWith();
-
-  late Map<Odds, bool> selectedOddsMap = {
-    Odds.earlyOdds1: filter.futureSameEarlyHome,
-    Odds.earlyOddsX: filter.futureSameEarlyDraw,
-    Odds.earlyOdds2: filter.futureSameEarlyAway,
-    Odds.finalOdds1: filter.futureSameFinalHome,
-    Odds.finalOddsX: filter.futureSameFinalDraw,
-    Odds.finalOdds2: filter.futureSameFinalAway,
-  };
-  // FILTERS -->
-
-  final List<int> pastMatchesMinutesList = [60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3, 60 * 24 * 4, 60 * 24 * 5, 60 * 24 * 8, 60 * 24 * 10, 60 * 24 * 7];
+  final List<int> pastMatchesMinutesList = [
+    60 * 5,
+    60 * 6,
+    60 * 12,
+    60 * 24,
+    60 * 24 * 2,
+    60 * 24 * 3,
+    60 * 24 * 4,
+    60 * 24 * 5,
+    60 * 24 * 7,
+  ];
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
-  StreamSubscription<Record>? _recordSubscription;
-  final ScrollController _scrollController = ScrollController();
-  late TextEditingController yearController = TextEditingController();
-  late TextEditingController filterNameController = TextEditingController();
-
-  Future<void> fetchFromMaxMatchDate() async {
-    final DateTime minDateToFetch = await DatabaseService.fetchFromMaxMatchDate();
-
-    if (minDateToFetch != DateTime.now()) {
-      startFetching(minDate: minDateToFetch);
-    }
-
-    startFetchingFuture();
-  }
-
-  void loadFutureMatches() {
-    _recordSubscription?.cancel();
-
-    setState(() {
-      isLoading = true;
-      pivotRecords.clear();
-      selectedMatchId = null;
-      pivotRecordIndex = null;
-      records = Future.value([]);
-    });
-
-    _recordSubscription = DatabaseService.fetchPivotRecords(filter).listen(
-      (record) {
-        setState(() {
-          pivotRecords.add(record);
-          if (pivotRecordIndex == null) {
-            loadPastMatches(record.id, 0);
-          }
-        });
-      },
-      onDone: () {
-        setState(() {
-          isLoading = false;
-          pivotRecordIndex ??= 0;
-        });
-      },
-    );
-  }
-
-  void loadPastMatches(int? id, int? index) async {
-    setState(() {
-      selectedMatchId = id;
-      pivotRecordIndex = index;
-
-      if (id != null && index != null && pivotRecords.isNotEmpty) {
-        final Record futurePivotRecord = pivotRecords[index];
-        records = DatabaseService.fetchRecords(filter: filter, futureRecord: futurePivotRecord);
-      }
-    });
-  }
-
-  void loadTeamsAndLeaguesAndFolders() async {
-    final List<Team> fetchedTeams = await DatabaseService.fetchTeams();
-    final List<League> fetchedLeagues = await DatabaseService.fetchLeagues();
-    final List<Folder> fetchedFolders = await DatabaseService.fetchFoldersWithLeagues();
-
-    setState(() {
-      teams = fetchedTeams;
-      leagues = fetchedLeagues;
-      folders = fetchedFolders;
-    });
-  }
-
-  void retrieveFilter(int id) async {
-    filter = await DatabaseService.fetchFilter(id);
-
-    setState(() {
-      filter = filter;
-      placeholderFilter = filter.copyWith();
-    });
-
-    updateOddsFilter();
-    loadFutureMatches();
-  }
-
-  void updateOddsFilter() {
-    selectedOddsMap = {
-      Odds.earlyOdds1: filter.futureSameEarlyHome,
-      Odds.earlyOddsX: filter.futureSameEarlyDraw,
-      Odds.earlyOdds2: filter.futureSameEarlyAway,
-      Odds.finalOdds1: filter.futureSameFinalHome,
-      Odds.finalOddsX: filter.futureSameFinalDraw,
-      Odds.finalOdds2: filter.futureSameFinalAway,
-    };
-  }
-
-  void updateFutureSameOddsTypes() {
-    if (filter.anySpecificOddsPresent()) {
-      updateOddsFilter();
-    }
-
-    setState(() => filter = filter);
-  }
-
   @override
-  void initState() {
-    super.initState();
-
-    initializeDateFormatting("pt-BR");
-
-    fetcher = RecordFetcher();
-    fetcher.progressStream.listen((value) {
-      setState(() => progress = value);
-    });
-    fetcher.currentDateStream.listen((value) {
-      setState(() => currentDate = value);
-    });
-
-    records = Future.value([]);
-
-    fetchFromMaxMatchDate();
-    loadTeamsAndLeaguesAndFolders();
-
-    retrieveFilter(0);
-  }
-
-  @override
-  void dispose() {
-    fetcher.dispose();
-    _recordSubscription?.cancel();
-    super.dispose();
-  }
-
-  void startFetching({DateTime? minDate, DateTime? maxDate}) async {
-    minDate ??= DateTime.parse("2008-01-01");
-    maxDate ??= DateTime.now().subtract(Duration(days: 1));
-
-    setState(() {
-      isFetching = true;
-      isCancelled = false;
-    });
-
-    await fetcher.fetchAndInsertRecords(minDate: minDate, maxDate: maxDate, isCancelledCallback: () => isCancelled);
-
-    if (mounted) {
-      if (isCancelled) {
-        showOverlayMessage(context, "Operação cancelada!", type: MessageType.info);
-      } else {
-        showOverlayMessage(context, "Jogos passados buscados com sucesso!");
-      }
-    }
-
-    setState(() => isFetching = false);
-  }
-
-  void startFetchingFuture() async {
-    setState(() {
-      isFetching = true;
-      isCancelled = false;
-    });
-
-    await fetcher.fetchAndInsertFutureRecords(isCancelledCallback: () => isCancelled);
-
-    if (mounted && !isCancelled) showOverlayMessage(context, "Jogos futuros buscados com sucesso!");
-
-    setState(() => isFetching = false);
+  Stream<Record> fetchRecords(Filter filter) {
+    return DatabaseService.fetchPivotRecords(filter);
   }
 
   @override
   Widget build(BuildContext context) {
     final double buttonSize = MediaQuery.of(context).size.width * 0.087;
     final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
+    if (!pastMatchesMinutesList.contains(filter.futureNextMinutes)) {
+      filter.futureNextMinutes = pastMatchesMinutesList.first;
+    }
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -263,7 +77,7 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                         child: ElevatedButton(
-                          onPressed: () => filterHistoryMatches(time: time),
+                          onPressed: () => filterHistoryMatches(_yearController, time: time),
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             shadowColor: Colors.purple,
@@ -283,7 +97,7 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                     width: buttonSize,
                     height: MediaQuery.of(context).size.height * 0.042,
                     child: TextFormField(
-                      controller: yearController,
+                      controller: _yearController,
                       keyboardType: TextInputType.number,
                       validator: (value) => value == null ? "ANO INVÁLIDO" : null,
                       decoration: InputDecoration(
@@ -294,7 +108,11 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                         contentPadding: const EdgeInsets.all(12),
                       ),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                      onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
+                      onChanged:
+                          (value) => filterHistoryMatches(
+                            _yearController,
+                            specificYear: value.isEmpty ? null : int.parse(value),
+                          ),
                     ),
                   ),
                 ],
@@ -410,9 +228,9 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                     ),
                   ),
                   SizedBox(
-                    width: buttonSize * 1.5,
+                    width: buttonSize,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
                       child: ElevatedButton(
                         onPressed: () => filterMatchesBySameLeague(),
                         style: ElevatedButton.styleFrom(
@@ -420,19 +238,12 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                           shadowColor: Colors.purple,
                           backgroundColor: filter.futureOnlySameLeague ? Colors.indigoAccent : null,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.dehaze, color: filter.futureOnlySameLeague ? Colors.white : null),
-                            const SizedBox(width: 1),
-                            Text(
-                              "MESMA LIGA",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: filter.futureOnlySameLeague ? Colors.white : null,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          "MESMA LIGA",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: filter.futureOnlySameLeague ? Colors.white : null,
+                          ),
                         ),
                       ),
                     ),
@@ -642,7 +453,7 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                             ? SizedBox(
                               height: MediaQuery.of(context).size.height * 0.05,
                               child: TextField(
-                                controller: filterNameController,
+                                controller: _filterNameController,
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8), // Adjust padding
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -673,7 +484,7 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                             isCreatingFilter = true;
                             filter.id = null;
                             filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
-                            filterNameController.text = filter.filterName;
+                            _filterNameController.text = filter.filterName;
                           });
                         },
                         child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
@@ -691,7 +502,7 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
 
                           setState(() {
                             isUpdatingFilter = true;
-                            filterNameController.text = filter.filterName;
+                            _filterNameController.text = filter.filterName;
                           });
                         },
                         child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
@@ -810,7 +621,7 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                 Align(
                   alignment: Alignment.centerRight,
                   child:
-                      isFetching
+                      isFetchingPast || isFetchingPivot
                           ? SizedBox(
                             width: MediaQuery.of(context).size.width * 0.31,
                             child: Padding(
@@ -827,7 +638,8 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
                                           onPressed: () {
                                             setState(() {
                                               isCancelled = true;
-                                              isFetching = false;
+                                              isFetchingPast = false;
+                                              isFetchingPivot = false;
                                             });
                                           },
                                           style: OutlinedButton.styleFrom(
@@ -891,104 +703,5 @@ class _HistoryAnalysisRecordsScreenState extends State<HistoryAnalysisRecordsScr
         ],
       ),
     );
-  }
-
-  // FILTERS
-  void filterHistoryMatches({int? time, int? specificYear}) {
-    if (time == null && specificYear == null) {
-      showOverlayMessage(context, "Filtro de Tempo Passado preenchido incompletamente!", type: MessageType.warning);
-      return;
-    }
-
-    if (time != null) {
-      filter.pastYears = time;
-      yearController.clear();
-    } else if (specificYear != null) {
-      filter.pastYears = null;
-      filter.specificYears = specificYear;
-    }
-
-    setState(() => filter = filter);
-
-    loadFutureMatches();
-  }
-
-  void filterUpcomingMatches(int duration) {
-    filter.futureNextMinutes = duration;
-
-    setState(() {
-      filter = filter;
-    });
-
-    loadFutureMatches();
-  }
-
-  void filterMatchesBySimiliarity(Odds oddType) {
-    setState(() {
-      switch (oddType) {
-        case Odds.earlyOdds1:
-          filter.futureSameEarlyHome = !filter.futureSameEarlyHome;
-          break;
-        case Odds.earlyOddsX:
-          filter.futureSameEarlyDraw = !filter.futureSameEarlyDraw;
-          break;
-        case Odds.earlyOdds2:
-          filter.futureSameEarlyAway = !filter.futureSameEarlyAway;
-          break;
-        case Odds.finalOdds1:
-          filter.futureSameFinalHome = !filter.futureSameFinalHome;
-          break;
-        case Odds.finalOddsX:
-          filter.futureSameFinalDraw = !filter.futureSameFinalDraw;
-          break;
-        case Odds.finalOdds2:
-          filter.futureSameFinalAway = !filter.futureSameFinalAway;
-          break;
-      }
-
-      updateOddsFilter();
-
-      setState(() => filter = filter);
-
-      if (filter.anyFutureMinPercent()) {
-        loadFutureMatches();
-      } else {
-        loadPastMatches(selectedMatchId, pivotRecordIndex);
-      }
-    });
-  }
-
-  void filterMatchesBySameLeague() {
-    filter.futureOnlySameLeague = !filter.futureOnlySameLeague;
-    if (filter.futureOnlySameLeague) {
-      filter.leagues.clear();
-      filter.folders.clear();
-    }
-
-    setState(() {
-      filter = filter;
-    });
-
-    loadPastMatches(selectedMatchId, pivotRecordIndex);
-  }
-
-  Future<bool> saveFilter() async {
-    late bool success;
-
-    if (filter.id == null) {
-      success = await DatabaseService.insertFilter(filter);
-    } else {
-      success = await DatabaseService.updateFilter(filter);
-    }
-
-    if (!success) return false;
-
-    setState(() {
-      placeholderFilter = filter.copyWith();
-      isCreatingFilter = false;
-      isUpdatingFilter = false;
-    });
-
-    return true;
   }
 }

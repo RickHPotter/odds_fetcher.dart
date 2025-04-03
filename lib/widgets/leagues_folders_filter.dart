@@ -240,7 +240,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                           children:
                               selectedLeaguesFromFolders.map((league) {
                                 return Chip(
-                                  label: Tooltip(message: league.name, child: Text(league.code)),
+                                  label: Tooltip(message: league.name, child: Text(league.name)),
                                   deleteIconColor: Colors.red,
                                   onDeleted: () {
                                     setStates(() {

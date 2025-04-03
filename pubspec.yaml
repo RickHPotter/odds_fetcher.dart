@@ -37,5 +37,4 @@ flutter:
   assets:
     - assets/db.zip
     - assets/migrations/0001.sql
-    - assets/migrations/0002.sql
     - assets/images/logo.jpg

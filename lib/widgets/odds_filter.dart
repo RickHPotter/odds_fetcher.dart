@@ -212,7 +212,7 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // FILTER APPLYING
-                  if (filter.id != null)
+                  if (filter.showPivotOptions)
                     Row(
                       children: [
                         Flexible(

@@ -81,7 +81,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 1,
       onCreate: (db, version) async {
         debugPrint("Creating new database with version $version.");
         db.execute("PRAGMA foreign_keys=ON;");
@@ -290,7 +290,7 @@ class DatabaseService {
     try {
       await batch.commit(noResult: true);
     } catch (e) {
-      // ignore
+      debugPrint(e.toString());
     }
   }
 

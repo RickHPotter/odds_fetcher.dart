@@ -6,6 +6,7 @@ import "package:odds_fetcher/models/league.dart" show League;
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/team.dart" show Team;
 import "package:odds_fetcher/services/database_service.dart" show DatabaseService;
+import "package:odds_fetcher/utils/date_utils.dart" show parseRawDateTime;
 import "package:odds_fetcher/utils/parse_utils.dart";
 
 class ApiService {
@@ -46,13 +47,11 @@ class ApiService {
       }
 
       DateTime matchDate;
-      List<String> timeFraments = fields[1].split(",");
 
       try {
-        matchDate = DateTime.parse(
-          "${timeFraments[0]}-${timeFraments[1]}-${timeFraments[2]} ${timeFraments[3]}:${timeFraments[4]}:${timeFraments[5]}",
-        ).subtract(const Duration(hours: 11));
+        matchDate = parseRawDateTime(fields[1].trim().replaceAll(",", "")).subtract(Duration(hours: 11));
       } catch (e) {
+        debugPrint(e.toString());
         matchDate = DateTime.now();
       }
 
@@ -153,13 +152,11 @@ class ApiService {
       }
 
       DateTime matchDate;
-      List<String> timeFraments = fields[1].split(",");
 
       try {
-        matchDate = DateTime.parse(
-          "${timeFraments[0]}-${timeFraments[1]}-${timeFraments[2]} ${timeFraments[3]}:${timeFraments[4]}:${timeFraments[5]}",
-        ).subtract(const Duration(hours: 11));
+        matchDate = parseRawDateTime(fields[1].trim().replaceAll(",", "")).subtract(Duration(hours: 11));
       } catch (e) {
+        debugPrint(e.toString());
         matchDate = DateTime.now();
       }
 
@@ -265,13 +262,11 @@ class ApiService {
       }
 
       DateTime matchDate;
-      List<String> timeFraments = fields[1].split(",");
 
       try {
-        matchDate = DateTime.parse(
-          "${timeFraments[0]}-${timeFraments[1]}-${timeFraments[2]} ${timeFraments[3]}:${timeFraments[4]}:${timeFraments[5]}",
-        ).subtract(const Duration(hours: 11));
+        matchDate = parseRawDateTime(fields[1].trim().replaceAll(",", "")).subtract(Duration(hours: 11));
       } catch (e) {
+        debugPrint(e.toString());
         matchDate = DateTime.now();
       }
 

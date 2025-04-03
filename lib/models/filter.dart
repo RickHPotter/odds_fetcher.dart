@@ -73,6 +73,8 @@ class Filter {
   List<League> leagues;
   List<Folder> folders;
 
+  bool showPivotOptions;
+
   Filter({
     this.id,
     required this.filterName,
@@ -119,6 +121,8 @@ class Filter {
     this.teams = const [],
     this.leagues = const [],
     this.folders = const [],
+
+    this.showPivotOptions = true,
   }) : assert(pastYears != null || specificYears != null);
 
   Filter copyWith() {
@@ -163,12 +167,9 @@ class Filter {
       futureSameFinalHome: map["futureSameFinalHome"] == 1,
       futureSameFinalDraw: map["futureSameFinalDraw"] == 1,
       futureSameFinalAway: map["futureSameFinalAway"] == 1,
-      futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"] ?? 0,
-      futureMinDrawPercentage: map["futureMinDrawPercentage"] ?? 0,
-      futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"] ?? 0,
-      futureMinOverFirstPercentage: map["futureMinOverFirstPercentage"] ?? 0,
-      futureMinOverSecondPercentage: map["futureMinOverSecondPercentage"] ?? 0,
-      futureMinOverFullPercentage: map["futureMinOverFullPercentage"] ?? 0,
+      futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"],
+      futureMinDrawPercentage: map["futureMinDrawPercentage"],
+      futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
       filterPastRecordsByTeams: map["filterPastRecordsByTeams"] == 1,
       filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
       filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
@@ -216,9 +217,6 @@ class Filter {
       "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
       "futureMinDrawPercentage": futureMinDrawPercentage,
       "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
-      "futureMinOverFirstPercentage": futureMinOverFirstPercentage,
-      "futureMinOverSecondPercentage": futureMinOverSecondPercentage,
-      "futureMinOverFullPercentage": futureMinOverFullPercentage,
       "filterPastRecordsByTeams": filterPastRecordsByTeams ? 1 : 0,
       "filterFutureRecordsByTeams": filterFutureRecordsByTeams ? 1 : 0,
       "filterPastRecordsByLeagues": filterPastRecordsByLeagues ? 1 : 0,
@@ -553,5 +551,40 @@ class Filter {
     }
 
     return whereClause;
+  }
+
+  void updateOdds() {
+    if (minEarlyHome != null && maxEarlyHome == null) futureSameEarlyHome = false;
+    if (minEarlyDraw != null && maxEarlyDraw == null) futureSameEarlyDraw = false;
+    if (minEarlyAway != null && maxEarlyAway == null) futureSameEarlyAway = false;
+    if (minFinalHome != null && maxFinalHome == null) futureSameFinalHome = false;
+    if (minFinalDraw != null && maxFinalDraw == null) futureSameFinalDraw = false;
+    if (minFinalAway != null && maxFinalAway == null) futureSameFinalAway = false;
+
+    if (futureSameEarlyHome) {
+      minEarlyHome = null;
+      maxEarlyHome = null;
+    }
+
+    if (futureSameEarlyDraw) {
+      minEarlyDraw = null;
+      maxEarlyDraw = null;
+    }
+    if (futureSameEarlyAway) {
+      minEarlyAway = null;
+      maxEarlyAway = null;
+    }
+    if (futureSameFinalHome) {
+      minFinalHome = null;
+      maxFinalHome = null;
+    }
+    if (futureSameFinalDraw) {
+      minFinalDraw = null;
+      maxFinalDraw = null;
+    }
+    if (futureSameFinalAway) {
+      minFinalAway = null;
+      maxFinalAway = null;
+    }
   }
 }

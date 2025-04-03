@@ -34,8 +34,10 @@ void main() async {
   };
 
   Timer.periodic(Duration(minutes: 5), (timer) async {
-    List<Record> records = [];
-    records = await ApiService().fetchFutureData();
+    List<Record> liveRecords = await ApiService().fetchLiveData();
+    List<Record> futureRecords = await ApiService().fetchFutureData();
+    List<Record> records = liveRecords + futureRecords;
+
     await DatabaseService.deleteOldFutureRecords();
     await DatabaseService.insertRecordsBatch(records);
   });

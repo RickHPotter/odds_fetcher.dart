@@ -16,9 +16,13 @@ import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league_folder.dart";
 import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/services/database_service.dart";
-import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber;
+import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
+import "package:odds_fetcher/widgets/criteria_filter.dart" show CriteriaFilterButton, CriteriaFilterModal;
 import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
+import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
+import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
 import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
+import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
 
 abstract class BaseAnalysisScreen extends StatefulWidget {
   const BaseAnalysisScreen({super.key});
@@ -321,6 +325,207 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   }
 
   // WIDGETS
+  Widget pivotFilters(IconData icon, List<int> minutesList, double buttonSize) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(icon)),
+          for (final int minutes in minutesList)
+            SizedBox(
+              width: buttonSize,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: (4.0)),
+                child: ElevatedButton(
+                  onPressed: () => filterUpcomingMatches(minutes),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shadowColor: Colors.purple,
+                    backgroundColor: minutes == filter.futureNextMinutes ? Colors.indigoAccent : null,
+                  ),
+                  child: Text(
+                    humaniseTime(minutes, short: true),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: minutes == filter.futureNextMinutes ? Colors.white : null,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.042,
+            child: Switch(
+              value: hideFiltersOnFutureRecordSelect,
+              activeColor: Colors.indigoAccent,
+              onChanged: (bool value) {
+                setState(() {
+                  hideFiltersOnFutureRecordSelect = value;
+                });
+              },
+            ),
+          ),
+          const Text("OCULTAR FILTROS AO PESQUISAR"),
+        ],
+      ),
+    );
+  }
+
+  Widget bothFilters(double buttonSize, double smallButtonSize) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.tune)),
+          ...[Odds.earlyOdds1, Odds.earlyOddsX, Odds.earlyOdds2, Odds.finalOdds1, Odds.finalOddsX, Odds.finalOdds2].map(
+            (oddsType) {
+              final bool isSelected = selectedOddsMap[oddsType] ?? false;
+
+              return SizedBox(
+                width: smallButtonSize,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton(
+                    onPressed: () => filterMatchesBySimiliarity(oddsType),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shadowColor: Colors.purple,
+                      backgroundColor: isSelected ? Colors.indigoAccent : null,
+                    ),
+                    child: Text(
+                      oddsType.shortName,
+                      style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : null),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          SizedBox(
+            width: buttonSize,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: OddsFilterButton(
+                filter: filter,
+                onApplyCallback: () {
+                  updateFutureSameOddsTypes();
+                  loadFutureMatches();
+                },
+              ),
+            ),
+          ),
+          SizedBox(
+            width: buttonSize,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: TeamsFilterButton(
+                filter: filter,
+                teams: teams,
+                onApplyCallback: () {
+                  loadFutureMatches();
+                },
+              ),
+            ),
+          ),
+          SizedBox(
+            width: buttonSize,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: ElevatedButton(
+                onPressed: () => filterMatchesBySameLeague(),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shadowColor: Colors.purple,
+                  backgroundColor: filter.futureOnlySameLeague ? Colors.indigoAccent : null,
+                ),
+                child: Text(
+                  "MESMA LIGA",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: filter.futureOnlySameLeague ? Colors.white : null,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: buttonSize,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: LeaguesFoldersFilterButton(
+                filter: filter,
+                leagues: leagues,
+                folders: folders,
+                onApplyCallback: () {
+                  if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                    setState(() => filter.futureOnlySameLeague = false);
+                  }
+                  loadFutureMatches();
+                },
+              ),
+            ),
+          ),
+          SizedBox(
+            width: buttonSize,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: CriteriaFilterButton(filter: filter, onApplyCallback: () => loadFutureMatches()),
+            ),
+          ),
+          SizedBox(
+            width: buttonSize,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  if (filter.futureMinHomeWinPercentage == 52 &&
+                      filter.futureMinDrawPercentage == 52 &&
+                      filter.futureMinAwayWinPercentage == 52) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return CriteriaFilterModal(filter: filter, onApplyCallback: () => loadFutureMatches());
+                      },
+                    );
+                  } else {
+                    filter.futureMinHomeWinPercentage = 52;
+                    filter.futureMinDrawPercentage = 52;
+                    filter.futureMinAwayWinPercentage = 52;
+
+                    setState(() => filter = filter);
+
+                    loadFutureMatches();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shadowColor: Colors.purple,
+                  backgroundColor: filter.allFutureMinPercentSpecificValue(52) ? Colors.indigoAccent : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.filter_list, color: filter.allFutureMinPercentSpecificValue(52) ? Colors.white : null),
+                    const SizedBox(width: 1),
+                    Text(
+                      "52 %",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: filter.allFutureMinPercentSpecificValue(52) ? Colors.white : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget footerControls(BuildContext context, TextEditingController filterNameController) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
@@ -353,113 +558,124 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                       ),
             ),
           ),
-          Row(
-            children: [
-              Tooltip(
-                message: "Novo Filtro",
-                child: ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                    backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.2,
+            child: Row(
+              children: [
+                Tooltip(
+                  message: "Novo Filtro",
+                  child: ElevatedButton(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isCreatingFilter = true;
+                        filter.id = null;
+                        filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
+                        filterNameController.text = filter.filterName;
+                      });
+                    },
+                    child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      isCreatingFilter = true;
-                      filter.id = null;
-                      filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
-                      filterNameController.text = filter.filterName;
-                    });
-                  },
-                  child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
                 ),
-              ),
-              Tooltip(
-                message: "Editar Filtro",
-                child: ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                    backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
-                  ),
-                  onPressed: () {
-                    if (isCreatingFilter || isUpdatingFilter) return;
+                Tooltip(
+                  message: "Editar Filtro",
+                  child: ElevatedButton(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                      backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
+                    ),
+                    onPressed: () {
+                      if (isCreatingFilter || isUpdatingFilter) return;
 
-                    setState(() {
-                      isUpdatingFilter = true;
-                      filterNameController.text = filter.filterName;
-                    });
-                  },
-                  child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
+                      setState(() {
+                        isUpdatingFilter = true;
+                        filterNameController.text = filter.filterName;
+                      });
+                    },
+                    child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
+                  ),
                 ),
-              ),
-              Tooltip(
-                message: "Salvar Filtro",
-                child: ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                  ),
-                  onPressed: () async {
-                    final bool success = await saveFilter();
+                Tooltip(
+                  message: "Salvar Filtro",
+                  child: ElevatedButton(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                    ),
+                    onPressed: () async {
+                      final bool success = await saveFilter();
 
-                    if (!context.mounted) return;
-                    if (success) {
-                      showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
-                    } else {
-                      showOverlayMessage(context, "Filtro precisa de um nome diferente!", type: MessageType.error);
-                    }
-                  },
-                  child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
-                ),
-              ),
-              Tooltip(
-                message:
-                    isCreatingFilter || isUpdatingFilter ? "Cancelar Criação/Edição de Filtro" : "Resetar Filtro",
-                child: ElevatedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      if (isCreatingFilter || isUpdatingFilter) {
-                        isCreatingFilter = false;
-                        isUpdatingFilter = false;
-                        filter.filterName = placeholderFilter.filterName;
-
-                        showOverlayMessage(
-                          context,
-                          "Criação/Edição de filtro cancelada com sucesso!",
-                          type: MessageType.info,
-                        );
+                      if (!context.mounted) return;
+                      if (success) {
+                        showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
                       } else {
-                        filter = placeholderFilter.copyWith();
-                        updateOddsFilter();
-                        loadFutureMatches();
-                        showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                        showOverlayMessage(context, "Filtro precisa de um nome diferente!", type: MessageType.error);
                       }
-                    });
-                  },
-                  child:
-                      isCreatingFilter || isUpdatingFilter
-                          ? Icon(FontAwesomeIcons.ban, color: Colors.red)
-                          : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
+                    },
+                    child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
+                  ),
                 ),
-              ),
-            ],
+                Tooltip(
+                  message:
+                      isCreatingFilter || isUpdatingFilter ? "Cancelar Criação/Edição de Filtro" : "Resetar Filtro",
+                  child: ElevatedButton(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (isCreatingFilter || isUpdatingFilter) {
+                          isCreatingFilter = false;
+                          isUpdatingFilter = false;
+                          filter.filterName = placeholderFilter.filterName;
+
+                          showOverlayMessage(
+                            context,
+                            "Criação/Edição de filtro cancelada com sucesso!",
+                            type: MessageType.info,
+                          );
+                        } else {
+                          filter = placeholderFilter.copyWith();
+                          updateOddsFilter();
+                          loadFutureMatches();
+                          showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                        }
+                      });
+                    },
+                    child:
+                        isCreatingFilter || isUpdatingFilter
+                            ? Icon(FontAwesomeIcons.ban, color: Colors.red)
+                            : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
+                  ),
+                ),
+              ],
+            ),
           ),
-          isLoading
-              ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
-              : SizedBox(width: 20, height: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${humaniseNumber(pivotRecordsCount)} JOGOS PIVÔS TOTAIS.",
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
-              ),
-              Text(
-                "${humaniseNumber(pivotRecords.length)} JOGOS PIVÔS FILTRADOS.",
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
-              ),
-            ],
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${humaniseNumber(pivotRecordsCount)} JOGOS PIVÔS TOTAIS.",
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
+                    ),
+                    Text(
+                      "${humaniseNumber(pivotRecords.length)} JOGOS PIVÔS FILTRADOS.",
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+                isLoading
+                    ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
+                    : SizedBox(width: 20, height: 20),
+              ],
+            ),
           ),
           // Fetch Controls
           ElevatedButton(

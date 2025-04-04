@@ -43,8 +43,8 @@ class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<History
   Widget build(BuildContext context) {
     final double buttonSize = MediaQuery.of(context).size.width * 0.087;
     final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
-    if (!pastMatchesMinutesList.contains(filter.futureNextMinutes)) {
-      filter.futureNextMinutes = pastMatchesMinutesList.first;
+    if (!pastMatchesMinutesList.contains(filter.pivotNextMinutes)) {
+      filter.pivotNextMinutes = pastMatchesMinutesList.first;
     }
 
     return Padding(

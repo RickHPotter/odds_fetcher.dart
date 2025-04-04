@@ -55,19 +55,19 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   int? pivotRecordIndex;
 
   bool showFilters = true;
-  bool hideFiltersOnFutureRecordSelect = Platform.isLinux ? false : true;
+  bool hideFiltersOnPivotRecordSelect = Platform.isLinux ? false : true;
 
   // <-- FILTERS
   late Filter filter = Filter.base("FILTRO PADRÃO");
   late Filter placeholderFilter = filter.copyWith();
 
   late Map<Odds, bool> selectedOddsMap = {
-    Odds.earlyOdds1: filter.futureSameEarlyHome,
-    Odds.earlyOddsX: filter.futureSameEarlyDraw,
-    Odds.earlyOdds2: filter.futureSameEarlyAway,
-    Odds.finalOdds1: filter.futureSameFinalHome,
-    Odds.finalOddsX: filter.futureSameFinalDraw,
-    Odds.finalOdds2: filter.futureSameFinalAway,
+    Odds.earlyOdds1: filter.pivotSameEarlyHome,
+    Odds.earlyOddsX: filter.pivotSameEarlyDraw,
+    Odds.earlyOdds2: filter.pivotSameEarlyAway,
+    Odds.finalOdds1: filter.pivotSameFinalHome,
+    Odds.finalOddsX: filter.pivotSameFinalDraw,
+    Odds.finalOdds2: filter.pivotSameFinalAway,
   };
   // FILTERS -->
 
@@ -83,7 +83,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
     startFetchingFuture();
   }
 
-  void loadFutureMatches() {
+  void loadPivotMatches() {
     _recordSubscription?.cancel();
 
     setState(() {
@@ -118,8 +118,8 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
       pivotRecordIndex = index;
 
       if (id != null && index != null && pivotRecords.isNotEmpty) {
-        final Record futurePivotRecord = pivotRecords[index];
-        records = DatabaseService.fetchRecords(filter: filter, futureRecord: futurePivotRecord);
+        final Record pivotRecord = pivotRecords[index];
+        records = DatabaseService.fetchRecords(filter: filter, pivotRecord: pivotRecord);
       }
     });
   }
@@ -145,23 +145,23 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
     });
 
     updateOddsFilter();
-    loadFutureMatches();
+    loadPivotMatches();
   }
 
   void updateOddsFilter() {
     filter.updateOdds();
 
     selectedOddsMap = {
-      Odds.earlyOdds1: filter.futureSameEarlyHome,
-      Odds.earlyOddsX: filter.futureSameEarlyDraw,
-      Odds.earlyOdds2: filter.futureSameEarlyAway,
-      Odds.finalOdds1: filter.futureSameFinalHome,
-      Odds.finalOddsX: filter.futureSameFinalDraw,
-      Odds.finalOdds2: filter.futureSameFinalAway,
+      Odds.earlyOdds1: filter.pivotSameEarlyHome,
+      Odds.earlyOddsX: filter.pivotSameEarlyDraw,
+      Odds.earlyOdds2: filter.pivotSameEarlyAway,
+      Odds.finalOdds1: filter.pivotSameFinalHome,
+      Odds.finalOddsX: filter.pivotSameFinalDraw,
+      Odds.finalOdds2: filter.pivotSameFinalAway,
     };
   }
 
-  void updateFutureSameOddsTypes() {
+  void updatePivotSameOddsTypes() {
     updateOddsFilter();
 
     setState(() => filter = filter);
@@ -248,35 +248,35 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
 
     setState(() => filter = filter);
 
-    loadFutureMatches();
+    loadPivotMatches();
   }
 
   void filterUpcomingMatches(int duration) {
-    setState(() => filter.futureNextMinutes = duration);
+    setState(() => filter.pivotNextMinutes = duration);
 
-    loadFutureMatches();
+    loadPivotMatches();
   }
 
   void filterMatchesBySimiliarity(Odds oddType) {
     setState(() {
       switch (oddType) {
         case Odds.earlyOdds1:
-          filter.futureSameEarlyHome = !filter.futureSameEarlyHome;
+          filter.pivotSameEarlyHome = !filter.pivotSameEarlyHome;
           break;
         case Odds.earlyOddsX:
-          filter.futureSameEarlyDraw = !filter.futureSameEarlyDraw;
+          filter.pivotSameEarlyDraw = !filter.pivotSameEarlyDraw;
           break;
         case Odds.earlyOdds2:
-          filter.futureSameEarlyAway = !filter.futureSameEarlyAway;
+          filter.pivotSameEarlyAway = !filter.pivotSameEarlyAway;
           break;
         case Odds.finalOdds1:
-          filter.futureSameFinalHome = !filter.futureSameFinalHome;
+          filter.pivotSameFinalHome = !filter.pivotSameFinalHome;
           break;
         case Odds.finalOddsX:
-          filter.futureSameFinalDraw = !filter.futureSameFinalDraw;
+          filter.pivotSameFinalDraw = !filter.pivotSameFinalDraw;
           break;
         case Odds.finalOdds2:
-          filter.futureSameFinalAway = !filter.futureSameFinalAway;
+          filter.pivotSameFinalAway = !filter.pivotSameFinalAway;
           break;
       }
 
@@ -284,8 +284,8 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
 
       setState(() => filter = filter);
 
-      if (filter.anyFutureMinPercent()) {
-        loadFutureMatches();
+      if (filter.anyPivotMinPercent()) {
+        loadPivotMatches();
       } else {
         loadPastMatches(selectedMatchId, pivotRecordIndex);
       }
@@ -293,8 +293,8 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   }
 
   void filterMatchesBySameLeague() {
-    filter.futureOnlySameLeague = !filter.futureOnlySameLeague;
-    if (filter.futureOnlySameLeague) {
+    filter.pivotOnlySameLeague = !filter.pivotOnlySameLeague;
+    if (filter.pivotOnlySameLeague) {
       filter.leagues.clear();
       filter.folders.clear();
     }
@@ -398,13 +398,13 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     shadowColor: Colors.purple,
-                    backgroundColor: minutes == filter.futureNextMinutes ? Colors.indigoAccent : null,
+                    backgroundColor: minutes == filter.pivotNextMinutes ? Colors.indigoAccent : null,
                   ),
                   child: Text(
                     humaniseTime(minutes, short: true),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: minutes == filter.futureNextMinutes ? Colors.white : null,
+                      color: minutes == filter.pivotNextMinutes ? Colors.white : null,
                     ),
                   ),
                 ),
@@ -413,11 +413,11 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.042,
             child: Switch(
-              value: hideFiltersOnFutureRecordSelect,
+              value: hideFiltersOnPivotRecordSelect,
               activeColor: Colors.indigoAccent,
               onChanged: (bool value) {
                 setState(() {
-                  hideFiltersOnFutureRecordSelect = value;
+                  hideFiltersOnPivotRecordSelect = value;
                 });
               },
             ),
@@ -466,8 +466,8 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
               child: OddsFilterButton(
                 filter: filter,
                 onApplyCallback: () {
-                  updateFutureSameOddsTypes();
-                  loadFutureMatches();
+                  updatePivotSameOddsTypes();
+                  loadPivotMatches();
                 },
               ),
             ),
@@ -480,7 +480,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                 filter: filter,
                 teams: teams,
                 onApplyCallback: () {
-                  loadFutureMatches();
+                  loadPivotMatches();
                 },
               ),
             ),
@@ -494,13 +494,13 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   shadowColor: Colors.purple,
-                  backgroundColor: filter.futureOnlySameLeague ? Colors.indigoAccent : null,
+                  backgroundColor: filter.pivotOnlySameLeague ? Colors.indigoAccent : null,
                 ),
                 child: Text(
                   "MESMA LIGA",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: filter.futureOnlySameLeague ? Colors.white : null,
+                    color: filter.pivotOnlySameLeague ? Colors.white : null,
                   ),
                 ),
               ),
@@ -515,10 +515,10 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                 leagues: leagues,
                 folders: folders,
                 onApplyCallback: () {
-                  if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
-                    setState(() => filter.futureOnlySameLeague = false);
+                  if (filter.pivotOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                    setState(() => filter.pivotOnlySameLeague = false);
                   }
-                  loadFutureMatches();
+                  loadPivotMatches();
                 },
               ),
             ),
@@ -527,7 +527,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
             width: buttonSize,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: CriteriaFilterButton(filter: filter, onApplyCallback: () => loadFutureMatches()),
+              child: CriteriaFilterButton(filter: filter, onApplyCallback: () => loadPivotMatches()),
             ),
           ),
           SizedBox(
@@ -536,40 +536,40 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: ElevatedButton(
                 onPressed: () {
-                  if (filter.futureMinHomeWinPercentage == 52 &&
-                      filter.futureMinDrawPercentage == 52 &&
-                      filter.futureMinAwayWinPercentage == 52) {
+                  if (filter.pivotMinHomeWinPercentage == 52 &&
+                      filter.pivotMinDrawPercentage == 52 &&
+                      filter.pivotMinAwayWinPercentage == 52) {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return CriteriaFilterModal(filter: filter, onApplyCallback: () => loadFutureMatches());
+                        return CriteriaFilterModal(filter: filter, onApplyCallback: () => loadPivotMatches());
                       },
                     );
                   } else {
-                    filter.futureMinHomeWinPercentage = 52;
-                    filter.futureMinDrawPercentage = 52;
-                    filter.futureMinAwayWinPercentage = 52;
+                    filter.pivotMinHomeWinPercentage = 52;
+                    filter.pivotMinDrawPercentage = 52;
+                    filter.pivotMinAwayWinPercentage = 52;
 
                     setState(() => filter = filter);
 
-                    loadFutureMatches();
+                    loadPivotMatches();
                   }
                 },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   shadowColor: Colors.purple,
-                  backgroundColor: filter.allFutureMinPercentSpecificValue(52) ? Colors.indigoAccent : null,
+                  backgroundColor: filter.allPivotMinPercentSpecificValue(52) ? Colors.indigoAccent : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.filter_list, color: filter.allFutureMinPercentSpecificValue(52) ? Colors.white : null),
+                    Icon(Icons.filter_list, color: filter.allPivotMinPercentSpecificValue(52) ? Colors.white : null),
                     const SizedBox(width: 1),
                     Text(
                       "52 %",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: filter.allFutureMinPercentSpecificValue(52) ? Colors.white : null,
+                        color: filter.allPivotMinPercentSpecificValue(52) ? Colors.white : null,
                       ),
                     ),
                   ],
@@ -639,7 +639,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                     borderRadius: BorderRadius.circular(8),
                     child: InkWell(
                       onTap: () {
-                        if (hideFiltersOnFutureRecordSelect) showFilters = false;
+                        if (hideFiltersOnPivotRecordSelect) showFilters = false;
                         loadPastMatches(match.id as int, index);
                       },
                       child: Padding(
@@ -801,7 +801,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
                         } else {
                           filter = placeholderFilter.copyWith();
                           updateOddsFilter();
-                          loadFutureMatches();
+                          loadPivotMatches();
                           showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
                         }
                       });

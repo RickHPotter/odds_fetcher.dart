@@ -205,8 +205,8 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
                       leagues: leagues,
                       folders: folders,
                       onApplyCallback: () {
-                        if (filter.futureOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
-                          setState(() => filter.futureOnlySameLeague = false);
+                        if (filter.pivotOnlySameLeague && (filter.leagues.isNotEmpty || filter.folders.isNotEmpty)) {
+                          setState(() => filter.pivotOnlySameLeague = false);
                         }
                         loadMatches();
                       },

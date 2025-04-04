@@ -23,7 +23,7 @@ enum MinMaxOdds {
 class Filter {
   int? id;
   String filterName;
-  int futureNextMinutes;
+  int pivotNextMinutes;
   int? pastYears;
   int? specificYears;
 
@@ -40,36 +40,36 @@ class Filter {
   double? minFinalAway;
   double? maxFinalAway;
 
-  bool futureDismissNoEarlyOdds;
-  bool futureDismissNoFinalOdds;
+  bool pivotDismissNoEarlyOdds;
+  bool pivotDismissNoFinalOdds;
 
-  bool futureOnlySameLeague;
+  bool pivotOnlySameLeague;
 
-  bool futureSameEarlyHome;
-  bool futureSameEarlyDraw;
-  bool futureSameEarlyAway;
-  bool futureSameFinalHome;
-  bool futureSameFinalDraw;
-  bool futureSameFinalAway;
+  bool pivotSameEarlyHome;
+  bool pivotSameEarlyDraw;
+  bool pivotSameEarlyAway;
+  bool pivotSameFinalHome;
+  bool pivotSameFinalDraw;
+  bool pivotSameFinalAway;
 
   int milestoneGoalsFirstHalf;
   int milestoneGoalsSecondHalf;
   int milestoneGoalsFullTime;
 
-  int futureMinOverFirstPercentage;
-  int futureMinOverSecondPercentage;
-  int futureMinOverFullPercentage;
+  int pivotMinOverFirstPercentage;
+  int pivotMinOverSecondPercentage;
+  int pivotMinOverFullPercentage;
 
-  int futureMinHomeWinPercentage;
-  int futureMinDrawPercentage;
-  int futureMinAwayWinPercentage;
+  int pivotMinHomeWinPercentage;
+  int pivotMinDrawPercentage;
+  int pivotMinAwayWinPercentage;
 
   bool filterPastRecordsByTeams;
-  bool filterFutureRecordsByTeams;
+  bool filterPivotRecordsByTeams;
   bool filterPastRecordsByLeagues;
-  bool filterFutureRecordsByLeagues;
+  bool filterPivotRecordsByLeagues;
   bool filterPastRecordsBySpecificOdds;
-  bool filterFutureRecordsBySpecificOdds;
+  bool filterPivotRecordsBySpecificOdds;
 
   List<Team> teams;
   List<League> leagues;
@@ -80,7 +80,7 @@ class Filter {
   Filter({
     this.id,
     required this.filterName,
-    this.futureNextMinutes = 60,
+    this.pivotNextMinutes = 60,
     this.pastYears = 1,
     this.specificYears,
     this.minEarlyHome,
@@ -98,27 +98,27 @@ class Filter {
     this.milestoneGoalsFirstHalf = 1,
     this.milestoneGoalsSecondHalf = 1,
     this.milestoneGoalsFullTime = 3,
-    this.futureDismissNoEarlyOdds = true,
-    this.futureDismissNoFinalOdds = false,
-    this.futureOnlySameLeague = false,
-    this.futureSameEarlyHome = true,
-    this.futureSameEarlyDraw = true,
-    this.futureSameEarlyAway = true,
-    this.futureSameFinalHome = false,
-    this.futureSameFinalDraw = false,
-    this.futureSameFinalAway = false,
-    this.futureMinHomeWinPercentage = 52,
-    this.futureMinDrawPercentage = 52,
-    this.futureMinAwayWinPercentage = 52,
-    this.futureMinOverFirstPercentage = 0,
-    this.futureMinOverSecondPercentage = 0,
-    this.futureMinOverFullPercentage = 0,
+    this.pivotDismissNoEarlyOdds = true,
+    this.pivotDismissNoFinalOdds = false,
+    this.pivotOnlySameLeague = false,
+    this.pivotSameEarlyHome = true,
+    this.pivotSameEarlyDraw = true,
+    this.pivotSameEarlyAway = true,
+    this.pivotSameFinalHome = false,
+    this.pivotSameFinalDraw = false,
+    this.pivotSameFinalAway = false,
+    this.pivotMinHomeWinPercentage = 52,
+    this.pivotMinDrawPercentage = 52,
+    this.pivotMinAwayWinPercentage = 52,
+    this.pivotMinOverFirstPercentage = 0,
+    this.pivotMinOverSecondPercentage = 0,
+    this.pivotMinOverFullPercentage = 0,
     this.filterPastRecordsByTeams = true,
-    this.filterFutureRecordsByTeams = true,
+    this.filterPivotRecordsByTeams = true,
     this.filterPastRecordsByLeagues = true,
-    this.filterFutureRecordsByLeagues = true,
+    this.filterPivotRecordsByLeagues = true,
     this.filterPastRecordsBySpecificOdds = true,
-    this.filterFutureRecordsBySpecificOdds = false,
+    this.filterPivotRecordsBySpecificOdds = false,
 
     required this.teams,
     required this.leagues,
@@ -142,7 +142,7 @@ class Filter {
     return Filter(
       id: map["id"],
       filterName: map["filterName"],
-      futureNextMinutes: map["futureNextMinutes"],
+      pivotNextMinutes: map["pivotNextMinutes"],
       pastYears: map["pastYears"],
       specificYears: map["specificYears"],
 
@@ -159,36 +159,36 @@ class Filter {
       minFinalAway: map["minFinalAway"],
       maxFinalAway: map["maxFinalAway"],
 
-      futureDismissNoEarlyOdds: map["futureDismissNoEarlyOdds"] == 1,
-      futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"] == 1,
+      pivotDismissNoEarlyOdds: map["pivotDismissNoEarlyOdds"] == 1,
+      pivotDismissNoFinalOdds: map["pivotDismissNoFinalOdds"] == 1,
 
-      futureOnlySameLeague: map["futureOnlySameLeague"] == 1,
+      pivotOnlySameLeague: map["pivotOnlySameLeague"] == 1,
 
-      futureSameEarlyHome: map["futureSameEarlyHome"] == 1,
-      futureSameEarlyDraw: map["futureSameEarlyDraw"] == 1,
-      futureSameEarlyAway: map["futureSameEarlyAway"] == 1,
-      futureSameFinalHome: map["futureSameFinalHome"] == 1,
-      futureSameFinalDraw: map["futureSameFinalDraw"] == 1,
-      futureSameFinalAway: map["futureSameFinalAway"] == 1,
+      pivotSameEarlyHome: map["pivotSameEarlyHome"] == 1,
+      pivotSameEarlyDraw: map["pivotSameEarlyDraw"] == 1,
+      pivotSameEarlyAway: map["pivotSameEarlyAway"] == 1,
+      pivotSameFinalHome: map["pivotSameFinalHome"] == 1,
+      pivotSameFinalDraw: map["pivotSameFinalDraw"] == 1,
+      pivotSameFinalAway: map["pivotSameFinalAway"] == 1,
 
       milestoneGoalsFirstHalf: map["milestoneGoalsFirstHalf"],
       milestoneGoalsSecondHalf: map["milestoneGoalsSecondHalf"],
       milestoneGoalsFullTime: map["milestoneGoalsFullTime"],
 
-      futureMinOverFirstPercentage: map["futureMinOverFirstPercentage"],
-      futureMinOverSecondPercentage: map["futureMinOverSecondPercentage"],
-      futureMinOverFullPercentage: map["futureMinOverFullPercentage"],
+      pivotMinOverFirstPercentage: map["pivotMinOverFirstPercentage"],
+      pivotMinOverSecondPercentage: map["pivotMinOverSecondPercentage"],
+      pivotMinOverFullPercentage: map["pivotMinOverFullPercentage"],
 
-      futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"],
-      futureMinDrawPercentage: map["futureMinDrawPercentage"],
-      futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
+      pivotMinHomeWinPercentage: map["pivotMinHomeWinPercentage"],
+      pivotMinDrawPercentage: map["pivotMinDrawPercentage"],
+      pivotMinAwayWinPercentage: map["pivotMinAwayWinPercentage"],
 
       filterPastRecordsByTeams: map["filterPastRecordsByTeams"] == 1,
-      filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
+      filterPivotRecordsByTeams: map["filterPivotRecordsByTeams"] == 1,
       filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
-      filterFutureRecordsByLeagues: map["filterFutureRecordsByLeagues"] == 1,
+      filterPivotRecordsByLeagues: map["filterPivotRecordsByLeagues"] == 1,
       filterPastRecordsBySpecificOdds: map["filterPastRecordsBySpecificOdds"] == 1,
-      filterFutureRecordsBySpecificOdds: map["filterFutureRecordsBySpecificOdds"] == 1,
+      filterPivotRecordsBySpecificOdds: map["filterPivotRecordsBySpecificOdds"] == 1,
 
       teams: map["teams"] == null ? [] : map["teams"].map((t) => Team.fromMap(t)).toList(),
       leagues: map["leagues"] == null ? [] : map["leagues"].map((l) => League.fromMap(l)).toList(),
@@ -200,7 +200,7 @@ class Filter {
     return {
       "id": id,
       "filterName": filterName,
-      "futureNextMinutes": futureNextMinutes,
+      "pivotNextMinutes": pivotNextMinutes,
       "pastYears": pastYears,
       "specificYears": specificYears,
 
@@ -217,36 +217,36 @@ class Filter {
       "minFinalAway": minFinalAway,
       "maxFinalAway": maxFinalAway,
 
-      "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds ? 1 : 0,
-      "futureDismissNoFinalOdds": futureDismissNoFinalOdds ? 1 : 0,
+      "pivotDismissNoEarlyOdds": pivotDismissNoEarlyOdds ? 1 : 0,
+      "pivotDismissNoFinalOdds": pivotDismissNoFinalOdds ? 1 : 0,
 
-      "futureOnlySameLeague": futureOnlySameLeague ? 1 : 0,
+      "pivotOnlySameLeague": pivotOnlySameLeague ? 1 : 0,
 
-      "futureSameEarlyHome": futureSameEarlyHome ? 1 : 0,
-      "futureSameEarlyDraw": futureSameEarlyDraw ? 1 : 0,
-      "futureSameEarlyAway": futureSameEarlyAway ? 1 : 0,
-      "futureSameFinalHome": futureSameFinalHome ? 1 : 0,
-      "futureSameFinalDraw": futureSameFinalDraw ? 1 : 0,
-      "futureSameFinalAway": futureSameFinalAway ? 1 : 0,
+      "pivotSameEarlyHome": pivotSameEarlyHome ? 1 : 0,
+      "pivotSameEarlyDraw": pivotSameEarlyDraw ? 1 : 0,
+      "pivotSameEarlyAway": pivotSameEarlyAway ? 1 : 0,
+      "pivotSameFinalHome": pivotSameFinalHome ? 1 : 0,
+      "pivotSameFinalDraw": pivotSameFinalDraw ? 1 : 0,
+      "pivotSameFinalAway": pivotSameFinalAway ? 1 : 0,
 
       "milestoneGoalsFirstHalf": milestoneGoalsFirstHalf,
       "milestoneGoalsSecondHalf": milestoneGoalsSecondHalf,
       "milestoneGoalsFullTime": milestoneGoalsFullTime,
 
-      "futureMinOverFirstPercentage": futureMinOverFirstPercentage,
-      "futureMinOverSecondPercentage": futureMinOverSecondPercentage,
-      "futureMinOverFullPercentage": futureMinOverFullPercentage,
+      "pivotMinOverFirstPercentage": pivotMinOverFirstPercentage,
+      "pivotMinOverSecondPercentage": pivotMinOverSecondPercentage,
+      "pivotMinOverFullPercentage": pivotMinOverFullPercentage,
 
-      "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
-      "futureMinDrawPercentage": futureMinDrawPercentage,
-      "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
+      "pivotMinHomeWinPercentage": pivotMinHomeWinPercentage,
+      "pivotMinDrawPercentage": pivotMinDrawPercentage,
+      "pivotMinAwayWinPercentage": pivotMinAwayWinPercentage,
 
       "filterPastRecordsByTeams": filterPastRecordsByTeams ? 1 : 0,
-      "filterFutureRecordsByTeams": filterFutureRecordsByTeams ? 1 : 0,
+      "filterPivotRecordsByTeams": filterPivotRecordsByTeams ? 1 : 0,
       "filterPastRecordsByLeagues": filterPastRecordsByLeagues ? 1 : 0,
-      "filterFutureRecordsByLeagues": filterFutureRecordsByLeagues ? 1 : 0,
+      "filterPivotRecordsByLeagues": filterPivotRecordsByLeagues ? 1 : 0,
       "filterPastRecordsBySpecificOdds": filterPastRecordsBySpecificOdds ? 1 : 0,
-      "filterFutureRecordsBySpecificOdds": filterFutureRecordsBySpecificOdds ? 1 : 0,
+      "filterPivotRecordsBySpecificOdds": filterPivotRecordsBySpecificOdds ? 1 : 0,
     };
   }
 
@@ -289,19 +289,56 @@ class Filter {
         maxFinalAway != null;
   }
 
-  bool anyFutureMinPercent() {
-    return futureMinHomeWinPercentage > 0 ||
-        futureMinDrawPercentage > 0 ||
-        futureMinAwayWinPercentage > 0 ||
-        futureMinOverFirstPercentage > 0 ||
-        futureMinOverSecondPercentage > 0 ||
-        futureMinOverFullPercentage > 0;
+  bool anyPivotMinPercent() {
+    return pivotMinHomeWinPercentage > 0 ||
+        pivotMinDrawPercentage > 0 ||
+        pivotMinAwayWinPercentage > 0 ||
+        pivotMinOverFirstPercentage > 0 ||
+        pivotMinOverSecondPercentage > 0 ||
+        pivotMinOverFullPercentage > 0;
   }
 
-  bool allFutureMinPercentSpecificValue(int percentage) {
-    return futureMinHomeWinPercentage == percentage &&
-        futureMinDrawPercentage == percentage &&
-        futureMinAwayWinPercentage == percentage;
+  bool allPivotMinPercentSpecificValue(int percentage) {
+    return pivotMinHomeWinPercentage == percentage &&
+        pivotMinDrawPercentage == percentage &&
+        pivotMinAwayWinPercentage == percentage;
+  }
+
+  void updateOdds() {
+    fillInAllRangeOdds();
+
+    if (minEarlyHome != null && maxEarlyHome == null) pivotSameEarlyHome = false;
+    if (minEarlyDraw != null && maxEarlyDraw == null) pivotSameEarlyDraw = false;
+    if (minEarlyAway != null && maxEarlyAway == null) pivotSameEarlyAway = false;
+    if (minFinalHome != null && maxFinalHome == null) pivotSameFinalHome = false;
+    if (minFinalDraw != null && maxFinalDraw == null) pivotSameFinalDraw = false;
+    if (minFinalAway != null && maxFinalAway == null) pivotSameFinalAway = false;
+
+    if (pivotSameEarlyHome) {
+      minEarlyHome = null;
+      maxEarlyHome = null;
+    }
+
+    if (pivotSameEarlyDraw) {
+      minEarlyDraw = null;
+      maxEarlyDraw = null;
+    }
+    if (pivotSameEarlyAway) {
+      minEarlyAway = null;
+      maxEarlyAway = null;
+    }
+    if (pivotSameFinalHome) {
+      minFinalHome = null;
+      maxFinalHome = null;
+    }
+    if (pivotSameFinalDraw) {
+      minFinalDraw = null;
+      maxFinalDraw = null;
+    }
+    if (pivotSameFinalAway) {
+      minFinalAway = null;
+      maxFinalAway = null;
+    }
   }
 
   void removeAllSpecificOdds() {
@@ -389,7 +426,7 @@ class Filter {
     return teamIds;
   }
 
-  Future<String> whereClause({Record? futureRecord}) async {
+  Future<String> whereClause({Record? pivotRecord}) async {
     fillInAllRangeOdds();
 
     late String whereClause = "WHERE finished = 1";
@@ -397,28 +434,28 @@ class Filter {
     whereClause += " AND MatchDate >= ${rawDateTime(minDate())}";
     whereClause += " AND MatchDate <= ${rawDateTime(maxDate())}";
 
-    if (futureSameEarlyHome && futureRecord?.earlyOdds1 != null) {
-      whereClause += " AND earlyOdds1 = ${futureRecord?.earlyOdds1}";
+    if (pivotSameEarlyHome && pivotRecord?.earlyOdds1 != null) {
+      whereClause += " AND earlyOdds1 = ${pivotRecord?.earlyOdds1}";
     }
 
-    if (futureSameEarlyDraw && futureRecord?.earlyOddsX != null) {
-      whereClause += " AND earlyOddsX = ${futureRecord?.earlyOddsX}";
+    if (pivotSameEarlyDraw && pivotRecord?.earlyOddsX != null) {
+      whereClause += " AND earlyOddsX = ${pivotRecord?.earlyOddsX}";
     }
 
-    if (futureSameEarlyAway && futureRecord?.earlyOdds2 != null) {
-      whereClause += " AND earlyOdds2 = ${futureRecord?.earlyOdds2}";
+    if (pivotSameEarlyAway && pivotRecord?.earlyOdds2 != null) {
+      whereClause += " AND earlyOdds2 = ${pivotRecord?.earlyOdds2}";
     }
 
-    if (futureSameFinalHome && futureRecord?.finalOdds1 != null) {
-      whereClause += " AND finalOdds1 = ${futureRecord?.finalOdds1}";
+    if (pivotSameFinalHome && pivotRecord?.finalOdds1 != null) {
+      whereClause += " AND finalOdds1 = ${pivotRecord?.finalOdds1}";
     }
 
-    if (futureSameFinalDraw && futureRecord?.finalOddsX != null) {
-      whereClause += " AND finalOddsX = ${futureRecord?.finalOddsX}";
+    if (pivotSameFinalDraw && pivotRecord?.finalOddsX != null) {
+      whereClause += " AND finalOddsX = ${pivotRecord?.finalOddsX}";
     }
 
-    if (futureSameFinalAway && futureRecord?.finalOdds2 != null) {
-      whereClause += " AND finalOdds2 = ${futureRecord?.finalOdds2}";
+    if (pivotSameFinalAway && pivotRecord?.finalOdds2 != null) {
+      whereClause += " AND finalOdds2 = ${pivotRecord?.finalOdds2}";
     }
 
     if (filterPastRecordsByTeams && teams.isNotEmpty) {
@@ -429,15 +466,15 @@ class Filter {
     if (filterPastRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       final List<int> leagueIdsList = await leaguesIds();
       whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
-    } else if (futureOnlySameLeague && futureRecord?.league.id != null) {
-      whereClause += " AND leagueId = ${futureRecord?.league.id}";
+    } else if (pivotOnlySameLeague && pivotRecord?.league.id != null) {
+      whereClause += " AND leagueId = ${pivotRecord?.league.id}";
     }
 
-    if (futureDismissNoEarlyOdds) {
+    if (pivotDismissNoEarlyOdds) {
       whereClause += " AND earlyOdds1 IS NOT NULL AND earlyOddsX IS NOT NULL AND earlyOdds2 IS NOT NULL";
     }
 
-    if (futureDismissNoFinalOdds) {
+    if (pivotDismissNoFinalOdds) {
       whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
     }
 
@@ -470,35 +507,35 @@ class Filter {
     return whereClause;
   }
 
-  Future<String> whereClauseFuture() async {
+  Future<String> whereClausePivot({bool unfinishedOnly = true}) async {
     fillInAllRangeOdds();
 
-    late String whereClause = "WHERE finished = 0";
+    late String whereClause = unfinishedOnly ? "WHERE finished = 0" : "WHERE 1 = 1";
 
-    final DateTime futureMaxDate = DateTime.now().add(Duration(minutes: futureNextMinutes));
+    final DateTime pivotMaxDate = DateTime.now().add(Duration(minutes: pivotNextMinutes));
 
     whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
-    whereClause += " AND MatchDate <= ${rawDateTime(futureMaxDate)}";
+    whereClause += " AND MatchDate <= ${rawDateTime(pivotMaxDate)}";
 
-    if (filterFutureRecordsByTeams && teams.isNotEmpty) {
+    if (filterPivotRecordsByTeams && teams.isNotEmpty) {
       final String teamsIdsString = teamsIds().join(", ");
       whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
     }
 
-    if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
+    if (filterPivotRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
       final List<int> leagueIdsList = await leaguesIds();
       whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
     }
 
-    if (futureDismissNoEarlyOdds) {
+    if (pivotDismissNoEarlyOdds) {
       whereClause += " AND earlyOdds1 IS NOT NULL AND earlyOddsX IS NOT NULL AND earlyOdds2 IS NOT NULL";
     }
 
-    if (futureDismissNoFinalOdds) {
+    if (pivotDismissNoFinalOdds) {
       whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
     }
 
-    if (filterFutureRecordsBySpecificOdds) {
+    if (filterPivotRecordsBySpecificOdds) {
       if (minEarlyHome != null) {
         whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
       }
@@ -525,99 +562,5 @@ class Filter {
     }
 
     return whereClause;
-  }
-
-  Future<String> whereClausePivot() async {
-    fillInAllRangeOdds();
-
-    late String whereClause = "WHERE 1 = 1";
-
-    final DateTime pivotMinDate = DateTime.now().subtract(Duration(minutes: futureNextMinutes));
-
-    whereClause += " AND MatchDate >= ${rawDateTime(pivotMinDate)}";
-    whereClause += " AND MatchDate <= ${rawDateTime(DateTime.now())}";
-
-    if (filterFutureRecordsByTeams && teams.isNotEmpty) {
-      final String teamsIdsString = teamsIds().join(", ");
-      whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
-    }
-
-    if (filterFutureRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
-      final List<int> leagueIdsList = await leaguesIds();
-      whereClause += " AND leagueId IN (${leagueIdsList.join(', ')}) ";
-    }
-
-    if (futureDismissNoEarlyOdds) {
-      whereClause += " AND earlyOdds1 IS NOT NULL AND earlyOddsX IS NOT NULL AND earlyOdds2 IS NOT NULL";
-    }
-
-    if (futureDismissNoFinalOdds) {
-      whereClause += " AND finalOdds1 IS NOT NULL AND finalOddsX IS NOT NULL AND finalOdds2 IS NOT NULL";
-    }
-
-    if (filterFutureRecordsBySpecificOdds) {
-      if (minEarlyHome != null) {
-        whereClause += " AND earlyOdds1 BETWEEN $minEarlyHome AND $maxEarlyHome";
-      }
-
-      if (minEarlyDraw != null) {
-        whereClause += " AND earlyOddsX BETWEEN $minEarlyDraw AND $maxEarlyDraw";
-      }
-
-      if (minEarlyAway != null) {
-        whereClause += " AND earlyOdds2 BETWEEN $minEarlyAway AND $maxEarlyAway";
-      }
-
-      if (minFinalHome != null) {
-        whereClause += " AND finalOdds1 BETWEEN $minFinalHome AND $maxFinalHome";
-      }
-
-      if (minFinalDraw != null) {
-        whereClause += " AND finalOddsX BETWEEN $minFinalDraw AND $maxFinalDraw";
-      }
-
-      if (minFinalAway != null) {
-        whereClause += " AND finalOdds2 BETWEEN $minFinalAway AND $maxFinalAway";
-      }
-    }
-
-    return whereClause;
-  }
-
-  void updateOdds() {
-    fillInAllRangeOdds();
-
-    if (minEarlyHome != null && maxEarlyHome == null) futureSameEarlyHome = false;
-    if (minEarlyDraw != null && maxEarlyDraw == null) futureSameEarlyDraw = false;
-    if (minEarlyAway != null && maxEarlyAway == null) futureSameEarlyAway = false;
-    if (minFinalHome != null && maxFinalHome == null) futureSameFinalHome = false;
-    if (minFinalDraw != null && maxFinalDraw == null) futureSameFinalDraw = false;
-    if (minFinalAway != null && maxFinalAway == null) futureSameFinalAway = false;
-
-    if (futureSameEarlyHome) {
-      minEarlyHome = null;
-      maxEarlyHome = null;
-    }
-
-    if (futureSameEarlyDraw) {
-      minEarlyDraw = null;
-      maxEarlyDraw = null;
-    }
-    if (futureSameEarlyAway) {
-      minEarlyAway = null;
-      maxEarlyAway = null;
-    }
-    if (futureSameFinalHome) {
-      minFinalHome = null;
-      maxFinalHome = null;
-    }
-    if (futureSameFinalDraw) {
-      minFinalDraw = null;
-      maxFinalDraw = null;
-    }
-    if (futureSameFinalAway) {
-      minFinalAway = null;
-      maxFinalAway = null;
-    }
   }
 }

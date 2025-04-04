@@ -135,12 +135,12 @@ class Record {
     }
   }
 
-  static Map<String, double> calculateScoreMatchPercentages(Record futureRecord, List<Record> records) {
-    if (futureRecord.pastRecordsCount > 0) {
+  static Map<String, double> calculateScoreMatchPercentages(Record pivotRecord, List<Record> records) {
+    if (pivotRecord.pastRecordsCount > 0) {
       return {
-        "homeWins": futureRecord.homeWinPercentage,
-        "draws": futureRecord.drawPercentage,
-        "awayWins": futureRecord.awayWinPercentage,
+        "homeWins": pivotRecord.homeWinPercentage,
+        "draws": pivotRecord.drawPercentage,
+        "awayWins": pivotRecord.awayWinPercentage,
       };
     }
 
@@ -171,20 +171,20 @@ class Record {
     return {"homeWins": homeWinPercentage, "draws": drawPercentage, "awayWins": awayWinPercentage};
   }
 
-  static Map<String, double> calculateGoalsMatchPercentages(Record futureRecord, List<Record> records, Filter filter) {
-    if (futureRecord.pastRecordsCount > 0) {
-      double underFirstPercentage = 100 - futureRecord.overFirstPercentage;
-      double underSecondPercentage = 100 - futureRecord.overSecondPercentage;
-      double underFullPercentage = 100 - futureRecord.overFullPercentage;
+  static Map<String, double> calculateGoalsMatchPercentages(Record pivotRecord, List<Record> records, Filter filter) {
+    if (pivotRecord.pastRecordsCount > 0) {
+      double underFirstPercentage = 100 - pivotRecord.overFirstPercentage;
+      double underSecondPercentage = 100 - pivotRecord.overSecondPercentage;
+      double underFullPercentage = 100 - pivotRecord.overFullPercentage;
 
       return {
-        "overFirst": futureRecord.overFirstPercentage,
+        "overFirst": pivotRecord.overFirstPercentage,
         "underFirst": underFirstPercentage,
 
-        "overSecond": futureRecord.overSecondPercentage,
+        "overSecond": pivotRecord.overSecondPercentage,
         "underSecond": underSecondPercentage,
 
-        "overFull": futureRecord.overFullPercentage,
+        "overFull": pivotRecord.overFullPercentage,
         "underFull": underFullPercentage,
       };
     }

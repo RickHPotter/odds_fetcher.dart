@@ -18,7 +18,7 @@ import "package:odds_fetcher/utils/date_utils.dart" show parseRawDate;
 
 class DatabaseService {
   static Database? _db;
-  static const String dbName = "odds_fetcher.db";
+  static const String dbName = "odds_fetcher_v2.db";
   static const String assetDbZipPath = "assets/db.zip";
 
   static Future<Database> get database async {
@@ -130,16 +130,16 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    ${await filter.whereClauseFuture()}
+    ${await filter.whereClausePivot()}
     ORDER BY MatchDate, ID
     """);
 
     updateCount(result.length);
 
     for (final row in result) {
-      Record futureRecord = Record.fromMap(row);
+      Record pivotRecord = Record.fromMap(row);
 
-      Record? updatedFutureRecord = await fetchPivotRecord(futureRecord, filter);
+      Record? updatedFutureRecord = await fetchPivotRecord(pivotRecord, filter);
 
       if (updatedFutureRecord != null) yield updatedFutureRecord;
     }
@@ -154,15 +154,15 @@ class DatabaseService {
       l.id AS leagueId,
       l.leagueCode,
       l.leagueName,
-      ht.teamName AS homeTeamName,
       ht.id AS homeTeamId,
+      ht.teamName AS homeTeamName,
       at.id AS awayTeamId,
       at.teamName AS awayTeamName
     FROM Records r
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    ${await filter.whereClausePivot()}
+    ${await filter.whereClausePivot(unfinishedOnly: false)}
     ORDER BY MatchDate DESC, ID
     """);
 
@@ -189,7 +189,7 @@ class DatabaseService {
           SUM(CASE WHEN homeFullTimeScore + awayFullTimeScore >= ${filter.milestoneGoalsSecondHalf} THEN 1 ELSE 0 END) AS overSecond,
           SUM(CASE WHEN homeHalfTimeScore + homeFullTimeScore + awayHalfTimeScore + awayFullTimeScore >= ${filter.milestoneGoalsFullTime} THEN 1 ELSE 0 END) AS overFull
         FROM Records r
-        ${await filter.whereClause(futureRecord: pivotRecord)}
+        ${await filter.whereClause(pivotRecord: pivotRecord)}
       """);
 
     final Map<String, dynamic> res = percentageResult[0];
@@ -215,27 +215,27 @@ class DatabaseService {
     pivotRecord.overFullPercentage = overFullPercentage;
 
     bool resultApplies =
-        homeWinPercentage >= filter.futureMinHomeWinPercentage ||
-        drawPercentage >= filter.futureMinDrawPercentage ||
-        awayWinPercentage >= filter.futureMinAwayWinPercentage;
+        homeWinPercentage >= filter.pivotMinHomeWinPercentage ||
+        drawPercentage >= filter.pivotMinDrawPercentage ||
+        awayWinPercentage >= filter.pivotMinAwayWinPercentage;
     bool scoreApplies =
-        overFirstPercentage >= filter.futureMinOverFirstPercentage ||
-        overSecondPercentage >= filter.futureMinOverSecondPercentage ||
-        overFullPercentage >= filter.futureMinOverFullPercentage;
+        overFirstPercentage >= filter.pivotMinOverFirstPercentage ||
+        overSecondPercentage >= filter.pivotMinOverSecondPercentage ||
+        overFullPercentage >= filter.pivotMinOverFullPercentage;
 
     if (resultApplies && scoreApplies) return pivotRecord;
 
     return null;
   }
 
-  static Future<List<Record>> fetchRecords({Filter? filter, Record? futureRecord}) async {
+  static Future<List<Record>> fetchRecords({Filter? filter, Record? pivotRecord}) async {
     final Database db = await database;
     late String whereClause;
 
     if (filter == null) {
       whereClause = "WHERE 1 = 1";
     } else {
-      whereClause = await filter.whereClause(futureRecord: futureRecord);
+      whereClause = await filter.whereClause(pivotRecord: pivotRecord);
     }
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""

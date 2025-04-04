@@ -119,10 +119,10 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                           child: Row(
                             children: [
                               Switch(
-                                value: widget.filter.filterFutureRecordsByTeams,
+                                value: widget.filter.filterPivotRecordsByTeams,
                                 onChanged: (bool value) {
                                   setState(() {
-                                    widget.filter.filterFutureRecordsByTeams = value;
+                                    widget.filter.filterPivotRecordsByTeams = value;
                                   });
                                 },
                               ),

@@ -153,10 +153,10 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                           child: Row(
                             children: [
                               Switch(
-                                value: widget.filter.filterFutureRecordsByLeagues,
+                                value: widget.filter.filterPivotRecordsByLeagues,
                                 onChanged: (value) {
                                   setStates(() {
-                                    widget.filter.filterFutureRecordsByLeagues = value;
+                                    widget.filter.filterPivotRecordsByLeagues = value;
                                   });
                                 },
                               ),
@@ -190,8 +190,8 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                     getSubItemName: (league) => league.name,
                     onItemSelected: (league) {
                       setStates(() {
-                        if (widget.filter.futureOnlySameLeague) {
-                          widget.filter.futureOnlySameLeague = false;
+                        if (widget.filter.pivotOnlySameLeague) {
+                          widget.filter.pivotOnlySameLeague = false;
                         }
 
                         if (!widget.selectedLeagues.contains(league)) widget.selectedLeagues.add(league);

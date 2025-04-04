@@ -33,8 +33,8 @@ class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAn
   Widget build(BuildContext context) {
     final double buttonSize = MediaQuery.of(context).size.width * 0.087;
     final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
-    if (!futureMatchesMinutesList.contains(filter.futureNextMinutes)) {
-      filter.futureNextMinutes = futureMatchesMinutesList.first;
+    if (!futureMatchesMinutesList.contains(filter.pivotNextMinutes)) {
+      filter.pivotNextMinutes = futureMatchesMinutesList.first;
     }
 
     return Padding(

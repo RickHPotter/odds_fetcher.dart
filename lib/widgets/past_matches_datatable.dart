@@ -178,14 +178,14 @@ class PastMachDataTable extends StatelessWidget {
   List<PlutoRow> getRows(List<Record> records, Filter filter) {
     return records.map((Record record) {
       String halfTimeScore =
-          ((record.homeHalfTimeScore ?? 0) + (record.awayHalfTimeScore ?? 0)) >= filter.milestoneGoalsFirstHalf
-              ? "+ ${record.halfTimeScore} +"
-              : "-- ${record.halfTimeScore} --";
+          ((record.homeHalfTimeScore ?? 0) + (record.awayHalfTimeScore ?? 0)) < filter.milestoneGoalsFirstHalf
+              ? "(${record.halfTimeScore})  ✖"
+              : "(${record.halfTimeScore})  ✔";
 
       String fullTimeScore =
-          ((record.homeFullTimeScore ?? 0) + (record.awayFullTimeScore ?? 0)) >= filter.milestoneGoalsFullTime
-              ? "+ ${record.fullTimeScore} +"
-              : "-- ${record.fullTimeScore} --";
+          ((record.homeFullTimeScore ?? 0) + (record.awayFullTimeScore ?? 0)) < filter.milestoneGoalsFullTime
+              ? "${record.fullTimeScore}  ✖"
+              : "${record.fullTimeScore}  ✔";
 
       return PlutoRow(
         cells: {
@@ -193,7 +193,7 @@ class PastMachDataTable extends StatelessWidget {
           "liga": PlutoCell(value: record.league.code),
           "home": PlutoCell(value: record.homeTeam.name),
           "away": PlutoCell(value: record.awayTeam.name),
-          "intervalo": PlutoCell(value: halfTimeScore),
+          "intervalo": PlutoCell(value: record.halfTimeScore == "" ? "" : halfTimeScore),
           "placar": PlutoCell(value: fullTimeScore),
           "early_home": PlutoCell(value: record.earlyOdds1?.toString() ?? ""),
           "early_draw": PlutoCell(value: record.earlyOddsX?.toString() ?? ""),

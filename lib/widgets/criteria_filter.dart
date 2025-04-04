@@ -30,20 +30,20 @@ class _CriteriaFilterButtonState extends State<CriteriaFilterButton> {
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         shadowColor: Colors.purple,
-        backgroundColor: filter.anyFutureMinPercent() ? Colors.indigoAccent : null,
+        backgroundColor: filter.anyPivotMinPercent() ? Colors.indigoAccent : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             FontAwesomeIcons.arrowUpRightFromSquare,
-            color: filter.anyFutureMinPercent() ? Colors.white : null,
+            color: filter.anyPivotMinPercent() ? Colors.white : null,
             size: 16,
           ),
           const SizedBox(width: 5),
           Text(
             "ACEITE",
-            style: TextStyle(fontWeight: FontWeight.bold, color: filter.anyFutureMinPercent() ? Colors.white : null),
+            style: TextStyle(fontWeight: FontWeight.bold, color: filter.anyPivotMinPercent() ? Colors.white : null),
           ),
         ],
       ),
@@ -64,32 +64,32 @@ class CriteriaFilterModal extends StatefulWidget {
 class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
   final FocusNode _focusNode = FocusNode();
 
-  late TextEditingController futureMinHomeController = TextEditingController(
-    text: (widget.filter.futureMinHomeWinPercentage).toString(),
+  late TextEditingController pivotMinHomeController = TextEditingController(
+    text: (widget.filter.pivotMinHomeWinPercentage).toString(),
   );
-  late TextEditingController futureMinDrawController = TextEditingController(
-    text: (widget.filter.futureMinDrawPercentage).toString(),
+  late TextEditingController pivotMinDrawController = TextEditingController(
+    text: (widget.filter.pivotMinDrawPercentage).toString(),
   );
-  late TextEditingController futureMinAwayController = TextEditingController(
-    text: (widget.filter.futureMinAwayWinPercentage).toString(),
+  late TextEditingController pivotMinAwayController = TextEditingController(
+    text: (widget.filter.pivotMinAwayWinPercentage).toString(),
   );
-  late TextEditingController futureOverFirstController = TextEditingController(
+  late TextEditingController pivotOverFirstController = TextEditingController(
     text: (widget.filter.milestoneGoalsFirstHalf).toString(),
   );
-  late TextEditingController futureOverSecondController = TextEditingController(
+  late TextEditingController pivotOverSecondController = TextEditingController(
     text: (widget.filter.milestoneGoalsSecondHalf).toString(),
   );
-  late TextEditingController futureOverFullController = TextEditingController(
+  late TextEditingController pivotOverFullController = TextEditingController(
     text: (widget.filter.milestoneGoalsFullTime).toString(),
   );
-  late TextEditingController futureOverFirstPercentageController = TextEditingController(
-    text: (widget.filter.futureMinOverFirstPercentage).toString(),
+  late TextEditingController pivotOverFirstPercentageController = TextEditingController(
+    text: (widget.filter.pivotMinOverFirstPercentage).toString(),
   );
-  late TextEditingController futureOverSecondPercentageController = TextEditingController(
-    text: (widget.filter.futureMinOverSecondPercentage).toString(),
+  late TextEditingController pivotOverSecondPercentageController = TextEditingController(
+    text: (widget.filter.pivotMinOverSecondPercentage).toString(),
   );
-  late TextEditingController futureOverFullPercentageController = TextEditingController(
-    text: (widget.filter.futureMinOverFullPercentage).toString(),
+  late TextEditingController pivotOverFullPercentageController = TextEditingController(
+    text: (widget.filter.pivotMinOverFullPercentage).toString(),
   );
 
   @override
@@ -106,9 +106,9 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
     super.dispose();
 
     final List<TextEditingController> controllersList = [
-      futureMinHomeController,
-      futureMinDrawController,
-      futureMinAwayController,
+      pivotMinHomeController,
+      pivotMinDrawController,
+      pivotMinAwayController,
     ];
 
     for (final TextEditingController controller in controllersList) {
@@ -140,36 +140,36 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
         }
 
         void clearAllTextFields() {
-          futureMinHomeController.text = "0";
-          futureMinDrawController.text = "0";
-          futureMinAwayController.text = "0";
-          futureOverFirstPercentageController.text = "0";
-          futureOverSecondPercentageController.text = "0";
-          futureOverFullPercentageController.text = "0";
+          pivotMinHomeController.text = "0";
+          pivotMinDrawController.text = "0";
+          pivotMinAwayController.text = "0";
+          pivotOverFirstPercentageController.text = "0";
+          pivotOverSecondPercentageController.text = "0";
+          pivotOverFullPercentageController.text = "0";
         }
 
         void updatePercentagesAndApply() {
           setStates(() {
-            filter.futureMinHomeWinPercentage = int.tryParse(futureMinHomeController.text) ?? 0;
-            filter.futureMinDrawPercentage = int.tryParse(futureMinDrawController.text) ?? 0;
-            filter.futureMinAwayWinPercentage = int.tryParse(futureMinAwayController.text) ?? 0;
-            filter.futureMinOverFirstPercentage = int.tryParse(futureOverFirstPercentageController.text) ?? 0;
-            filter.futureMinOverSecondPercentage = int.tryParse(futureOverSecondPercentageController.text) ?? 0;
-            filter.futureMinOverFullPercentage = int.tryParse(futureOverFullPercentageController.text) ?? 0;
+            filter.pivotMinHomeWinPercentage = int.tryParse(pivotMinHomeController.text) ?? 0;
+            filter.pivotMinDrawPercentage = int.tryParse(pivotMinDrawController.text) ?? 0;
+            filter.pivotMinAwayWinPercentage = int.tryParse(pivotMinAwayController.text) ?? 0;
+            filter.pivotMinOverFirstPercentage = int.tryParse(pivotOverFirstPercentageController.text) ?? 0;
+            filter.pivotMinOverSecondPercentage = int.tryParse(pivotOverSecondPercentageController.text) ?? 0;
+            filter.pivotMinOverFullPercentage = int.tryParse(pivotOverFullPercentageController.text) ?? 0;
           });
 
           widget.onApplyCallback();
         }
 
         hintTextOne = """CRITERIOS HOME/DRAW/AWAY:
-          -> HOME precisa de uma porcentagem de ${filter.futureMinHomeWinPercentage}%
-          -> DRAW precisa de uma porcentagem de ${filter.futureMinDrawPercentage}%
-          -> AWAY precisa de uma porcentagem de ${filter.futureMinAwayWinPercentage}%""";
+          -> HOME precisa de uma porcentagem de ${filter.pivotMinHomeWinPercentage}%
+          -> DRAW precisa de uma porcentagem de ${filter.pivotMinDrawPercentage}%
+          -> AWAY precisa de uma porcentagem de ${filter.pivotMinAwayWinPercentage}%""";
 
         hintTextTwo = """CRITERIOS UNDER/OVER:
-          -> OVER 1T > ${filter.milestoneGoalsFirstHalf} GOLS / Porcentagem Mínima ${filter.futureMinOverFirstPercentage}%
-          -> OVER 2T > ${filter.milestoneGoalsSecondHalf} GOLS / Porcentagem Mínima ${filter.futureMinOverSecondPercentage}%
-          -> OVER FT > ${filter.milestoneGoalsFullTime} GOLS / Porcentagem Mínima ${filter.futureMinOverFullPercentage}%\n""";
+          -> OVER 1T > ${filter.milestoneGoalsFirstHalf} GOLS / Porcentagem Mínima ${filter.pivotMinOverFirstPercentage}%
+          -> OVER 2T > ${filter.milestoneGoalsSecondHalf} GOLS / Porcentagem Mínima ${filter.pivotMinOverSecondPercentage}%
+          -> OVER FT > ${filter.milestoneGoalsFullTime} GOLS / Porcentagem Mínima ${filter.pivotMinOverFullPercentage}%\n""";
 
         return Dialog(
           elevation: 4,
@@ -211,6 +211,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                     ),
                     padding: const EdgeInsets.all(12),
                     child: Column(
+                      spacing: 12,
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -224,7 +225,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                 padding: const EdgeInsets.only(right: 4.0),
                                 child: TextFormField(
                                   focusNode: _focusNode,
-                                  controller: futureMinHomeController,
+                                  controller: pivotMinHomeController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Porcentagem Mínima HOME",
@@ -240,7 +241,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                   ),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
                                   onChanged: (String value) {
-                                    setState(() => filter.futureMinHomeWinPercentage = int.tryParse(value) ?? 0);
+                                    setState(() => filter.pivotMinHomeWinPercentage = int.tryParse(value) ?? 0);
                                   },
                                 ),
                               ),
@@ -249,7 +250,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                                 child: TextFormField(
-                                  controller: futureMinDrawController,
+                                  controller: pivotMinDrawController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Porcentagem Mínima DRAW",
@@ -265,7 +266,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                   ),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
                                   onChanged: (String value) {
-                                    setState(() => filter.futureMinDrawPercentage = int.tryParse(value) ?? 0);
+                                    setState(() => filter.pivotMinDrawPercentage = int.tryParse(value) ?? 0);
                                   },
                                 ),
                               ),
@@ -274,7 +275,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 4.0),
                                 child: TextFormField(
-                                  controller: futureMinAwayController,
+                                  controller: pivotMinAwayController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Porcentagem Mínima AWAY",
@@ -290,7 +291,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                   ),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
                                   onChanged: (String value) {
-                                    setState(() => filter.futureMinAwayWinPercentage = int.tryParse(value) ?? 0);
+                                    setState(() => filter.pivotMinAwayWinPercentage = int.tryParse(value) ?? 0);
                                   },
                                 ),
                               ),
@@ -322,7 +323,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 4.0),
                                 child: TextFormField(
-                                  controller: futureOverFirstController,
+                                  controller: pivotOverFirstController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Marco OVER 1T",
@@ -347,7 +348,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 4.0),
                                 child: TextFormField(
-                                  controller: futureOverSecondController,
+                                  controller: pivotOverSecondController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Marco OVER 2T",
@@ -372,7 +373,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                                 child: TextFormField(
-                                  controller: futureOverFullController,
+                                  controller: pivotOverFullController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Marco OVER FT",
@@ -402,7 +403,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 4.0),
                                 child: TextFormField(
-                                  controller: futureOverFirstPercentageController,
+                                  controller: pivotOverFirstPercentageController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Porcentagem Mínima OVER 1T",
@@ -418,7 +419,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                   ),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
                                   onChanged: (String value) {
-                                    setState(() => filter.futureMinOverFirstPercentage = int.tryParse(value) ?? 0);
+                                    setState(() => filter.pivotMinOverFirstPercentage = int.tryParse(value) ?? 0);
                                   },
                                 ),
                               ),
@@ -427,7 +428,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 4.0),
                                 child: TextFormField(
-                                  controller: futureOverSecondPercentageController,
+                                  controller: pivotOverSecondPercentageController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Porcentagem Mínima OVER 2T",
@@ -443,7 +444,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                   ),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
                                   onChanged: (String value) {
-                                    setState(() => filter.futureMinOverSecondPercentage = int.tryParse(value) ?? 0);
+                                    setState(() => filter.pivotMinOverSecondPercentage = int.tryParse(value) ?? 0);
                                   },
                                 ),
                               ),
@@ -452,7 +453,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                                 child: TextFormField(
-                                  controller: futureOverFullPercentageController,
+                                  controller: pivotOverFullPercentageController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: "Porcentagem Mínima OVER FT",
@@ -468,7 +469,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                                   ),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
                                   onChanged: (String value) {
-                                    setState(() => filter.futureMinOverFullPercentage = int.tryParse(value) ?? 0);
+                                    setState(() => filter.pivotMinOverFullPercentage = int.tryParse(value) ?? 0);
                                   },
                                 ),
                               ),

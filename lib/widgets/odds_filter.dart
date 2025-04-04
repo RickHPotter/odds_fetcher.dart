@@ -18,11 +18,11 @@ class _OddsFilterButtonState extends State<OddsFilterButton> {
     final Filter filter = widget.filter;
     final List<Color> colors = [];
     final bool anyApply =
-        filter.anySpecificOddsPresent() || filter.futureDismissNoEarlyOdds || filter.futureDismissNoFinalOdds;
+        filter.anySpecificOddsPresent() || filter.pivotDismissNoEarlyOdds || filter.pivotDismissNoFinalOdds;
 
     if (filter.anySpecificOddsPresent()) colors.add(Colors.indigoAccent);
-    if (filter.futureDismissNoEarlyOdds) colors.add(Colors.purple);
-    if (filter.futureDismissNoFinalOdds) colors.add(Colors.pink);
+    if (filter.pivotDismissNoEarlyOdds) colors.add(Colors.purple);
+    if (filter.pivotDismissNoFinalOdds) colors.add(Colors.pink);
 
     final List<double> stops = List.generate(colors.length, (index) => index / (colors.length - 1));
 
@@ -220,10 +220,10 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                           child: Row(
                             children: [
                               Switch(
-                                value: widget.filter.filterFutureRecordsBySpecificOdds,
+                                value: widget.filter.filterPivotRecordsBySpecificOdds,
                                 onChanged: (value) {
                                   setStates(() {
-                                    widget.filter.filterFutureRecordsBySpecificOdds = value;
+                                    widget.filter.filterPivotRecordsBySpecificOdds = value;
                                   });
                                 },
                               ),
@@ -256,11 +256,11 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                         child: Row(
                           children: [
                             Switch(
-                              value: filter.futureDismissNoEarlyOdds,
+                              value: filter.pivotDismissNoEarlyOdds,
                               activeColor: Colors.purple,
                               onChanged: (bool value) {
                                 setState(() {
-                                  filter.futureDismissNoEarlyOdds = value;
+                                  filter.pivotDismissNoEarlyOdds = value;
                                 });
                               },
                             ),
@@ -272,11 +272,11 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                         child: Row(
                           children: [
                             Switch(
-                              value: filter.futureDismissNoFinalOdds,
+                              value: filter.pivotDismissNoFinalOdds,
                               activeColor: Colors.pink,
                               onChanged: (bool value) {
                                 setState(() {
-                                  filter.futureDismissNoFinalOdds = value;
+                                  filter.pivotDismissNoFinalOdds = value;
                                 });
                               },
                             ),

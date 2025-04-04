@@ -35,8 +35,8 @@ void main() async {
 
   Timer.periodic(Duration(minutes: 5), (timer) async {
     List<Record> liveRecords = await ApiService().fetchLiveData();
-    List<Record> futureRecords = await ApiService().fetchFutureData();
-    List<Record> records = liveRecords + futureRecords;
+    List<Record> pivotRecords = await ApiService().fetchFutureData();
+    List<Record> records = liveRecords + pivotRecords;
 
     await DatabaseService.deleteOldFutureRecords();
     await DatabaseService.insertRecordsBatch(records);
@@ -84,7 +84,7 @@ class MyHomePage extends StatefulWidget {
 final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class _MyHomePageState extends State<MyHomePage> {
-  int selectedIndex = 2;
+  int selectedIndex = 1;
   final String githubLink = "https://github.com/RickHPotter/odds_fetcher.dart";
 
   @override

@@ -2,14 +2,16 @@ import "dart:math";
 
 import "package:flutter/material.dart";
 import "package:intl/intl.dart" show DateFormat;
+import "package:odds_fetcher/models/filter.dart" show Filter;
 import "package:odds_fetcher/models/record.dart";
 
 class MatchCard extends StatelessWidget {
   final Future<List<Record>>? records;
   final Record pivotRecord;
+  final Filter filter;
   final double percentagesContainerWidthFactor = 0.15;
 
-  const MatchCard({super.key, required this.records, required this.pivotRecord});
+  const MatchCard({super.key, required this.records, required this.pivotRecord, required this.filter});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,11 @@ class MatchCard extends StatelessWidget {
           } else {
             final List<Record> records = snapshot.data!;
             final Map<String, double> scorePercentages = Record.calculateScoreMatchPercentages(pivotRecord, records);
-            final Map<String, double> goalsPercentages = Record.calculateGoalsMatchPercentages(pivotRecord, records);
+            final Map<String, double> goalsPercentages = Record.calculateGoalsMatchPercentages(
+              pivotRecord,
+              records,
+              filter,
+            );
 
             scorePercentageChild = Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -40,7 +40,7 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
 
   bool isLoading = false;
 
-  Filter filter = Filter(filterName: "FILTRO PADRÃO", showPivotOptions: false);
+  Filter filter = Filter.base("FILTRO PADRÃO", showPivotOptions: false);
 
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
@@ -223,7 +223,7 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          filter = Filter(filterName: "FILTRO PADRÃO", showPivotOptions: false);
+                          filter = Filter.base("FILTRO PADRÃO", showPivotOptions: false);
                           loadMatches();
                           showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
                         });
@@ -272,9 +272,9 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
           if (records.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 15.0),
-              child: MatchCard(records: Future.value(records), pivotRecord: records.first),
+              child: MatchCard(records: Future.value(records), pivotRecord: records.first, filter: filter),
             ),
-          PastMachDataTable(records: Future.value(records)),
+          PastMachDataTable(records: Future.value(records), filter: filter),
         ],
       ),
     );

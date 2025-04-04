@@ -153,6 +153,9 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
             filter.futureMinHomeWinPercentage = int.tryParse(futureMinHomeController.text) ?? 0;
             filter.futureMinDrawPercentage = int.tryParse(futureMinDrawController.text) ?? 0;
             filter.futureMinAwayWinPercentage = int.tryParse(futureMinAwayController.text) ?? 0;
+            filter.futureMinOverFirstPercentage = int.tryParse(futureOverFirstPercentageController.text) ?? 0;
+            filter.futureMinOverSecondPercentage = int.tryParse(futureOverSecondPercentageController.text) ?? 0;
+            filter.futureMinOverFullPercentage = int.tryParse(futureOverFullPercentageController.text) ?? 0;
           });
 
           widget.onApplyCallback();

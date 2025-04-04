@@ -17,10 +17,10 @@ class Record {
   final double? finalOdds1;
   final double? finalOddsX;
   final double? finalOdds2;
-  final int? homeFirstHalfScore;
-  final int? awayFirstHalfScore;
-  final int? homeSecondHalfScore;
-  final int? awaySecondHalfScore;
+  final int? homeHalfTimeScore;
+  final int? awayHalfTimeScore;
+  final int? homeFullTimeScore;
+  final int? awayFullTimeScore;
   final int? homeWin;
   final int? draw;
   final int? awayWin;
@@ -47,30 +47,30 @@ class Record {
     this.finalOdds1,
     this.finalOddsX,
     this.finalOdds2,
-    this.homeFirstHalfScore,
-    this.awayFirstHalfScore,
-    this.homeSecondHalfScore,
-    this.awaySecondHalfScore,
+    this.homeHalfTimeScore,
+    this.awayHalfTimeScore,
+    this.homeFullTimeScore,
+    this.awayFullTimeScore,
     this.homeWin,
     this.draw,
     this.awayWin,
     this.finished = true,
   });
 
-  String get firstHalfScore {
-    if (homeFirstHalfScore == null || awayFirstHalfScore == null) {
+  String get halfTimeScore {
+    if (homeHalfTimeScore == null || awayHalfTimeScore == null) {
       return "";
     }
 
-    return "$homeFirstHalfScore - $awayFirstHalfScore";
+    return "$homeHalfTimeScore - $awayHalfTimeScore";
   }
 
-  String get secondHalfScore {
-    if (homeSecondHalfScore == null || awaySecondHalfScore == null) {
+  String get fullTimeScore {
+    if (homeFullTimeScore == null || awayFullTimeScore == null) {
       return "";
     }
 
-    return "$homeSecondHalfScore - $awaySecondHalfScore";
+    return "$homeFullTimeScore - $awayFullTimeScore";
   }
 
   bool anyPercentageHigherThan(double percentage) {
@@ -93,10 +93,10 @@ class Record {
       finalOdds1: map["finalOdds1"] != null ? double.tryParse(map["finalOdds1"]) : null,
       finalOddsX: map["finalOddsX"] != null ? double.tryParse(map["finalOddsX"]) : null,
       finalOdds2: map["finalOdds2"] != null ? double.tryParse(map["finalOdds2"]) : null,
-      homeFirstHalfScore: map["homeFirstHalfScore"],
-      awayFirstHalfScore: map["awayFirstHalfScore"],
-      homeSecondHalfScore: map["homeSecondHalfScore"],
-      awaySecondHalfScore: map["awaySecondHalfScore"],
+      homeHalfTimeScore: map["homeHalfTimeScore"],
+      awayHalfTimeScore: map["awayHalfTimeScore"],
+      homeFullTimeScore: map["homeFullTimeScore"],
+      awayFullTimeScore: map["awayFullTimeScore"],
       homeWin: map["homeWin"] ?? 0,
       draw: map["draw"] ?? 0,
       awayWin: map["awayWin"] ?? 0,
@@ -117,10 +117,10 @@ class Record {
       "finalOdds1": finalOdds1,
       "finalOddsX": finalOddsX,
       "finalOdds2": finalOdds2,
-      "homeFirstHalfScore": homeFirstHalfScore,
-      "homeSecondHalfScore": homeSecondHalfScore,
-      "awayFirstHalfScore": awayFirstHalfScore,
-      "awaySecondHalfScore": awaySecondHalfScore,
+      "homeHalfTimeScore": homeHalfTimeScore,
+      "homeFullTimeScore": homeFullTimeScore,
+      "awayHalfTimeScore": awayHalfTimeScore,
+      "awayFullTimeScore": awayFullTimeScore,
       "homeWin": homeWin ?? 0,
       "draw": draw ?? 0,
       "awayWin": awayWin ?? 0,
@@ -171,7 +171,7 @@ class Record {
     return {"homeWins": homeWinPercentage, "draws": drawPercentage, "awayWins": awayWinPercentage};
   }
 
-  static Map<String, double> calculateGoalsMatchPercentages(Record futureRecord, List<Record> records) {
+  static Map<String, double> calculateGoalsMatchPercentages(Record futureRecord, List<Record> records, Filter filter) {
     if (futureRecord.pastRecordsCount > 0) {
       double underFirstPercentage = 100 - futureRecord.overFirstPercentage;
       double underSecondPercentage = 100 - futureRecord.overSecondPercentage;
@@ -207,16 +207,13 @@ class Record {
     int overFull = 0;
 
     for (Record record in records) {
-      int firstHalfScore = (record.homeFirstHalfScore ?? 0) + (record.awayFirstHalfScore ?? 0);
-      int secondHalfScore = (record.homeSecondHalfScore ?? 0) + (record.awaySecondHalfScore ?? 0);
+      int firstHalfGoals = (record.homeHalfTimeScore ?? 0) + (record.awayHalfTimeScore ?? 0);
+      int fullTimeGoals = (record.homeFullTimeScore ?? 0) + (record.awayFullTimeScore ?? 0);
+      int secondHalfGoals = fullTimeGoals - firstHalfGoals;
 
-      if (firstHalfScore > 1) {
-        overFirst++;
-      } else if (secondHalfScore - firstHalfScore > 1) {
-        overSecond++;
-      } else if (secondHalfScore > 3) {
-        overFull++;
-      }
+      if (firstHalfGoals > filter.milestoneGoalsFirstHalf) overFirst++;
+      if (secondHalfGoals > filter.milestoneGoalsSecondHalf) overSecond++;
+      if (fullTimeGoals > filter.milestoneGoalsFullTime) overFull++;
     }
 
     double overFirstPercentage = (overFirst / recordsCount) * 100;

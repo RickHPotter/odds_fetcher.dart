@@ -58,7 +58,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   bool hideFiltersOnFutureRecordSelect = Platform.isLinux ? false : true;
 
   // <-- FILTERS
-  late Filter filter = Filter(filterName: "FILTRO PADRÃO");
+  late Filter filter = Filter.base("FILTRO PADRÃO");
   late Filter placeholderFilter = filter.copyWith();
 
   late Map<Odds, bool> selectedOddsMap = {

@@ -8,7 +8,7 @@ class Folder {
   Folder({required this.id, required this.name, required this.leagues});
 
   factory Folder.fromMap(Map<String, dynamic> map) {
-    final List<String> leagueIds = (map["leagueIds"] as String).split(",");
+    final List<String> leagueIds = (map["leagueIds"] ?? "").split(",");
     final List<int> ids = leagueIds.where((e) => e.trim().isNotEmpty).map(int.parse).toList();
 
     final League league = League(code: map["leagueCode"], id: map["leagueId"], name: map["leagueName"], ids: ids);
@@ -26,6 +26,6 @@ class Folder {
   }
 
   Folder copyWith() {
-    return Folder.fromMap(toMap());
+    return Folder(id: id, name: name, leagues: leagues);
   }
 }

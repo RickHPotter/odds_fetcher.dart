@@ -185,9 +185,9 @@ class DatabaseService {
           SUM(homeWin) AS homeWins,
           SUM(draw) AS draws,
           SUM(awayWin) AS awayWins,
-          SUM(CASE WHEN homeFirstHalfScore + awayFirstHalfScore >= ${filter.milestoneGoalsFirstHalf} THEN 1 ELSE 0 END) AS overFirst,
-          SUM(CASE WHEN homeSecondHalfScore + awaySecondHalfScore >= ${filter.milestoneGoalsSecondHalf} THEN 1 ELSE 0 END) AS overSecond,
-          SUM(CASE WHEN homeFirstHalfScore + homeSecondHalfScore + awayFirstHalfScore + awaySecondHalfScore >= ${filter.milestoneGoalsFullTime} THEN 1 ELSE 0 END) AS overFull
+          SUM(CASE WHEN homeHalfTimeScore + awayHalfTimeScore >= ${filter.milestoneGoalsFirstHalf} THEN 1 ELSE 0 END) AS overFirst,
+          SUM(CASE WHEN homeFullTimeScore + awayFullTimeScore >= ${filter.milestoneGoalsSecondHalf} THEN 1 ELSE 0 END) AS overSecond,
+          SUM(CASE WHEN homeHalfTimeScore + homeFullTimeScore + awayHalfTimeScore + awayFullTimeScore >= ${filter.milestoneGoalsFullTime} THEN 1 ELSE 0 END) AS overFull
         FROM Records r
         ${await filter.whereClause(futureRecord: pivotRecord)}
       """);
@@ -492,7 +492,7 @@ class DatabaseService {
 
     if (filterResult.isEmpty) {
       debugPrint("fallback to base filter");
-      return Filter(filterName: "FILTRO PADRÃO");
+      return Filter.base("FILTRO PADRÃO");
     }
 
     final Filter filter = Filter.fromMap(filterResult.first);

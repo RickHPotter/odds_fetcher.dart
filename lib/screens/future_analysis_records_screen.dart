@@ -54,10 +54,10 @@ class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAn
           if (selectedMatchId != null && pivotRecords.isNotEmpty && pivotRecordIndex != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 15.0),
-              child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int]),
+              child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int], filter: filter),
             ),
 
-          PastMachDataTable(records: records),
+          PastMachDataTable(records: records, filter: filter),
 
           const Divider(),
           footerControls(context, _filterNameController),

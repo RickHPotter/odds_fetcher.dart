@@ -131,54 +131,57 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
 
         populateSelectedLeaguesFolders();
 
+        final double heightFactor = widget.filter.showPivotOptions ? 0.6 : 0.5;
+
         return Dialog(
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.height * 0.60,
+            height: MediaQuery.of(context).size.height * heightFactor,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            Switch(
-                              value: widget.filter.filterFutureRecordsByLeagues,
-                              onChanged: (value) {
-                                setStates(() {
-                                  widget.filter.filterFutureRecordsByLeagues = value;
-                                });
-                              },
-                            ),
-                            const Text("FILTRAR JOGOS FUTUROS"),
-                          ],
+                  if (widget.filter.showPivotOptions)
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.filterFutureRecordsByLeagues,
+                                onChanged: (value) {
+                                  setStates(() {
+                                    widget.filter.filterFutureRecordsByLeagues = value;
+                                  });
+                                },
+                              ),
+                              const Text("FILTRAR JOGOS FUTUROS"),
+                            ],
+                          ),
                         ),
-                      ),
-                      Flexible(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            Switch(
-                              value: widget.filter.filterPastRecordsByLeagues,
-                              onChanged: (value) {
-                                setStates(() {
-                                  widget.filter.filterPastRecordsByLeagues = value;
-                                });
-                              },
-                            ),
-                            const Text("FILTRAR JOGOS ANTERIORES"),
-                          ],
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.filterPastRecordsByLeagues,
+                                onChanged: (value) {
+                                  setStates(() {
+                                    widget.filter.filterPastRecordsByLeagues = value;
+                                  });
+                                },
+                              ),
+                              const Text("FILTRAR JOGOS ANTERIORES"),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   _buildMultiSelect<League>(
                     shouldFocus: true,
                     items: widget.leagues,
@@ -240,7 +243,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                           children:
                               selectedLeaguesFromFolders.map((league) {
                                 return Chip(
-                                  label: Tooltip(message: league.name, child: Text(league.name)),
+                                  label: Tooltip(message: league.name, child: Text(league.code)),
                                   deleteIconColor: Colors.red,
                                   onDeleted: () {
                                     setStates(() {

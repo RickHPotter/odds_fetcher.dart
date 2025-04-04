@@ -84,7 +84,7 @@ class MyHomePage extends StatefulWidget {
 final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class _MyHomePageState extends State<MyHomePage> {
-  int selectedIndex = 0;
+  int selectedIndex = 2;
   final String githubLink = "https://github.com/RickHPotter/odds_fetcher.dart";
 
   @override

@@ -1,12 +1,14 @@
 import "package:flutter/material.dart";
+import "package:odds_fetcher/models/filter.dart" show Filter;
 import "package:odds_fetcher/models/record.dart";
 import "package:pluto_grid/pluto_grid.dart";
 
 class PastMachDataTable extends StatelessWidget {
   final Future<List<Record>>? records;
+  final Filter filter;
   final double percentagesContainerWidthFactor = 0.10;
 
-  const PastMachDataTable({super.key, required this.records});
+  const PastMachDataTable({super.key, required this.records, required this.filter});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +33,11 @@ class PastMachDataTable extends StatelessWidget {
 
           return PlutoGrid(
             columns: getColumns(screenWidth),
-            rows: getRows(records),
+            rows: getRows(records, filter),
             rowColorCallback: (PlutoRowColorContext context) {
               final Record record = records[context.rowIdx];
-              final int home = record.homeSecondHalfScore ?? 0;
-              final int away = record.awaySecondHalfScore ?? 0;
+              final int home = record.homeFullTimeScore ?? 0;
+              final int away = record.awayFullTimeScore ?? 0;
 
               if (home == away) {
                 return Colors.grey.shade200;
@@ -107,7 +109,7 @@ class PastMachDataTable extends StatelessWidget {
         width: largerWidth,
       ),
       PlutoColumn(
-        title: "HT",
+        title: "1T",
         field: "intervalo",
         type: PlutoColumnType.text(),
         titleTextAlign: PlutoColumnTextAlign.start,
@@ -173,16 +175,26 @@ class PastMachDataTable extends StatelessWidget {
     ];
   }
 
-  List<PlutoRow> getRows(List<Record> records) {
+  List<PlutoRow> getRows(List<Record> records, Filter filter) {
     return records.map((Record record) {
+      String halfTimeScore =
+          ((record.homeHalfTimeScore ?? 0) + (record.awayHalfTimeScore ?? 0)) >= filter.milestoneGoalsFirstHalf
+              ? "+ ${record.halfTimeScore} +"
+              : "-- ${record.halfTimeScore} --";
+
+      String fullTimeScore =
+          ((record.homeFullTimeScore ?? 0) + (record.awayFullTimeScore ?? 0)) >= filter.milestoneGoalsFullTime
+              ? "+ ${record.fullTimeScore} +"
+              : "-- ${record.fullTimeScore} --";
+
       return PlutoRow(
         cells: {
           "dia": PlutoCell(value: record.matchDate.toString()),
           "liga": PlutoCell(value: record.league.code),
           "home": PlutoCell(value: record.homeTeam.name),
           "away": PlutoCell(value: record.awayTeam.name),
-          "intervalo": PlutoCell(value: record.firstHalfScore),
-          "placar": PlutoCell(value: record.secondHalfScore),
+          "intervalo": PlutoCell(value: halfTimeScore),
+          "placar": PlutoCell(value: fullTimeScore),
           "early_home": PlutoCell(value: record.earlyOdds1?.toString() ?? ""),
           "early_draw": PlutoCell(value: record.earlyOddsX?.toString() ?? ""),
           "early_away": PlutoCell(value: record.earlyOdds2?.toString() ?? ""),

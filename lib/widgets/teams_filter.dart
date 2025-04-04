@@ -97,54 +97,57 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
           });
         }
 
+        final double heightFactor = widget.filter.showPivotOptions ? 0.4 : 0.3;
+
         return Dialog(
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.height * 0.40,
+            height: MediaQuery.of(context).size.height * heightFactor,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            Switch(
-                              value: widget.filter.filterFutureRecordsByTeams,
-                              onChanged: (bool value) {
-                                setState(() {
-                                  widget.filter.filterFutureRecordsByTeams = value;
-                                });
-                              },
-                            ),
-                            const Text("FILTRAR JOGOS FUTUROS"),
-                          ],
+                  if (widget.filter.showPivotOptions)
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.filterFutureRecordsByTeams,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    widget.filter.filterFutureRecordsByTeams = value;
+                                  });
+                                },
+                              ),
+                              const Text("FILTRAR JOGOS FUTUROS"),
+                            ],
+                          ),
                         ),
-                      ),
-                      Flexible(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            Switch(
-                              value: widget.filter.filterPastRecordsByTeams,
-                              onChanged: (value) {
-                                setStates(() {
-                                  widget.filter.filterPastRecordsByTeams = value;
-                                });
-                              },
-                            ),
-                            const Text("FILTRAR JOGOS ANTERIORES"),
-                          ],
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.filterPastRecordsByTeams,
+                                onChanged: (value) {
+                                  setStates(() {
+                                    widget.filter.filterPastRecordsByTeams = value;
+                                  });
+                                },
+                              ),
+                              const Text("FILTRAR JOGOS ANTERIORES"),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   _buildMultiSelect<Team>(
                     shouldFocus: true,
                     items: widget.teams,

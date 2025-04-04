@@ -57,14 +57,14 @@ class ApiService {
 
       try {
         String firstHalfScore = fields[10].trim();
-        int? homeFirstHalfScore;
-        int? awayFirstHalfScore;
+        int? homeHalfTimeScore;
+        int? awayHalfTimeScore;
 
         if (firstHalfScore.isNotEmpty && firstHalfScore.contains("-")) {
           final List<String> scores = firstHalfScore.split("-");
           if (scores.length == 2) {
-            homeFirstHalfScore = int.tryParse(scores[0]);
-            awayFirstHalfScore = int.tryParse(scores[1]);
+            homeHalfTimeScore = int.tryParse(scores[0]);
+            awayHalfTimeScore = int.tryParse(scores[1]);
           }
         }
         final String leagueCode = fields[3].split(",")[0];
@@ -74,16 +74,16 @@ class ApiService {
         final int homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
         final int awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
 
-        int homeSecondHalfScore = parseInteger(fields[8]);
-        int awaySecondHalfScore = parseInteger(fields[9]);
+        int homeFullTimeScore = parseInteger(fields[8]);
+        int awayFullTimeScore = parseInteger(fields[9]);
 
         int home = 0;
         int draw = 0;
         int away = 0;
 
-        if (homeSecondHalfScore == awaySecondHalfScore) {
+        if (homeFullTimeScore == awayFullTimeScore) {
           draw = 1;
-        } else if (homeSecondHalfScore > awaySecondHalfScore) {
+        } else if (homeFullTimeScore > awayFullTimeScore) {
           home = 1;
         } else {
           away = 1;
@@ -101,10 +101,10 @@ class ApiService {
           finalOdds1: double.tryParse(fields[14]),
           finalOddsX: double.tryParse(fields[15]),
           finalOdds2: double.tryParse(fields[16]),
-          homeFirstHalfScore: homeFirstHalfScore,
-          awayFirstHalfScore: awayFirstHalfScore,
-          homeSecondHalfScore: homeSecondHalfScore,
-          awaySecondHalfScore: awaySecondHalfScore,
+          homeHalfTimeScore: homeHalfTimeScore,
+          awayHalfTimeScore: awayHalfTimeScore,
+          homeFullTimeScore: homeFullTimeScore,
+          awayFullTimeScore: awayFullTimeScore,
           homeWin: home,
           draw: draw,
           awayWin: away,
@@ -164,14 +164,14 @@ class ApiService {
 
       try {
         String firstHalfScore = fields[10].trim();
-        int? homeFirstHalfScore;
-        int? awayFirstHalfScore;
+        int? homeHalfTimeScore;
+        int? awayHalfTimeScore;
 
         if (firstHalfScore.isNotEmpty && firstHalfScore.contains("-")) {
           final List<String> scores = firstHalfScore.split("-");
           if (scores.length == 2) {
-            homeFirstHalfScore = int.tryParse(scores[0]);
-            awayFirstHalfScore = int.tryParse(scores[1]);
+            homeHalfTimeScore = int.tryParse(scores[0]);
+            awayHalfTimeScore = int.tryParse(scores[1]);
           }
         }
 
@@ -180,16 +180,16 @@ class ApiService {
         final int homeTeamId = await DatabaseService.getOrCreateTeam(fields[6]);
         final int awayTeamId = await DatabaseService.getOrCreateTeam(fields[7]);
 
-        int homeSecondHalfScore = parseInteger(fields[8]);
-        int awaySecondHalfScore = parseInteger(fields[9]);
+        int homeFullTimeScore = parseInteger(fields[8]);
+        int awayFullTimeScore = parseInteger(fields[9]);
 
         int home = 0;
         int draw = 0;
         int away = 0;
 
-        if (homeSecondHalfScore == awaySecondHalfScore) {
+        if (homeFullTimeScore == awayFullTimeScore) {
           draw = 1;
-        } else if (homeSecondHalfScore > awaySecondHalfScore) {
+        } else if (homeFullTimeScore > awayFullTimeScore) {
           home = 1;
         } else {
           away = 1;
@@ -207,10 +207,10 @@ class ApiService {
           finalOdds1: double.tryParse(fields[14]),
           finalOddsX: double.tryParse(fields[15]),
           finalOdds2: double.tryParse(fields[16]),
-          homeFirstHalfScore: homeFirstHalfScore,
-          awayFirstHalfScore: awayFirstHalfScore,
-          homeSecondHalfScore: homeSecondHalfScore,
-          awaySecondHalfScore: awaySecondHalfScore,
+          homeHalfTimeScore: homeHalfTimeScore,
+          awayHalfTimeScore: awayHalfTimeScore,
+          homeFullTimeScore: homeFullTimeScore,
+          awayFullTimeScore: awayFullTimeScore,
           homeWin: home,
           draw: draw,
           awayWin: away,
@@ -288,10 +288,10 @@ class ApiService {
           finalOdds1: double.tryParse(fields[11]),
           finalOddsX: double.tryParse(fields[12]),
           finalOdds2: double.tryParse(fields[13]),
-          homeFirstHalfScore: null,
-          awayFirstHalfScore: null,
-          homeSecondHalfScore: null,
-          awaySecondHalfScore: null,
+          homeHalfTimeScore: null,
+          awayHalfTimeScore: null,
+          homeFullTimeScore: null,
+          awayFullTimeScore: null,
           finished: false,
         );
 

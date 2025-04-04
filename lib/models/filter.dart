@@ -52,9 +52,9 @@ class Filter {
   bool futureSameFinalDraw;
   bool futureSameFinalAway;
 
-  int? milestoneGoalsFirstHalf;
-  int? milestoneGoalsSecondHalf;
-  int? milestoneGoalsFullTime;
+  int milestoneGoalsFirstHalf;
+  int milestoneGoalsSecondHalf;
+  int milestoneGoalsFullTime;
 
   int futureMinOverFirstPercentage;
   int futureMinOverSecondPercentage;
@@ -120,9 +120,9 @@ class Filter {
     this.filterPastRecordsBySpecificOdds = true,
     this.filterFutureRecordsBySpecificOdds = false,
 
-    this.teams = const [],
-    this.leagues = const [],
-    this.folders = const [],
+    required this.teams,
+    required this.leagues,
+    required this.folders,
 
     this.showPivotOptions = true,
   }) : assert(pastYears != null || specificYears != null);
@@ -248,6 +248,10 @@ class Filter {
       "filterPastRecordsBySpecificOdds": filterPastRecordsBySpecificOdds ? 1 : 0,
       "filterFutureRecordsBySpecificOdds": filterFutureRecordsBySpecificOdds ? 1 : 0,
     };
+  }
+
+  static Filter base(String filterName, {showPivotOptions = true}) {
+    return Filter(filterName: filterName, teams: [], leagues: [], folders: [], showPivotOptions: showPivotOptions);
   }
 
   DateTime minDate() {

@@ -280,7 +280,6 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                           ),
                         ),
                       ),
-
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(

@@ -3,7 +3,7 @@ import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/team.dart";
 import "package:odds_fetcher/services/database_service.dart";
-import "package:odds_fetcher/utils/date_utils.dart" show rawDateTime;
+import "package:odds_fetcher/utils/date_utils.dart" show parseRawDateTime, rawDateTime;
 
 enum MinMaxOdds {
   minEarlyHome,
@@ -25,7 +25,8 @@ class Filter {
   String filterName;
   int pivotNextMinutes;
   int? pastYears;
-  int? specificYears;
+  DateTime? specificMinDate;
+  DateTime? specificMaxDate;
 
   double? minEarlyHome;
   double? maxEarlyHome;
@@ -82,7 +83,8 @@ class Filter {
     required this.filterName,
     this.pivotNextMinutes = 60,
     this.pastYears = 1,
-    this.specificYears,
+    this.specificMinDate,
+    this.specificMaxDate,
     this.minEarlyHome,
     this.maxEarlyHome,
     this.minEarlyDraw,
@@ -125,7 +127,7 @@ class Filter {
     required this.folders,
 
     this.showPivotOptions = true,
-  }) : assert(pastYears != null || specificYears != null);
+  }) : assert(pastYears != null || specificMinDate != null || specificMaxDate != null);
 
   Filter copyWith() {
     Filter filter = Filter.fromMap(toMap());
@@ -139,12 +141,18 @@ class Filter {
   }
 
   factory Filter.fromMap(Map<String, dynamic> map) {
+    DateTime? formattedMinDateString =
+        map["specificMinDate"] == null ? null : parseRawDateTime(map["specificMinDate"].toString());
+    DateTime? formattedMaxDateString =
+        map["specificMaxDate"] == null ? null : parseRawDateTime(map["specificMaxDate"].toString());
+
     return Filter(
       id: map["id"],
       filterName: map["filterName"],
       pivotNextMinutes: map["pivotNextMinutes"],
       pastYears: map["pastYears"],
-      specificYears: map["specificYears"],
+      specificMinDate: formattedMinDateString,
+      specificMaxDate: formattedMaxDateString,
 
       minEarlyHome: map["minEarlyHome"],
       maxEarlyHome: map["maxEarlyHome"],
@@ -202,7 +210,8 @@ class Filter {
       "filterName": filterName,
       "pivotNextMinutes": pivotNextMinutes,
       "pastYears": pastYears,
-      "specificYears": specificYears,
+      "specificMinDate": specificMinDate == null ? null : rawDateTime(specificMinDate as DateTime),
+      "specificMaxDate": specificMaxDate == null ? null : rawDateTime(specificMaxDate as DateTime),
 
       "minEarlyHome": minEarlyHome,
       "maxEarlyHome": maxEarlyHome,
@@ -257,8 +266,8 @@ class Filter {
   DateTime minDate() {
     if (pastYears != null) {
       return DateTime.now().subtract(Duration(days: (pastYears as int) * 365));
-    } else if (specificYears != null) {
-      return DateTime(specificYears as int, 1, 1);
+    } else if (specificMinDate != null) {
+      return specificMinDate as DateTime;
     } else {
       return DateTime.parse("2008-01-01");
     }
@@ -267,8 +276,8 @@ class Filter {
   DateTime maxDate() {
     if (pastYears != null) {
       return DateTime.now();
-    } else if (specificYears != null) {
-      return DateTime(specificYears as int, 12, 31);
+    } else if (specificMaxDate != null) {
+      return specificMaxDate as DateTime;
     } else {
       return DateTime.now();
     }

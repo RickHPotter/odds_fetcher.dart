@@ -64,7 +64,8 @@ CREATE TABLE Filters (
   filterName                       TEXT NOT NULL UNIQUE,
   pivotNextMinutes                 INTEGER,
   pastYears                        INTEGER,
-  specificYears                    INTEGER,
+  specificMinDate                  INTEGER,
+  specificMaxDate                  INTEGER,
 
   minEarlyHome                     REAL,
   maxEarlyHome                     REAL,

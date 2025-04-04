@@ -319,7 +319,6 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                           ),
                         ),
                       ),
-
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(

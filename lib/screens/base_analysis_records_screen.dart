@@ -3,7 +3,6 @@ import "dart:io" show Platform;
 
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
-import "package:flutter/services.dart" show FilteringTextInputFormatter;
 import "package:font_awesome_flutter/font_awesome_flutter.dart" show FontAwesomeIcons;
 import "package:google_fonts/google_fonts.dart" show GoogleFonts;
 
@@ -20,6 +19,7 @@ import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/services/database_service.dart";
 import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
 import "package:odds_fetcher/widgets/criteria_filter.dart" show CriteriaFilterButton, CriteriaFilterModal;
+import "package:odds_fetcher/widgets/datetime_picker.dart";
 import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
 import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
@@ -232,18 +232,20 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   }
 
   // FILTERS
-  void filterHistoryMatches(TextEditingController yearController, {int? time, int? specificYear}) {
-    if (time == null && specificYear == null) {
+  void filterHistoryMatches({int? time, DateTime? minDate, DateTime? maxDate}) {
+    if (time == null && (minDate == null || maxDate == null)) {
       showOverlayMessage(context, "Filtro de Tempo Passado preenchido incompletamente!", type: MessageType.warning);
       return;
     }
 
     if (time != null) {
       filter.pastYears = time;
-      yearController.clear();
-    } else if (specificYear != null) {
+      filter.specificMinDate = null;
+      filter.specificMaxDate = null;
+    } else if (minDate != null || maxDate != null) {
       filter.pastYears = null;
-      filter.specificYears = specificYear;
+      filter.specificMinDate = minDate;
+      filter.specificMaxDate = maxDate;
     }
 
     setState(() => filter = filter);
@@ -327,7 +329,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   }
 
   // WIDGETS
-  Widget pastFilters(double buttonSize, List<int> pastYearsList, TextEditingController yearController) {
+  Widget pastFilters(double buttonSize, List<int> pastYearsList) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -340,7 +342,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: (4.0)),
                 child: ElevatedButton(
-                  onPressed: () => filterHistoryMatches(yearController, time: time),
+                  onPressed: () => filterHistoryMatches(time: time),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     shadowColor: Colors.purple,
@@ -358,22 +360,38 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
             ),
           SizedBox(
             width: buttonSize,
-            height: MediaQuery.of(context).size.height * 0.042,
-            child: TextFormField(
-              controller: yearController,
-              keyboardType: TextInputType.number,
-              validator: (value) => value == null ? "ANO INVÁLIDO" : null,
-              decoration: InputDecoration(
-                labelText: "ANO",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.all(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: (4.0)),
+              child: ElevatedButton.icon(
+                icon: Icon(
+                  Icons.calendar_today,
+                  color: (filter.specificMinDate != null || filter.specificMaxDate != null) ? Colors.white : null,
+                ),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shadowColor: Colors.purple,
+                  backgroundColor:
+                      (filter.specificMinDate != null || filter.specificMaxDate != null) ? Colors.indigoAccent : null,
+                ),
+                label: Text(
+                  "Data",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: (filter.specificMinDate != null || filter.specificMaxDate != null) ? Colors.white : null,
+                  ),
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Selecionar Data e Hora"),
+                        content: DateTimePickerWidget(filter: filter, onApplyCallback: filterHistoryMatches),
+                      );
+                    },
+                  );
+                },
               ),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-              onChanged:
-                  (value) =>
-                      filterHistoryMatches(yearController, specificYear: value.isEmpty ? null : int.parse(value)),
             ),
           ),
         ],

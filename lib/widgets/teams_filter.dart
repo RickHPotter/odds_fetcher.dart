@@ -184,7 +184,6 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                           ),
                         ),
                       ),
-
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(

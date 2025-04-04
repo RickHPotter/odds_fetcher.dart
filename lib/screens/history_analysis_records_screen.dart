@@ -18,7 +18,6 @@ class HistoryAnalysisRecordsScreen extends BaseAnalysisScreen {
 
 class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<HistoryAnalysisRecordsScreen> {
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _yearController = TextEditingController();
   final TextEditingController _filterNameController = TextEditingController();
 
   final List<int> pastMatchesMinutesList = [
@@ -52,7 +51,7 @@ class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<History
       child: Column(
         children: [
           // FILTERS
-          if (showFilters) pastFilters(buttonSize, pastYearsList, _yearController),
+          if (showFilters) pastFilters(buttonSize, pastYearsList),
           if (showFilters) pivotFilters(Icons.history, pastMatchesMinutesList, buttonSize),
           if (showFilters) bothFilters(buttonSize, smallButtonSize),
 

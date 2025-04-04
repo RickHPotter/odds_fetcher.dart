@@ -2,7 +2,6 @@ import "dart:async";
 
 import "package:async/async.dart" show CancelableOperation;
 import "package:flutter/material.dart";
-import "package:flutter/services.dart" show FilteringTextInputFormatter;
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 
 import "package:intl/date_symbol_data_local.dart" show initializeDateFormatting;
@@ -14,6 +13,7 @@ import "package:odds_fetcher/models/league.dart";
 import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league_folder.dart";
 import "package:odds_fetcher/services/database_service.dart";
+import "package:odds_fetcher/widgets/datetime_picker.dart" show DateTimePickerWidget;
 
 import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
 import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
@@ -43,9 +43,6 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
   Filter filter = Filter.base("FILTRO PADRÃO", showPivotOptions: false);
 
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
-
-  late TextEditingController yearController = TextEditingController();
-  late TextEditingController filterNameController = TextEditingController();
 
   void loadMatches() {
     setState(() {
@@ -146,20 +143,41 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
                   ),
                 SizedBox(
                   width: buttonSize,
-                  height: MediaQuery.of(context).size.height * 0.042,
-                  child: TextFormField(
-                    controller: yearController,
-                    keyboardType: TextInputType.number,
-                    validator: (value) => value == null ? "ANO INVÁLIDO" : null,
-                    decoration: InputDecoration(
-                      labelText: "ANO",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.all(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: (4.0)),
+                    child: ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.calendar_today,
+                        color: (filter.specificMinDate != null || filter.specificMaxDate != null) ? Colors.white : null,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shadowColor: Colors.purple,
+                        backgroundColor:
+                            (filter.specificMinDate != null || filter.specificMaxDate != null)
+                                ? Colors.indigoAccent
+                                : null,
+                      ),
+                      label: Text(
+                        "Data",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              (filter.specificMinDate != null || filter.specificMaxDate != null) ? Colors.white : null,
+                        ),
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text("Selecionar Data e Hora"),
+                              content: DateTimePickerWidget(filter: filter, onApplyCallback: filterHistoryMatches),
+                            );
+                          },
+                        );
+                      },
                     ),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
-                    onChanged: (value) => filterHistoryMatches(specificYear: value.isEmpty ? null : int.parse(value)),
                   ),
                 ),
               ],
@@ -281,18 +299,20 @@ class _HistoryRecordsScreenState extends State<HistoryRecordsScreen> {
   }
 
   // FILTERS
-  void filterHistoryMatches({int? time, int? specificYear}) {
-    if (time == null && specificYear == null) {
+  void filterHistoryMatches({int? time, DateTime? minDate, DateTime? maxDate}) {
+    if (time == null && (minDate == null || maxDate == null)) {
       showOverlayMessage(context, "Filtro de Tempo Passado preenchido incompletamente!", type: MessageType.warning);
       return;
     }
 
     if (time != null) {
       filter.pastYears = time;
-      yearController.clear();
-    } else if (specificYear != null) {
+      filter.specificMinDate = null;
+      filter.specificMaxDate = null;
+    } else if (minDate != null || maxDate != null) {
       filter.pastYears = null;
-      filter.specificYears = specificYear;
+      filter.specificMinDate = minDate;
+      filter.specificMaxDate = maxDate;
     }
 
     setState(() => filter = filter);

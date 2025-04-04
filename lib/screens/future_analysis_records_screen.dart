@@ -18,7 +18,6 @@ class FutureAnalysisRecordsScreen extends BaseAnalysisScreen {
 
 class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAnalysisRecordsScreen> {
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _yearController = TextEditingController();
   final TextEditingController _filterNameController = TextEditingController();
 
   final List<int> futureMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3];
@@ -42,7 +41,7 @@ class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAn
       child: Column(
         children: [
           // FILTERS
-          if (showFilters) pastFilters(buttonSize, pastYearsList, _yearController),
+          if (showFilters) pastFilters(buttonSize, pastYearsList),
           if (showFilters) pivotFilters(Icons.update, futureMatchesMinutesList, buttonSize),
           if (showFilters) bothFilters(buttonSize, smallButtonSize),
 

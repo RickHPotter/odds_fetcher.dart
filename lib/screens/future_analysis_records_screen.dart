@@ -2,24 +2,20 @@ import "package:flutter/material.dart";
 import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/services.dart" show FilteringTextInputFormatter;
 import "package:intl/intl.dart" show DateFormat;
-import "package:font_awesome_flutter/font_awesome_flutter.dart";
-import "package:google_fonts/google_fonts.dart";
 import "package:odds_fetcher/models/filter.dart" show Filter;
 
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/services/database_service.dart" show DatabaseService;
-import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber, humaniseTime;
+import "package:odds_fetcher/utils/parse_utils.dart" show humaniseTime;
 
 import "package:odds_fetcher/screens/base_analysis_records_screen.dart";
 
-import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
 import "package:odds_fetcher/widgets/teams_filter.dart" show TeamsFilterButton;
 import "package:odds_fetcher/widgets/leagues_folders_filter.dart" show LeaguesFoldersFilterButton;
 import "package:odds_fetcher/widgets/odds_filter.dart" show OddsFilterButton;
 import "package:odds_fetcher/widgets/criteria_filter.dart" show CriteriaFilterButton, CriteriaFilterModal;
 import "package:odds_fetcher/widgets/match_card.dart" show MatchCard;
 import "package:odds_fetcher/widgets/past_matches_datatable.dart" show PastMachDataTable;
-import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
 
 class FutureAnalysisRecordsScreen extends BaseAnalysisScreen {
   const FutureAnalysisRecordsScreen({super.key});
@@ -38,13 +34,16 @@ class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAn
 
   @override
   Stream<Record> fetchRecords(Filter filter) {
-    return DatabaseService.fetchFutureRecords(filter);
+    return DatabaseService.fetchFutureRecords(filter, (count) => setState(() => pivotRecordsCount = count));
   }
 
   @override
   Widget build(BuildContext context) {
     final double buttonSize = MediaQuery.of(context).size.width * 0.087;
     final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
+    if (!futureMatchesMinutesList.contains(filter.futureNextMinutes)) {
+      filter.futureNextMinutes = futureMatchesMinutesList.first;
+    }
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -432,268 +431,7 @@ class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAn
             ),
           PastMachDataTable(records: records),
           const Divider(),
-          // Footer and Controls
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  child: Tooltip(
-                    message: filter.filterName,
-                    child:
-                        isCreatingFilter || isUpdatingFilter
-                            ? SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.05,
-                              child: TextField(
-                                controller: _filterNameController,
-                                decoration: InputDecoration(
-                                  contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8), // Adjust padding
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  hintText: "Informe um Nome...",
-                                ),
-                                onChanged: (value) => filter.filterName = value,
-                              ),
-                            )
-                            : FilterSelectButton(
-                              filter: filter,
-                              onApplyCallback: () {
-                                retrieveFilter(filter.id as int);
-                              },
-                            ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Tooltip(
-                      message: "Novo Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                          backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            isCreatingFilter = true;
-                            filter.id = null;
-                            filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
-                            _filterNameController.text = filter.filterName;
-                          });
-                        },
-                        child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
-                      ),
-                    ),
-                    Tooltip(
-                      message: "Editar Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                          backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
-                        ),
-                        onPressed: () {
-                          if (isCreatingFilter || isUpdatingFilter) return;
-
-                          setState(() {
-                            isUpdatingFilter = true;
-                            _filterNameController.text = filter.filterName;
-                          });
-                        },
-                        child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
-                      ),
-                    ),
-                    Tooltip(
-                      message: "Salvar Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                        ),
-                        onPressed: () async {
-                          final bool success = await saveFilter();
-
-                          if (!context.mounted) return;
-                          if (success) {
-                            showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
-                          } else {
-                            showOverlayMessage(
-                              context,
-                              "Filtro precisa de um nome diferente!",
-                              type: MessageType.error,
-                            );
-                          }
-                        },
-                        child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
-                      ),
-                    ),
-                    Tooltip(
-                      message:
-                          isCreatingFilter || isUpdatingFilter
-                              ? "Cancelar Criação/Edição de Filtro"
-                              : "Resetar Filtro",
-                      child: ElevatedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            if (isCreatingFilter || isUpdatingFilter) {
-                              isCreatingFilter = false;
-                              isUpdatingFilter = false;
-                              filter.filterName = placeholderFilter.filterName;
-
-                              showOverlayMessage(
-                                context,
-                                "Criação/Edição de filtro cancelada com sucesso!",
-                                type: MessageType.info,
-                              );
-                            } else {
-                              filter = placeholderFilter.copyWith();
-                              updateOddsFilter();
-                              loadFutureMatches();
-                              showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
-                            }
-                          });
-                        },
-                        child:
-                            isCreatingFilter || isUpdatingFilter
-                                ? Icon(FontAwesomeIcons.ban, color: Colors.red)
-                                : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
-                      ),
-                    ),
-                  ],
-                ),
-                isLoading
-                    ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
-                    : SizedBox(width: 20, height: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${humaniseNumber(pivotRecords.length)} JOGOS FUTUROS.",
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                    ),
-                    FutureBuilder<List<Record>>(
-                      future: records,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Text(
-                            "Carregando jogos passados...",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return const Text(
-                            "Erro ao carregar jogos passados.",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-                          );
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Text(
-                            "0 JOGOS PASSADOS.",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                          );
-                        }
-                        return Text(
-                          "${humaniseNumber(snapshot.data!.length)} JOGOS PASSADOS.",
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                // Fetch Controls
-                ElevatedButton(
-                  onPressed: () => setState(() => showFilters = !showFilters),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                  ),
-                  child: Text(
-                    showFilters ? "OCULTAR FILTROS" : "MOSTRAR FILTROS",
-                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child:
-                      isFetchingPast || isFetchingPivot
-                          ? SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.31,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
-                              child: Column(
-                                children: [
-                                  LinearProgressIndicator(value: progress / 100),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Tooltip(
-                                        message: "Cancelar",
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              isCancelled = true;
-                                              isFetchingPast = false;
-                                              isFetchingPivot = false;
-                                            });
-                                          },
-                                          style: OutlinedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                          ),
-                                          child: const Icon(FontAwesomeIcons.ban, size: 16, color: Colors.red),
-                                        ),
-                                      ),
-                                      Text(
-                                        currentDate,
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () {},
-                                        style: OutlinedButton.styleFrom(
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                        ),
-                                        child: Text("$progress%"),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                          : Row(
-                            children: [
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.15,
-                                child: ElevatedButton(
-                                  onPressed: startFetching,
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                  ),
-                                  child: Text(
-                                    "ATUALIZAR PASSADO",
-                                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.15,
-                                child: ElevatedButton(
-                                  onPressed: startFetchingFuture,
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                  ),
-                                  child: Text(
-                                    "ATUALIZAR FUTURO",
-                                    style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                ),
-              ],
-            ),
-          ),
+          footerControls(context, _filterNameController),
         ],
       ),
     );

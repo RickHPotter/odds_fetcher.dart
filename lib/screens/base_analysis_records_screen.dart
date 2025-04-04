@@ -2,8 +2,11 @@ import "dart:async";
 import "dart:io" show Platform;
 
 import "package:flutter/material.dart";
+import "package:font_awesome_flutter/font_awesome_flutter.dart" show FontAwesomeIcons;
+import "package:google_fonts/google_fonts.dart" show GoogleFonts;
 
 import "package:intl/date_symbol_data_local.dart" show initializeDateFormatting;
+import "package:intl/intl.dart" show DateFormat;
 
 import "package:odds_fetcher/models/record.dart";
 import "package:odds_fetcher/models/filter.dart";
@@ -13,6 +16,8 @@ import "package:odds_fetcher/models/folder.dart";
 import "package:odds_fetcher/models/league_folder.dart";
 import "package:odds_fetcher/jobs/records_fetcher.dart";
 import "package:odds_fetcher/services/database_service.dart";
+import "package:odds_fetcher/utils/parse_utils.dart" show humaniseNumber;
+import "package:odds_fetcher/widgets/filter_select.dart" show FilterSelectButton;
 import "package:odds_fetcher/widgets/overlay_message.dart" show MessageType, showOverlayMessage;
 
 abstract class BaseAnalysisScreen extends StatefulWidget {
@@ -30,6 +35,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   late List<LeagueFolder> leaguesFolders = [];
 
   late RecordFetcher fetcher;
+  late int pivotRecordsCount = 0;
   String currentDate = DateTime.now().toString();
   int progress = 0;
   bool isFetchingPast = false;
@@ -312,5 +318,243 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
     });
 
     return true;
+  }
+
+  // WIDGETS
+  Widget footerControls(BuildContext context, TextEditingController filterNameController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.2,
+            child: Tooltip(
+              message: filter.filterName,
+              child:
+                  isCreatingFilter || isUpdatingFilter
+                      ? SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.05,
+                        child: TextField(
+                          controller: filterNameController,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            hintText: "Informe um Nome...",
+                          ),
+                          onChanged: (value) => filter.filterName = value,
+                        ),
+                      )
+                      : FilterSelectButton(
+                        filter: filter,
+                        onApplyCallback: () {
+                          retrieveFilter(filter.id as int);
+                        },
+                      ),
+            ),
+          ),
+          Row(
+            children: [
+              Tooltip(
+                message: "Novo Filtro",
+                child: ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                    backgroundColor: isCreatingFilter ? Colors.grey[300] : Colors.grey[100],
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isCreatingFilter = true;
+                      filter.id = null;
+                      filter.filterName = "Novo Filtro Data: ${DateFormat.MMMMd("pt-BR").format(DateTime.now())}";
+                      filterNameController.text = filter.filterName;
+                    });
+                  },
+                  child: Icon(FontAwesomeIcons.squarePlus, color: Colors.black),
+                ),
+              ),
+              Tooltip(
+                message: "Editar Filtro",
+                child: ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                    backgroundColor: isUpdatingFilter ? Colors.grey[300] : Colors.grey[100],
+                  ),
+                  onPressed: () {
+                    if (isCreatingFilter || isUpdatingFilter) return;
+
+                    setState(() {
+                      isUpdatingFilter = true;
+                      filterNameController.text = filter.filterName;
+                    });
+                  },
+                  child: const Icon(FontAwesomeIcons.solidPenToSquare, color: Colors.black87),
+                ),
+              ),
+              Tooltip(
+                message: "Salvar Filtro",
+                child: ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  ),
+                  onPressed: () async {
+                    final bool success = await saveFilter();
+
+                    if (!context.mounted) return;
+                    if (success) {
+                      showOverlayMessage(context, "Filtro salvo com sucesso!", type: MessageType.success);
+                    } else {
+                      showOverlayMessage(context, "Filtro precisa de um nome diferente!", type: MessageType.error);
+                    }
+                  },
+                  child: Icon(FontAwesomeIcons.solidFloppyDisk, color: Colors.black87),
+                ),
+              ),
+              Tooltip(
+                message:
+                    isCreatingFilter || isUpdatingFilter ? "Cancelar Criação/Edição de Filtro" : "Resetar Filtro",
+                child: ElevatedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      if (isCreatingFilter || isUpdatingFilter) {
+                        isCreatingFilter = false;
+                        isUpdatingFilter = false;
+                        filter.filterName = placeholderFilter.filterName;
+
+                        showOverlayMessage(
+                          context,
+                          "Criação/Edição de filtro cancelada com sucesso!",
+                          type: MessageType.info,
+                        );
+                      } else {
+                        filter = placeholderFilter.copyWith();
+                        updateOddsFilter();
+                        loadFutureMatches();
+                        showOverlayMessage(context, "Filtro resetado com sucesso!", type: MessageType.info);
+                      }
+                    });
+                  },
+                  child:
+                      isCreatingFilter || isUpdatingFilter
+                          ? Icon(FontAwesomeIcons.ban, color: Colors.red)
+                          : Icon(FontAwesomeIcons.rotateLeft, color: Colors.black87),
+                ),
+              ),
+            ],
+          ),
+          isLoading
+              ? SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
+              : SizedBox(width: 20, height: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "${humaniseNumber(pivotRecordsCount)} JOGOS PIVÔS TOTAIS.",
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
+              ),
+              Text(
+                "${humaniseNumber(pivotRecords.length)} JOGOS PIVÔS FILTRADOS.",
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
+          // Fetch Controls
+          ElevatedButton(
+            onPressed: () => setState(() => showFilters = !showFilters),
+            style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2))),
+            child: Text(
+              showFilters ? "OCULTAR FILTROS" : "MOSTRAR FILTROS",
+              style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child:
+                isFetchingPast || isFetchingPivot
+                    ? SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.18,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: Column(
+                          children: [
+                            LinearProgressIndicator(value: progress / 100),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Tooltip(
+                                  message: "Cancelar",
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isCancelled = true;
+                                        isFetchingPast = false;
+                                        isFetchingPivot = false;
+                                      });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                    ),
+                                    child: const Icon(FontAwesomeIcons.ban, size: 14, color: Colors.red),
+                                  ),
+                                ),
+                                Text(currentDate, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                                ElevatedButton(
+                                  onPressed: () {},
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                                  ),
+                                  child: Text("$progress%"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    : SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.18,
+                      child: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == "past") {
+                            startFetching();
+                          } else if (value == "future") {
+                            startFetchingFuture();
+                          }
+                        },
+                        itemBuilder:
+                            (context) => [
+                              PopupMenuItem(value: "past", child: Text("ATUALIZAR PASSADO")),
+                              PopupMenuItem(value: "future", child: Text("ATUALIZAR FUTURO")),
+                            ],
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Theme.of(context).primaryColor,
+                            disabledForegroundColor: Colors.white,
+                          ),
+                          onPressed: null,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "ATUALIZAR",
+                                style: GoogleFonts.martianMono(fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+          ),
+        ],
+      ),
+    );
   }
 }

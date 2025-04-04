@@ -62,8 +62,10 @@ CREATE TABLE Records (
 CREATE TABLE Filters (
   id                                INTEGER PRIMARY KEY AUTOINCREMENT,
   filterName                        TEXT NOT NULL UNIQUE,
+  futureNextMinutes                 INTEGER,
   pastYears                         INTEGER,
   specificYears                     INTEGER,
+
   minEarlyHome                      REAL,
   maxEarlyHome                      REAL,
   minEarlyDraw                      REAL,
@@ -76,28 +78,37 @@ CREATE TABLE Filters (
   maxFinalDraw                      REAL,
   minFinalAway                      REAL,
   maxFinalAway                      REAL,
-  futureNextMinutes                 INTEGER,
+
   futureDismissNoEarlyOdds          INTEGER NOT NULL DEFAULT 1,
   futureDismissNoFinalOdds          INTEGER NOT NULL DEFAULT 0,
+
   futureOnlySameLeague              INTEGER NOT NULL DEFAULT 0,
+
   futureSameEarlyHome               INTEGER NOT NULL DEFAULT 1,
   futureSameEarlyDraw               INTEGER NOT NULL DEFAULT 0,
   futureSameEarlyAway               INTEGER NOT NULL DEFAULT 1,
   futureSameFinalHome               INTEGER NOT NULL DEFAULT 0,
   futureSameFinalDraw               INTEGER NOT NULL DEFAULT 0,
   futureSameFinalAway               INTEGER NOT NULL DEFAULT 0,
+
+  milestoneGoalsFirstHalf           INTEGER NOT NULL DEFAULT 1,
+  milestoneGoalsSecondHalf          INTEGER NOT NULL DEFAULT 1,
+  milestoneGoalsFullTime            INTEGER NOT NULL DEFAULT 3,
+
+  futureMinOverFirstPercentage      INTEGER NOT NULL DEFAULT 0,
+  futureMinOverSecondPercentage     INTEGER NOT NULL DEFAULT 0,
+  futureMinOverFullPercentage       INTEGER NOT NULL DEFAULT 0,
+
   futureMinHomeWinPercentage        INTEGER NOT NULL DEFAULT 0,
   futureMinDrawPercentage           INTEGER NOT NULL DEFAULT 0,
   futureMinAwayWinPercentage        INTEGER NOT NULL DEFAULT 0,
+
   filterPastRecordsByTeams          INTEGER NOT NULL DEFAULT 0,
   filterFutureRecordsByTeams        INTEGER NOT NULL DEFAULT 0,
   filterPastRecordsByLeagues        INTEGER NOT NULL DEFAULT 0,
   filterFutureRecordsByLeagues      INTEGER NOT NULL DEFAULT 0,
   filterPastRecordsBySpecificOdds   INTEGER NOT NULL DEFAULT 0,
-  filterFutureRecordsBySpecificOdds INTEGER NOT NULL DEFAULT 1,
-  milestoneGoalsFirstHalf           INTEGER NOT NULL DEFAULT 1,
-  milestoneGoalsSecondHalf          INTEGER NOT NULL DEFAULT 1,
-  milestoneGoalsFullTime            INTEGER NOT NULL DEFAULT 3
+  filterFutureRecordsBySpecificOdds INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE FiltersBettingHouses (

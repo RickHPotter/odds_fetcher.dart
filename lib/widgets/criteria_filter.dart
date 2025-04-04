@@ -140,9 +140,12 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
         }
 
         void clearAllTextFields() {
-          futureMinHomeController.clear();
-          futureMinDrawController.clear();
-          futureMinAwayController.clear();
+          futureMinHomeController.text = "0";
+          futureMinDrawController.text = "0";
+          futureMinAwayController.text = "0";
+          futureOverFirstPercentageController.text = "0";
+          futureOverSecondPercentageController.text = "0";
+          futureOverFullPercentageController.text = "0";
         }
 
         void updatePercentagesAndApply() {

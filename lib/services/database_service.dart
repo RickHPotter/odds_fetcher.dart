@@ -113,7 +113,7 @@ class DatabaseService {
     }
   }
 
-  static Stream<Record> fetchFutureRecords(Filter filter) async* {
+  static Stream<Record> fetchFutureRecords(Filter filter, void Function(int) updateCount) async* {
     final Database db = await DatabaseService.database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
@@ -134,6 +134,8 @@ class DatabaseService {
     ORDER BY MatchDate, ID
     """);
 
+    updateCount(result.length);
+
     for (final row in result) {
       Record futureRecord = Record.fromMap(row);
 
@@ -143,7 +145,7 @@ class DatabaseService {
     }
   }
 
-  static Stream<Record> fetchPivotRecords(Filter filter) async* {
+  static Stream<Record> fetchPivotRecords(Filter filter, void Function(int) updateCount) async* {
     final Database db = await DatabaseService.database;
 
     final List<Map<String, dynamic>> result = await db.rawQuery("""
@@ -163,6 +165,8 @@ class DatabaseService {
     ${await filter.whereClausePivot()}
     ORDER BY MatchDate DESC, ID
     """);
+
+    updateCount(result.length);
 
     for (final row in result) {
       Record pivotRecord = Record.fromMap(row);

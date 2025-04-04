@@ -23,6 +23,7 @@ enum MinMaxOdds {
 class Filter {
   int? id;
   String filterName;
+  int futureNextMinutes;
   int? pastYears;
   int? specificYears;
 
@@ -39,14 +40,11 @@ class Filter {
   double? minFinalAway;
   double? maxFinalAway;
 
-  int? milestoneGoalsFirstHalf;
-  int? milestoneGoalsSecondHalf;
-  int? milestoneGoalsFullTime;
-
-  int futureNextMinutes;
   bool futureDismissNoEarlyOdds;
   bool futureDismissNoFinalOdds;
+
   bool futureOnlySameLeague;
+
   bool futureSameEarlyHome;
   bool futureSameEarlyDraw;
   bool futureSameEarlyAway;
@@ -54,13 +52,17 @@ class Filter {
   bool futureSameFinalDraw;
   bool futureSameFinalAway;
 
-  int futureMinHomeWinPercentage;
-  int futureMinDrawPercentage;
-  int futureMinAwayWinPercentage;
+  int? milestoneGoalsFirstHalf;
+  int? milestoneGoalsSecondHalf;
+  int? milestoneGoalsFullTime;
 
   int futureMinOverFirstPercentage;
   int futureMinOverSecondPercentage;
   int futureMinOverFullPercentage;
+
+  int futureMinHomeWinPercentage;
+  int futureMinDrawPercentage;
+  int futureMinAwayWinPercentage;
 
   bool filterPastRecordsByTeams;
   bool filterFutureRecordsByTeams;
@@ -78,6 +80,7 @@ class Filter {
   Filter({
     this.id,
     required this.filterName,
+    this.futureNextMinutes = 60,
     this.pastYears = 1,
     this.specificYears,
     this.minEarlyHome,
@@ -95,7 +98,6 @@ class Filter {
     this.milestoneGoalsFirstHalf = 1,
     this.milestoneGoalsSecondHalf = 1,
     this.milestoneGoalsFullTime = 3,
-    this.futureNextMinutes = 60,
     this.futureDismissNoEarlyOdds = true,
     this.futureDismissNoFinalOdds = false,
     this.futureOnlySameLeague = false,
@@ -140,8 +142,10 @@ class Filter {
     return Filter(
       id: map["id"],
       filterName: map["filterName"],
+      futureNextMinutes: map["futureNextMinutes"],
       pastYears: map["pastYears"],
       specificYears: map["specificYears"],
+
       minEarlyHome: map["minEarlyHome"],
       maxEarlyHome: map["maxEarlyHome"],
       minEarlyDraw: map["minEarlyDraw"],
@@ -154,22 +158,31 @@ class Filter {
       maxFinalDraw: map["maxFinalDraw"],
       minFinalAway: map["minFinalAway"],
       maxFinalAway: map["maxFinalAway"],
-      milestoneGoalsFirstHalf: map["milestoneGoalsFirstHalf"],
-      milestoneGoalsSecondHalf: map["milestoneGoalsSecondHalf"],
-      milestoneGoalsFullTime: map["milestoneGoalsFullTime"],
-      futureNextMinutes: map["futureNextMinutes"],
+
       futureDismissNoEarlyOdds: map["futureDismissNoEarlyOdds"] == 1,
       futureDismissNoFinalOdds: map["futureDismissNoFinalOdds"] == 1,
+
       futureOnlySameLeague: map["futureOnlySameLeague"] == 1,
+
       futureSameEarlyHome: map["futureSameEarlyHome"] == 1,
       futureSameEarlyDraw: map["futureSameEarlyDraw"] == 1,
       futureSameEarlyAway: map["futureSameEarlyAway"] == 1,
       futureSameFinalHome: map["futureSameFinalHome"] == 1,
       futureSameFinalDraw: map["futureSameFinalDraw"] == 1,
       futureSameFinalAway: map["futureSameFinalAway"] == 1,
+
+      milestoneGoalsFirstHalf: map["milestoneGoalsFirstHalf"],
+      milestoneGoalsSecondHalf: map["milestoneGoalsSecondHalf"],
+      milestoneGoalsFullTime: map["milestoneGoalsFullTime"],
+
+      futureMinOverFirstPercentage: map["futureMinOverFirstPercentage"],
+      futureMinOverSecondPercentage: map["futureMinOverSecondPercentage"],
+      futureMinOverFullPercentage: map["futureMinOverFullPercentage"],
+
       futureMinHomeWinPercentage: map["futureMinHomeWinPercentage"],
       futureMinDrawPercentage: map["futureMinDrawPercentage"],
       futureMinAwayWinPercentage: map["futureMinAwayWinPercentage"],
+
       filterPastRecordsByTeams: map["filterPastRecordsByTeams"] == 1,
       filterFutureRecordsByTeams: map["filterFutureRecordsByTeams"] == 1,
       filterPastRecordsByLeagues: map["filterPastRecordsByLeagues"] == 1,
@@ -187,8 +200,10 @@ class Filter {
     return {
       "id": id,
       "filterName": filterName,
+      "futureNextMinutes": futureNextMinutes,
       "pastYears": pastYears,
       "specificYears": specificYears,
+
       "minEarlyHome": minEarlyHome,
       "maxEarlyHome": maxEarlyHome,
       "minEarlyDraw": minEarlyDraw,
@@ -201,22 +216,31 @@ class Filter {
       "maxFinalDraw": maxFinalDraw,
       "minFinalAway": minFinalAway,
       "maxFinalAway": maxFinalAway,
-      "milestoneGoalsFirstHalf": milestoneGoalsFirstHalf,
-      "milestoneGoalsSecondHalf": milestoneGoalsSecondHalf,
-      "milestoneGoalsFullTime": milestoneGoalsFullTime,
-      "futureNextMinutes": futureNextMinutes,
+
       "futureDismissNoEarlyOdds": futureDismissNoEarlyOdds ? 1 : 0,
       "futureDismissNoFinalOdds": futureDismissNoFinalOdds ? 1 : 0,
+
       "futureOnlySameLeague": futureOnlySameLeague ? 1 : 0,
+
       "futureSameEarlyHome": futureSameEarlyHome ? 1 : 0,
       "futureSameEarlyDraw": futureSameEarlyDraw ? 1 : 0,
       "futureSameEarlyAway": futureSameEarlyAway ? 1 : 0,
       "futureSameFinalHome": futureSameFinalHome ? 1 : 0,
       "futureSameFinalDraw": futureSameFinalDraw ? 1 : 0,
       "futureSameFinalAway": futureSameFinalAway ? 1 : 0,
+
+      "milestoneGoalsFirstHalf": milestoneGoalsFirstHalf,
+      "milestoneGoalsSecondHalf": milestoneGoalsSecondHalf,
+      "milestoneGoalsFullTime": milestoneGoalsFullTime,
+
+      "futureMinOverFirstPercentage": futureMinOverFirstPercentage,
+      "futureMinOverSecondPercentage": futureMinOverSecondPercentage,
+      "futureMinOverFullPercentage": futureMinOverFullPercentage,
+
       "futureMinHomeWinPercentage": futureMinHomeWinPercentage,
       "futureMinDrawPercentage": futureMinDrawPercentage,
       "futureMinAwayWinPercentage": futureMinAwayWinPercentage,
+
       "filterPastRecordsByTeams": filterPastRecordsByTeams ? 1 : 0,
       "filterFutureRecordsByTeams": filterFutureRecordsByTeams ? 1 : 0,
       "filterPastRecordsByLeagues": filterPastRecordsByLeagues ? 1 : 0,
@@ -262,9 +286,12 @@ class Filter {
   }
 
   bool anyFutureMinPercent() {
-    return (futureMinHomeWinPercentage > 0 && futureMinHomeWinPercentage < 100) ||
-        (futureMinDrawPercentage > 0 && futureMinDrawPercentage < 100) ||
-        (futureMinAwayWinPercentage > 0 && futureMinAwayWinPercentage < 100);
+    return futureMinHomeWinPercentage > 0 ||
+        futureMinDrawPercentage > 0 ||
+        futureMinAwayWinPercentage > 0 ||
+        futureMinOverFirstPercentage > 0 ||
+        futureMinOverSecondPercentage > 0 ||
+        futureMinOverFullPercentage > 0;
   }
 
   bool allFutureMinPercentSpecificValue(int percentage) {
@@ -554,6 +581,8 @@ class Filter {
   }
 
   void updateOdds() {
+    fillInAllRangeOdds();
+
     if (minEarlyHome != null && maxEarlyHome == null) futureSameEarlyHome = false;
     if (minEarlyDraw != null && maxEarlyDraw == null) futureSameEarlyDraw = false;
     if (minEarlyAway != null && maxEarlyAway == null) futureSameEarlyAway = false;

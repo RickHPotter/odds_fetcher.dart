@@ -1,7 +1,9 @@
 import "dart:async";
 import "dart:io" show Platform;
 
+import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
+import "package:flutter/services.dart" show FilteringTextInputFormatter;
 import "package:font_awesome_flutter/font_awesome_flutter.dart" show FontAwesomeIcons;
 import "package:google_fonts/google_fonts.dart" show GoogleFonts;
 
@@ -325,6 +327,60 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   }
 
   // WIDGETS
+  Widget pastFilters(double buttonSize, List<int> pastYearsList, TextEditingController yearController) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.only(right: 8.0), child: Icon(Icons.history)),
+          for (final int time in pastYearsList)
+            SizedBox(
+              width: buttonSize,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: (4.0)),
+                child: ElevatedButton(
+                  onPressed: () => filterHistoryMatches(yearController, time: time),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shadowColor: Colors.purple,
+                    backgroundColor: time == filter.pastYears ? Colors.indigoAccent : null,
+                  ),
+                  child: Text(
+                    time <= 1 ? "$time Ano" : "$time Anos",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: time == filter.pastYears ? Colors.white : null,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          SizedBox(
+            width: buttonSize,
+            height: MediaQuery.of(context).size.height * 0.042,
+            child: TextFormField(
+              controller: yearController,
+              keyboardType: TextInputType.number,
+              validator: (value) => value == null ? "ANO INVÁLIDO" : null,
+              decoration: InputDecoration(
+                labelText: "ANO",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r"^\d*\.?\d*"))],
+              onChanged:
+                  (value) =>
+                      filterHistoryMatches(yearController, specificYear: value.isEmpty ? null : int.parse(value)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget pivotFilters(IconData icon, List<int> minutesList, double buttonSize) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -522,6 +578,112 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget pivotMatchesCarousel(List<Record> pivotRecords, ScrollController scrollController) {
+    return SizedBox(
+      height: 66.6,
+      child: Listener(
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            scrollController.jumpTo(scrollController.offset + event.scrollDelta.dy);
+          }
+        },
+        child: Scrollbar(
+          thumbVisibility: true,
+          controller: scrollController,
+          trackVisibility: true,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            controller: scrollController,
+            itemCount: pivotRecords.length,
+            itemBuilder: (BuildContext context, int index) {
+              final Record match = pivotRecords[index];
+
+              final List<Color> colors = [];
+
+              if (match.anyPercentageHigherThan(80)) {
+                colors.add(Colors.red[300] as Color);
+              } else if (match.anyPercentageHigherThan(65)) {
+                colors.add(Colors.orange[300] as Color);
+              } else if (match.anyPercentageHigherThan(52)) {
+                colors.add(Colors.amber[300] as Color);
+              }
+
+              if (selectedMatchId == match.id) {
+                colors.add(Colors.grey[300] as Color);
+                if (colors.length == 2) {
+                  colors.add(colors.first);
+                }
+              }
+
+              if (colors.isEmpty) {
+                colors.add(Colors.grey[100] as Color);
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: colors, stops: colors.length == 1 ? [0.0] : [0.2, 0.4, 0.8]),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.black.withValues(alpha: 0.4), width: 0.7),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 2, offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      onTap: () {
+                        if (hideFiltersOnFutureRecordSelect) showFilters = false;
+                        loadPastMatches(match.id as int, index);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              match.homeTeam.name,
+                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.start,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  DateFormat.MMMMd("pt-BR").format(match.matchDate),
+                                  style: TextStyle(fontSize: 12, color: Colors.black87),
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  DateFormat.Hm("pt-BR").format(match.matchDate),
+                                  style: TextStyle(fontSize: 12, color: Colors.black87),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              match.awayTeam.name,
+                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

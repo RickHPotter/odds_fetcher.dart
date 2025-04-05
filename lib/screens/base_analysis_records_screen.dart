@@ -42,7 +42,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
 
   late RecordFetcher fetcher;
   late int pivotRecordsCount = 0;
-  String currentDate = DateTime.now().toString();
+  String currentDate = DateTime.now().toString().substring(0, 10);
   int progress = 0;
   bool isFetchingPast = false;
   bool isFetchingPivot = false;

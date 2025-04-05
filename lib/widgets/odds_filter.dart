@@ -227,7 +227,7 @@ class _OddsFilterModalState extends State<OddsFilterModal> {
                                   });
                                 },
                               ),
-                              const Text("FILTRAR JOGOS FUTUROS"),
+                              const Text("FILTRAR JOGOS REFERÊNCIAS"),
                             ],
                           ),
                         ),

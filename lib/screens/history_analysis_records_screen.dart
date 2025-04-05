@@ -39,29 +39,32 @@ class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<History
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          // FILTERS
-          if (showFilters) pastFilters(buttonSize, pastYearsList),
-          if (showFilters) pivotFilters(Icons.history, pastMatchesMinutesList, buttonSize),
-          if (showFilters) bothFilters(buttonSize, smallButtonSize),
+      child: Container(
+        color: Colors.green.withAlpha(30),
+        child: Column(
+          children: [
+            // FILTERS
+            if (showFilters) pastFilters(buttonSize, pastYearsList),
+            if (showFilters) pivotFilters(Icons.history, pastMatchesMinutesList, buttonSize),
+            if (showFilters) bothFilters(buttonSize, smallButtonSize),
 
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.015),
-            child: pivotMatchesCarousel(pivotRecords, _scrollController),
-          ),
-
-          if (selectedMatchId != null && pivotRecords.isNotEmpty && pivotRecordIndex != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 15.0),
-              child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int], filter: filter),
+              padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.015),
+              child: pivotMatchesCarousel(pivotRecords, _scrollController),
             ),
 
-          PastMachDataTable(records: records, filter: filter),
+            if (selectedMatchId != null && pivotRecords.isNotEmpty && pivotRecordIndex != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15.0),
+                child: MatchCard(records: records, pivotRecord: pivotRecords[pivotRecordIndex as int], filter: filter),
+              ),
 
-          const Divider(),
-          footerControls(context, _filterNameController),
-        ],
+            PastMachDataTable(records: records, filter: filter),
+
+            const Divider(),
+            footerControls(context, _filterNameController),
+          ],
+        ),
       ),
     );
   }

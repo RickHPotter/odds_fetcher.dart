@@ -160,7 +160,7 @@ class _LeaguesFoldersFilterModalState extends State<LeaguesFoldersFilterModal> {
                                   });
                                 },
                               ),
-                              const Text("FILTRAR JOGOS FUTUROS"),
+                              const Text("FILTRAR JOGOS REFERÊNCIAS"),
                             ],
                           ),
                         ),

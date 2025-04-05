@@ -126,7 +126,7 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                                   });
                                 },
                               ),
-                              const Text("FILTRAR JOGOS FUTUROS"),
+                              const Text("FILTRAR JOGOS REFERÊNCIAS"),
                             ],
                           ),
                         ),

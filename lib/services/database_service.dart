@@ -166,6 +166,8 @@ class DatabaseService {
     ORDER BY MatchDate DESC, ID
     """);
 
+    print("im here");
+
     updateCount(result.length);
 
     for (final row in result) {

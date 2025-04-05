@@ -3,6 +3,7 @@ import "dart:io";
 
 import "package:flutter/material.dart";
 import "package:flutter/services.dart" show Clipboard, ClipboardData;
+import "package:flutter_localizations/flutter_localizations.dart";
 
 import "package:sqflite_common_ffi/sqflite_ffi.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart" show FontAwesomeIcons;
@@ -70,6 +71,8 @@ class MyApp extends StatelessWidget {
       title: "Odds Fetcher",
       theme: _buildTheme(Brightness.light),
       home: MyHomePage(),
+      localizationsDelegates: [GlobalMaterialLocalizations.delegate],
+      supportedLocales: [const Locale("pt")],
     );
   }
 }

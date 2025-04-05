@@ -526,6 +526,8 @@ class Filter {
     whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
     whereClause += " AND MatchDate <= ${rawDateTime(pivotMaxDate)}";
 
+    print(whereClause);
+
     if (filterPivotRecordsByTeams && teams.isNotEmpty) {
       final String teamsIdsString = teamsIds().join(", ");
       whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";

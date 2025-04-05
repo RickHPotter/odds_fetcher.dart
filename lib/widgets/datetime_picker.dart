@@ -1,3 +1,4 @@
+import "package:flutter/gestures.dart" show PointerScrollEvent;
 import "package:flutter/material.dart";
 import "package:intl/intl.dart";
 import "package:odds_fetcher/models/filter.dart" show Filter;
@@ -15,12 +16,16 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   DateTime? startDate;
   DateTime? endDate;
 
-  Future<void> _pickDateTimeRange() async {
+  Future<void> _pickDateTimeRange({
+    required Filter filter,
+    required void Function({DateTime? minDate, DateTime? maxDate}) onApplyCallback,
+  }) async {
     DateTimeRange? pickedRange = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2000),
+      firstDate: DateTime(2008),
       lastDate: DateTime(2100),
       initialDateRange: startDate != null && endDate != null ? DateTimeRange(start: startDate!, end: endDate!) : null,
+      locale: const Locale("pt", "BR"),
     );
 
     if (mounted && pickedRange != null) {
@@ -47,8 +52,9 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
               endTime.minute,
             );
 
-            widget.filter.specificMinDate = startDate;
-            widget.filter.specificMaxDate = endDate;
+            filter.specificMinDate = startDate;
+            filter.specificMaxDate = endDate;
+            onApplyCallback(minDate: filter.specificMinDate, maxDate: filter.specificMaxDate);
           });
         }
       }
@@ -81,6 +87,8 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
 
     final void Function({DateTime? minDate, DateTime? maxDate}) onApplyCallback = widget.onApplyCallback;
 
+    final ScrollController yearsScrollController = ScrollController();
+
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.6,
       height: MediaQuery.of(context).size.height * 0.4,
@@ -94,7 +102,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
             child: TextField(
               readOnly: true,
               controller: TextEditingController(text: _formatDateTime(startDate)),
-              onTap: _pickDateTimeRange,
+              onTap: () => _pickDateTimeRange(filter: filter, onApplyCallback: onApplyCallback),
               decoration: InputDecoration(border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
             ),
           ),
@@ -104,50 +112,62 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
             child: TextField(
               readOnly: true,
               controller: TextEditingController(text: _formatDateTime(endDate)),
-              onTap: _pickDateTimeRange,
+              onTap: () => _pickDateTimeRange(filter: filter, onApplyCallback: onApplyCallback),
               decoration: InputDecoration(border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (int year in years.reversed)
-                  Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        shadowColor: Colors.purple,
-                        backgroundColor: selectedYears.contains(year) ? Colors.indigoAccent : null,
+          Listener(
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                yearsScrollController.jumpTo(yearsScrollController.offset + event.scrollDelta.dy);
+              }
+            },
+            child: Scrollbar(
+              thumbVisibility: true,
+              controller: yearsScrollController,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                controller: yearsScrollController,
+                child: Row(
+                  children: [
+                    for (int year in years.reversed)
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shadowColor: Colors.purple,
+                            backgroundColor: selectedYears.contains(year) ? Colors.indigoAccent : null,
+                          ),
+                          onPressed: () {
+                            DateTime minYear = DateTime(year, 1, 1, 0, 0);
+                            DateTime maxYear = DateTime(year, 12, 31, 23, 59);
+
+                            filter.specificMinDate ??= minYear;
+                            filter.specificMaxDate ??= maxYear;
+
+                            bool overlapMin = filter.specificMinDate!.isBefore(maxYear);
+                            bool overlapMax = filter.specificMaxDate!.isAfter(minYear);
+
+                            if (!overlapMin) filter.specificMinDate = minYear;
+                            if (!overlapMax) filter.specificMaxDate = maxYear;
+
+                            if (overlapMin && overlapMax) {
+                              selectedYears.add(year);
+                            }
+
+                            setState(() => filter = filter);
+                            onApplyCallback(minDate: filter.specificMinDate, maxDate: filter.specificMaxDate);
+                          },
+                          child: Text(
+                            year.toString(),
+                            style: TextStyle(color: selectedYears.contains(year) ? Colors.white : Colors.indigoAccent),
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                        DateTime minYear = DateTime(year, 1, 1, 0, 0);
-                        DateTime maxYear = DateTime(year, 12, 31, 23, 59);
-
-                        filter.specificMinDate ??= minYear;
-                        filter.specificMaxDate ??= maxYear;
-
-                        bool overlapMin = filter.specificMinDate!.isBefore(maxYear);
-                        bool overlapMax = filter.specificMaxDate!.isAfter(minYear);
-
-                        if (!overlapMin) filter.specificMinDate = minYear;
-                        if (!overlapMax) filter.specificMaxDate = maxYear;
-
-                        if (overlapMin && overlapMax) {
-                          selectedYears.add(year);
-                        }
-
-                        setState(() => filter = filter);
-                        onApplyCallback(minDate: filter.specificMinDate, maxDate: filter.specificMaxDate);
-                      },
-                      child: Text(
-                        year.toString(),
-                        style: TextStyle(color: selectedYears.contains(year) ? Colors.white : Colors.indigoAccent),
-                      ),
-                    ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
           Row(

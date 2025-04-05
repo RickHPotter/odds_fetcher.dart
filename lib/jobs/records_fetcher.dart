@@ -49,7 +49,7 @@ class RecordFetcher {
       date.isBefore(maxDate) || date.isAtSameMomentAs(maxDate);
       date = date.add(Duration(days: 1))
     ) {
-      String dateStr = date.toString().split(" ")[0];
+      String dateStr = date.toString().substring(0, 10);
       _currentDateController.add(dateStr);
 
       fetchTasks.add(fetchWithRetry(dateStr, 1));

@@ -130,7 +130,7 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    ${await filter.whereClausePivot()}
+    ${await filter.whereClausePivot(future: true)}
     ORDER BY MatchDate, ID
     """);
 
@@ -162,11 +162,9 @@ class DatabaseService {
     JOIN Leagues l ON r.leagueId = l.id
     JOIN Teams ht ON r.homeTeamId = ht.id
     JOIN Teams at ON r.awayTeamId = at.id
-    ${await filter.whereClausePivot(unfinishedOnly: false)}
+    ${await filter.whereClausePivot(future: false)}
     ORDER BY MatchDate DESC, ID
     """);
-
-    print("im here");
 
     updateCount(result.length);
 
@@ -278,10 +276,6 @@ class DatabaseService {
 
     String matchDateStr = result.first["MatchDate"].toString();
     return parseRawDate(matchDateStr);
-  }
-
-  static Future<void> insertRecord(Record record) async {
-    await _db?.insert("Records", record.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   static Future<void> insertRecordsBatch(List<Record> records) async {

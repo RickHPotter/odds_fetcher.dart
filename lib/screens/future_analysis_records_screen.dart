@@ -34,6 +34,7 @@ class _FutureAnalysisRecordsScreenState extends BaseAnalysisScreenState<FutureAn
     final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
     if (!futureMatchesMinutesList.contains(filter.pivotNextMinutes)) {
       filter.pivotNextMinutes = futureMatchesMinutesList.first;
+      loadPivotMatches();
     }
 
     return Padding(

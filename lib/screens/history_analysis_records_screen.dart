@@ -20,17 +20,7 @@ class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<History
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _filterNameController = TextEditingController();
 
-  final List<int> pastMatchesMinutesList = [
-    60 * 5,
-    60 * 6,
-    60 * 12,
-    60 * 24,
-    60 * 24 * 2,
-    60 * 24 * 3,
-    60 * 24 * 4,
-    60 * 24 * 5,
-    60 * 24 * 7,
-  ];
+  final List<int> pastMatchesMinutesList = [10, 30, 60, 60 * 3, 60 * 6, 60 * 12, 60 * 24, 60 * 24 * 2, 60 * 24 * 3];
   final List<int> pastYearsList = [1, 2, 3, 4, 5, 8, 10, 15, 20];
 
   @override
@@ -44,6 +34,7 @@ class _HistoryAnalysisRecordsScreenState extends BaseAnalysisScreenState<History
     final double smallButtonSize = MediaQuery.of(context).size.width * 0.058;
     if (!pastMatchesMinutesList.contains(filter.pivotNextMinutes)) {
       filter.pivotNextMinutes = pastMatchesMinutesList.first;
+      loadPivotMatches();
     }
 
     return Padding(

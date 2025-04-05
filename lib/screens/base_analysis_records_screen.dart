@@ -162,6 +162,7 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
   }
 
   void updatePivotSameOddsTypes() {
+    filter.lastAction = LastAction.manualOddsChange;
     updateOddsFilter();
 
     setState(() => filter = filter);
@@ -261,6 +262,8 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
 
   void filterMatchesBySimiliarity(Odds oddType) {
     setState(() {
+      filter.lastAction = LastAction.pivotChange;
+
       switch (oddType) {
         case Odds.earlyOdds1:
           filter.pivotSameEarlyHome = !filter.pivotSameEarlyHome;
@@ -286,11 +289,8 @@ abstract class BaseAnalysisScreenState<T extends BaseAnalysisScreen> extends Sta
 
       setState(() => filter = filter);
 
-      if (filter.anyPivotMinPercent()) {
-        loadPivotMatches();
-      } else {
-        loadPastMatches(selectedMatchId, pivotRecordIndex);
-      }
+      loadPivotMatches();
+      loadPastMatches(selectedMatchId, pivotRecordIndex);
     });
   }
 

@@ -20,6 +20,8 @@ enum MinMaxOdds {
   maxFinalAway,
 }
 
+enum LastAction { pivotChange, manualOddsChange }
+
 class Filter {
   int? id;
   String filterName;
@@ -77,6 +79,7 @@ class Filter {
   List<Folder> folders;
 
   bool showPivotOptions;
+  LastAction? lastAction;
 
   Filter({
     this.id,
@@ -316,38 +319,41 @@ class Filter {
   void updateOdds() {
     fillInAllRangeOdds();
 
-    if (minEarlyHome != null && maxEarlyHome == null) pivotSameEarlyHome = false;
-    if (minEarlyDraw != null && maxEarlyDraw == null) pivotSameEarlyDraw = false;
-    if (minEarlyAway != null && maxEarlyAway == null) pivotSameEarlyAway = false;
-    if (minFinalHome != null && maxFinalHome == null) pivotSameFinalHome = false;
-    if (minFinalDraw != null && maxFinalDraw == null) pivotSameFinalDraw = false;
-    if (minFinalAway != null && maxFinalAway == null) pivotSameFinalAway = false;
-
-    if (pivotSameEarlyHome) {
-      minEarlyHome = null;
-      maxEarlyHome = null;
+    if (lastAction == LastAction.pivotChange) {
+      if (pivotSameEarlyHome) {
+        minEarlyHome = null;
+        maxEarlyHome = null;
+      }
+      if (pivotSameEarlyDraw) {
+        minEarlyDraw = null;
+        maxEarlyDraw = null;
+      }
+      if (pivotSameEarlyAway) {
+        minEarlyAway = null;
+        maxEarlyAway = null;
+      }
+      if (pivotSameFinalHome) {
+        minFinalHome = null;
+        maxFinalHome = null;
+      }
+      if (pivotSameFinalDraw) {
+        minFinalDraw = null;
+        maxFinalDraw = null;
+      }
+      if (pivotSameFinalAway) {
+        minFinalAway = null;
+        maxFinalAway = null;
+      }
+    } else if (lastAction == LastAction.manualOddsChange) {
+      if (minEarlyHome != null || maxEarlyHome != null) pivotSameEarlyHome = false;
+      if (minEarlyDraw != null || maxEarlyDraw != null) pivotSameEarlyDraw = false;
+      if (minEarlyAway != null || maxEarlyAway != null) pivotSameEarlyAway = false;
+      if (minFinalHome != null || maxFinalHome != null) pivotSameFinalHome = false;
+      if (minFinalDraw != null || maxFinalDraw != null) pivotSameFinalDraw = false;
+      if (minFinalAway != null || maxFinalAway != null) pivotSameFinalAway = false;
     }
 
-    if (pivotSameEarlyDraw) {
-      minEarlyDraw = null;
-      maxEarlyDraw = null;
-    }
-    if (pivotSameEarlyAway) {
-      minEarlyAway = null;
-      maxEarlyAway = null;
-    }
-    if (pivotSameFinalHome) {
-      minFinalHome = null;
-      maxFinalHome = null;
-    }
-    if (pivotSameFinalDraw) {
-      minFinalDraw = null;
-      maxFinalDraw = null;
-    }
-    if (pivotSameFinalAway) {
-      minFinalAway = null;
-      maxFinalAway = null;
-    }
+    lastAction = null;
   }
 
   void removeAllSpecificOdds() {
@@ -516,17 +522,23 @@ class Filter {
     return whereClause;
   }
 
-  Future<String> whereClausePivot({bool unfinishedOnly = true}) async {
+  Future<String> whereClausePivot({required bool future}) async {
     fillInAllRangeOdds();
 
-    late String whereClause = unfinishedOnly ? "WHERE finished = 0" : "WHERE 1 = 1";
+    late String whereClause = "WHERE 1 = 1";
 
-    final DateTime pivotMaxDate = DateTime.now().add(Duration(minutes: pivotNextMinutes));
+    if (future) {
+      final DateTime pivotMaxDate = DateTime.now().add(Duration(minutes: pivotNextMinutes));
 
-    whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
-    whereClause += " AND MatchDate <= ${rawDateTime(pivotMaxDate)}";
+      whereClause += " AND finished = 0";
+      whereClause += " AND MatchDate >= ${rawDateTime(DateTime.now())}";
+      whereClause += " AND MatchDate <= ${rawDateTime(pivotMaxDate)}";
+    } else {
+      final DateTime pivotMinDate = DateTime.now().subtract(Duration(minutes: pivotNextMinutes));
 
-    print(whereClause);
+      whereClause += " AND MatchDate >= ${rawDateTime(pivotMinDate)}";
+      whereClause += " AND MatchDate <= ${rawDateTime(DateTime.now())}";
+    }
 
     if (filterPivotRecordsByTeams && teams.isNotEmpty) {
       final String teamsIdsString = teamsIds().join(", ");

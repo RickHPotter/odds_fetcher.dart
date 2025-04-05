@@ -481,11 +481,12 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    spacing: 12,
                     children: [
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.close, color: Colors.red),
                             label: const Text("Limpar", style: TextStyle(color: Colors.black)),
@@ -501,7 +502,7 @@ class _CriteriaFilterModalState extends State<CriteriaFilterModal> {
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.check, color: Colors.green),
                             label: const Text("Aplicar", style: TextStyle(color: Colors.black)),

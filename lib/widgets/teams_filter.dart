@@ -97,7 +97,7 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
           });
         }
 
-        final double heightFactor = widget.filter.showPivotOptions ? 0.4 : 0.3;
+        final double heightFactor = widget.filter.showPivotOptions ? 0.5 : 0.4;
 
         return Dialog(
           elevation: 4,
@@ -148,6 +148,79 @@ class _TeamsFilterModalState extends State<TeamsFilterModal> {
                         ),
                       ],
                     ),
+                  if (widget.filter.showPivotOptions)
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.pivotFilterHomeTeams,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    widget.filter.pivotFilterHomeTeams = value;
+                                  });
+                                },
+                              ),
+                              const Text("HOME REFERÊNCIA"),
+                            ],
+                          ),
+                        ),
+                        Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              Switch(
+                                value: widget.filter.pivotFilterAwayTeams,
+                                onChanged: (value) {
+                                  setStates(() {
+                                    widget.filter.pivotFilterAwayTeams = value;
+                                  });
+                                },
+                              ),
+                              const Text("AWAY REFERÊNCIA"),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            Switch(
+                              value: widget.filter.filterHomeTeams,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  widget.filter.filterHomeTeams = value;
+                                });
+                              },
+                            ),
+                            const Text("HOME PASSADOS"),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            Switch(
+                              value: widget.filter.filterAwayTeams,
+                              onChanged: (value) {
+                                setStates(() {
+                                  widget.filter.filterAwayTeams = value;
+                                });
+                              },
+                            ),
+                            const Text("AWAY PASSADOS"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   _buildMultiSelect<Team>(
                     shouldFocus: true,
                     items: widget.teams,

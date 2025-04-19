@@ -74,6 +74,11 @@ class Filter {
   bool filterPastRecordsBySpecificOdds;
   bool filterPivotRecordsBySpecificOdds;
 
+  bool pivotFilterHomeTeams;
+  bool pivotFilterAwayTeams;
+  bool filterHomeTeams;
+  bool filterAwayTeams;
+
   List<Team> teams;
   List<League> leagues;
   List<Folder> folders;
@@ -124,6 +129,10 @@ class Filter {
     this.filterPivotRecordsByLeagues = true,
     this.filterPastRecordsBySpecificOdds = true,
     this.filterPivotRecordsBySpecificOdds = false,
+    this.pivotFilterHomeTeams = true,
+    this.pivotFilterAwayTeams = true,
+    this.filterHomeTeams = true,
+    this.filterAwayTeams = true,
 
     required this.teams,
     required this.leagues,
@@ -201,6 +210,11 @@ class Filter {
       filterPastRecordsBySpecificOdds: map["filterPastRecordsBySpecificOdds"] == 1,
       filterPivotRecordsBySpecificOdds: map["filterPivotRecordsBySpecificOdds"] == 1,
 
+      pivotFilterHomeTeams: map["pivotFilterHomeTeams"] == 1,
+      pivotFilterAwayTeams: map["pivotFilterAwayTeams"] == 1,
+      filterHomeTeams: map["filterHomeTeams"] == 1,
+      filterAwayTeams: map["filterAwayTeams"] == 1,
+
       teams: map["teams"] == null ? [] : map["teams"].map((t) => Team.fromMap(t)).toList(),
       leagues: map["leagues"] == null ? [] : map["leagues"].map((l) => League.fromMap(l)).toList(),
       folders: map["folders"] == null ? [] : map["folders"].map((f) => Folder.fromMap(f)).toList(),
@@ -259,6 +273,11 @@ class Filter {
       "filterPivotRecordsByLeagues": filterPivotRecordsByLeagues ? 1 : 0,
       "filterPastRecordsBySpecificOdds": filterPastRecordsBySpecificOdds ? 1 : 0,
       "filterPivotRecordsBySpecificOdds": filterPivotRecordsBySpecificOdds ? 1 : 0,
+
+      "pivotFilterHomeTeams": pivotFilterHomeTeams ? 1 : 0,
+      "pivotFilterAwayTeams": pivotFilterAwayTeams ? 1 : 0,
+      "filterHomeTeams": filterHomeTeams ? 1 : 0,
+      "filterAwayTeams": filterAwayTeams ? 1 : 0,
     };
   }
 
@@ -475,7 +494,19 @@ class Filter {
 
     if (filterPastRecordsByTeams && teams.isNotEmpty) {
       final String teamsIdsString = teamsIds().join(", ");
-      whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
+      List<String> conditions = [];
+
+      if (filterHomeTeams) {
+        conditions.add("homeTeamId IN ($teamsIdsString)");
+      }
+
+      if (filterAwayTeams) {
+        conditions.add("awayTeamId IN ($teamsIdsString)");
+      }
+
+      if (conditions.isNotEmpty) {
+        whereClause += " AND (${conditions.join(" OR ")})";
+      }
     }
 
     if (filterPastRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {
@@ -542,7 +573,19 @@ class Filter {
 
     if (filterPivotRecordsByTeams && teams.isNotEmpty) {
       final String teamsIdsString = teamsIds().join(", ");
-      whereClause += " AND (homeTeamId IN ($teamsIdsString) OR awayTeamId IN ($teamsIdsString))";
+      List<String> conditions = [];
+
+      if (pivotFilterHomeTeams) {
+        conditions.add("homeTeamId IN ($teamsIdsString)");
+      }
+
+      if (pivotFilterAwayTeams) {
+        conditions.add("awayTeamId IN ($teamsIdsString)");
+      }
+
+      if (conditions.isNotEmpty) {
+        whereClause += " AND (${conditions.join(" OR ")})";
+      }
     }
 
     if (filterPivotRecordsByLeagues && (leagues.isNotEmpty || folders.isNotEmpty)) {

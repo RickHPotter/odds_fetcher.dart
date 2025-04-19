@@ -34,7 +34,7 @@ void main() async {
     logError(details.exception, details.stack);
   };
 
-  Timer.periodic(Duration(minutes: 5), (timer) async {
+  Timer.periodic(Duration(hours: 2), (timer) async {
     List<Record> liveRecords = await ApiService().fetchLiveData();
     List<Record> pivotRecords = await ApiService().fetchFutureData();
     List<Record> records = liveRecords + pivotRecords;
